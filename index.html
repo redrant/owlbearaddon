@@ -54,7 +54,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">My Star Dash Platinum v1</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM ONLINE V3</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -73,7 +73,7 @@
             <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
         </div>
 
-        <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
+        <div id="tab-controls" style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
             <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
             <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
         </div>
@@ -104,33 +104,52 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
         </div>
     </div>
 
     <script>
+        const M_KEY = "com.platinum.v3.metadata";
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
-        const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
         async function init() {
-            try {
-                await OBR.onReady(async () => {
-                    state.uid = await OBR.player.getId();
-                    state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); });
-                    const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
+            OBR.onReady(async () => {
+                state.uid = await OBR.player.getId();
+                state.uname = await OBR.player.getName();
+
+                // Sincronización en vivo
+                OBR.scene.onMetadataChange((m) => {
+                    const data = m[M_KEY];
+                    if(data) {
+                        state.items = data.items || {};
+                        state.log = data.log || [];
+                        state.openFolders = data.openFolders || {};
+                        render();
+                        if(state.id) syncView();
+                    }
                 });
-            } catch(e) { render(); }
+
+                // Carga inicial
+                const m = await OBR.scene.getMetadata();
+                if(m[M_KEY]) {
+                    state.items = m[M_KEY].items || {};
+                    state.log = m[M_KEY].log || [];
+                    state.openFolders = m[M_KEY].openFolders || {};
+                }
+                render();
+            });
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
+        async function save() {
+            await OBR.scene.setMetadata({ [M_KEY]: { items: state.items, log: state.log, openFolders: state.openFolders } });
+            render();
+        }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=20\n-5FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null, owner: null, ownerName: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -159,28 +178,47 @@
             });
             
             document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span></div>`
             ).join('');
-            if(state.id) syncView();
         }
 
         function createCard(it) {
             const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
+            const ownerTag = it.ownerName ? `<span style="font-size:9px; color:var(--p); border:1px solid; padding:2px 4px; border-radius:4px;">${it.ownerName}</span>` : "";
+            d.innerHTML = `<span>📄 ${it.name}</span> ${ownerTag}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
             return d;
         }
 
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
+        function openDetails() { 
+            document.getElementById('view-list').style.display='none'; 
+            document.getElementById('view-details').style.display='flex'; 
+            switchTab(false); 
+        }
+
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
 
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
+            
             const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
-            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
+            const tabControls = document.getElementById('tab-controls');
+
+            // Lógica de Ownership y Bloqueo
+            if(it.owner === state.uid) {
+                obtn.innerText = "LIBERAR";
+                obtn.className = "btn-dice btn-owner-true";
+                tabControls.style.display = "flex";
+            } else {
+                obtn.innerText = it.owner ? it.ownerName : "OWNEAR";
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
+                // Si alguien más es el dueño, no puedo editar
+                tabControls.style.display = it.owner ? "none" : "flex";
+                if(it.owner) state.edit = false;
+            }
+
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
@@ -188,32 +226,23 @@
 
         function calculateMemory(txt) {
             const memory = {};
-            const lines = txt.split('\n');
-            lines.forEach(line => {
-                const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
-                if(base) memory[base[1].toUpperCase()] = parseInt(base[2]);
-            });
-            lines.forEach(line => {
-                const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
-                if(plus) {
-                    const sign = plus[1], val = parseInt(plus[2]), key = plus[3].toUpperCase();
-                    if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * val;
-                }
+            txt.split('\n').forEach(line => {
+                const m = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
+                if(m) memory[m[1].toUpperCase()] = parseInt(m[2]);
             });
             return memory;
         }
 
         function renderPreview(txt) {
-            const memory = calculateMemory(txt);
-            const lines = txt.split('\n');
-            const processedLines = lines.map(line => {
+            const mem = calculateMemory(txt);
+            const lines = txt.split('\n').map(line => {
                 if (line.trim().startsWith('[+]')) {
                     const content = line.replace('[+]', '').trim();
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, mem)}</div>`;
                 }
-                return renderElements(line, memory);
+                return renderElements(line, mem);
             });
-            document.getElementById('preview').innerHTML = processedLines.join('<br>');
+            document.getElementById('preview').innerHTML = lines.join('<br>');
         }
 
         function renderElements(txt, memory) {
@@ -225,9 +254,8 @@
                     return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`;
                 })
                 .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (formula) => {
-                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${formula}\`)">${formula}</div>`;
+                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => {
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`;
                 });
         }
 
@@ -235,63 +263,46 @@
             const it = state.items[state.id];
             const memory = calculateMemory(it.content);
             let logic = formulaRaw.toUpperCase();
-            let breakdown = [];
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            keys.forEach(k => {
-                const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) {
-                    breakdown.push(`${k}(${memory[k]})`);
-                    logic = logic.replace(regex, memory[k]);
-                }
-            });
+            Object.keys(memory).forEach(k => { logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), memory[k]); });
+            
             const diceMatch = logic.match(/(\d*)D(\d+)/i);
             if(!diceMatch) return;
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+            
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formulaRaw;
             const container = document.getElementById('dice-container');
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
-            let currentSum = 0; let logDetails = [];
+            
+            let currentSum = 0;
             for(let res of results) {
-                const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
-                await new Promise(r => {
-                    let t = 0;
-                    const iv = setInterval(() => {
-                        die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 7) {
-                            clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span style="color:var(--crit)">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span style="color:var(--fail)">${res}</span>`); }
-                            else logDetails.push(res);
-                            currentSum += res; r();
-                        }
-                    }, 50);
-                });
+                const die = document.createElement('div'); die.className = "die-num"; die.innerText = res;
+                if(res === s) die.style.color = "var(--crit)";
+                if(res === 1) die.style.color = "var(--fail)";
+                container.appendChild(die);
+                currentSum += res;
             }
+            
             let final;
-            try {
-                let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathStr));
-            } catch(e) { final = currentSum; }
-            setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; 
-            }, 200);
-            state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
+            try { final = eval(logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '')); } catch(e) { final = currentSum; }
+            
+            totalVal.innerText = final; totalVal.classList.add('show');
+            state.log.unshift({ u: state.uname, f: formulaRaw, r: final });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
         function toggleOwnership() { 
             const it = state.items[state.id];
             if(it.owner && it.owner !== state.uid) return;
-            it.owner = it.owner ? null : state.uid; save(); 
+            it.owner = it.owner ? null : state.uid;
+            it.ownerName = it.owner ? state.uname : null;
+            save(); 
         }
 
         function openNote(t, c) { 
             document.getElementById('note-title').innerText = t; 
-            // Restaurar saltos de línea al mostrar
             document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); 
             document.getElementById('note-overlay').style.display='flex'; 
         }
@@ -300,20 +311,19 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        
         function askNote() { 
             const t=prompt("Título:"); 
-            let c=prompt("Contenido (Usa doble espacio para saltar de línea):"); 
-            if(t && c) {
-                // El doble espacio se guarda como doble espacio, pero la visualización ahora lo interpreta
-                ins(`\n[note=${t}]${c}[/note]`, ""); 
-            }
+            let c=prompt("Contenido (Doble espacio para saltar línea):"); 
+            if(t && c) ins(`\\n[note=${t}]${c}[/note]`, ""); 
         }
-
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-        function cloneToMyDash(t) { const my = Object.values(state.items).find(i => i.owner === state.uid); if(my) { my.content += "\n"+t; save(); alert("Clonado"); } }
+        function cloneToMyDash(t) { 
+            const my = Object.values(state.items).find(i => i.owner === state.uid); 
+            if(my) { my.content += "\n"+t; save(); alert("¡Clonado a tu Dash!"); }
+            else alert("Primero OWNEA un Dash para recibir clones.");
+        }
 
         init();
     </script>
