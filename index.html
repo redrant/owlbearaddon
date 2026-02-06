@@ -13,77 +13,86 @@
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
         /* HEADER & SIGNATURE */
-        .header-main { text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
+        .header-main { text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px; position: relative; }
         .version { font-size: 9px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
         .signature { font-size: 16px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
         /* CONTROLS */
         .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
         input[type="text"] { flex: 1; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 8px; outline: none; }
-        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; color: #000; transition: 0.2s; }
-        .btn-p { background: var(--p); } .btn-f { background: var(--folder); }
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; color: #000; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-p { background: var(--p); } 
+        .btn-f { background: var(--folder); }
         .btn-ghost { background: transparent; color: var(--t); border: 1px solid #444; }
 
         /* LIST & FOLDERS */
-        #list-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px; }
-        .item-card { padding: 10px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
-        .folder-card { border-left: 4px solid var(--folder); color: var(--folder); font-weight: bold; }
+        #list-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; }
+        .item-card { padding: 10px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; position: relative; }
+        .folder-card { border-left: 4px solid var(--folder); color: var(--folder); font-weight: bold; background: #1d170e; }
         .dash-card { border-left: 4px solid var(--p); }
-        .child { margin-left: 20px; display: none; } /* Colapsado por defecto */
-        .is-open { display: flex !important; }
+        .child-item { margin-left: 20px; }
+        .hidden { display: none !important; }
 
         /* EDITOR & PREVIEW */
-        #view-details { display: none; flex-direction: column; height: 100%; position: relative; }
+        #view-details { display: none; flex-direction: column; height: 100%; position: relative; z-index: 10; background: var(--bg); }
         .editor-wrap { flex: 1; display: flex; flex-direction: column; }
-        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #333; border-radius: 0 0 8px 8px; font-family: 'Consolas', monospace; resize: none; outline: none; line-height: 1.4; }
+        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #333; border-radius: 0 0 8px 8px; font-family: 'Consolas', monospace; resize: none; outline: none; line-height: 1.5; font-size: 14px; }
         .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; flex-wrap: wrap; }
         
-        #preview { flex: 1; padding: 20px; overflow-y: auto; background: #0d0d0f; border: 1px solid #333; border-radius: 8px; line-height: 1.6; display: none; }
+        #preview { flex: 1; padding: 20px; overflow-y: auto; background: #0d0d0f; border: 1px solid #333; border-radius: 8px; line-height: 1.6; display: none; white-space: normal; word-wrap: break-word; }
 
         /* VISUAL ELEMENTS */
         .glow { font-weight: bold; }
-        .note-btn { background: rgba(187,134,252,0.1); color: var(--p); border: 1px solid var(--p); padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin: 2px; font-weight: bold; }
+        .note-btn { background: rgba(187,134,252,0.15); color: var(--p); border: 1px solid var(--p); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin: 2px; font-weight: bold; }
         .cb-box { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 8px; border-radius: 6px; margin: 5px 0; border-left: 3px solid var(--accent); }
-        .cb-check { width: 17px; height: 17px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; }
-        .roll-trigger { color: var(--accent); font-weight: bold; cursor: pointer; text-decoration: underline dotted; }
+        .cb-check { width: 18px; height: 18px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; }
+        .roll-link { color: var(--accent); font-weight: bold; cursor: pointer; text-decoration: underline dotted; }
 
         /* LOG PANEL */
-        .log-area { height: 110px; background: #000; border: 1px solid #222; border-radius: 8px; margin-top: 10px; display: flex; flex-direction: column; }
+        .log-area { height: 130px; background: #000; border: 1px solid #222; border-radius: 8px; margin-top: 5px; display: flex; flex-direction: column; }
+        .log-header { font-size: 9px; padding: 5px 10px; background: #111; color: #666; display: flex; justify-content: space-between; align-items: center; }
         #log-content { flex: 1; overflow-y: auto; padding: 8px; font-size: 11px; font-family: monospace; }
-        .log-row { border-bottom: 1px solid #111; padding: 2px 0; }
+        .log-row { border-bottom: 1px solid #111; padding: 4px 0; color: #ddd; }
+        .log-dice { color: #777; font-size: 10px; display: block; }
 
         /* MODAL */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 999; }
-        .modal { background: #1a1a1d; border: 1px solid #444; padding: 20px; border-radius: 12px; width: 85%; max-width: 400px; box-shadow: 0 10px 30px #000; }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 999; }
+        .modal { background: #1a1a1d; border: 1px solid #444; padding: 20px; border-radius: 12px; width: 85%; max-width: 400px; box-shadow: 0 10px 40px #000; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">V 1.0.0v</div>
+            <div class="version">VERSION 1.0.0v</div>
             <div class="signature">My Dashesh - By Redrant :v</div>
         </div>
+        
         <div class="input-group">
-            <input type="text" id="itemName" placeholder="Nuevo elemento...">
-            <button onclick="addItem('dash')" class="btn btn-p">+DASH</button>
-            <button onclick="addItem('folder')" class="btn btn-f">+CARPETA</button>
+            <input type="text" id="itemName" placeholder="Nombre de dash o carpeta...">
+            <button onclick="createNew('dash')" class="btn btn-p">DASH</button>
+            <button onclick="createNew('folder')" class="btn btn-f">CARPETA</button>
         </div>
+
         <div id="list-container"></div>
+
         <div class="log-area">
-            <div style="font-size:9px; padding:3px 8px; background:#111; color:#666;">HISTORIAL DE DADOS</div>
+            <div class="log-header">
+                DICE LOG GLOBAL
+                <button onclick="clearGlobalLog()" class="btn btn-ghost" style="padding: 2px 5px; font-size: 8px;">REINICIAR LOG</button>
+            </div>
             <div id="log-content"></div>
         </div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:8px;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <button onclick="closeDetails()" class="btn btn-ghost">⬅ VOLVER</button>
-            <div id="detail-title" class="signature"></div>
-            <button onclick="setOwnerMenu()" class="btn btn-ghost">👤</button>
+            <div id="detail-title" class="signature" style="font-size:14px;"></div>
+            <button onclick="openOwnerMenu()" class="btn btn-ghost">👤 DUEÑO</button>
         </div>
         
-        <button onclick="toggleVisual()" id="mode-btn" style="width:100%; padding:10px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">VISUALIZAR</button>
+        <button onclick="toggleVisual()" id="mode-btn" style="width:100%; padding:12px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px; letter-spacing: 1px;">VISUALIZAR</button>
 
         <div id="editor-ui" class="editor-wrap">
             <div class="toolbar">
@@ -92,203 +101,365 @@
                 <button class="btn btn-ghost" onclick="wrap('<g=gold>','</g>')">✨ Glow</button>
                 <button class="btn btn-ghost" onclick="wrap('**','**')"><b>B</b></button>
                 <button class="btn btn-ghost" onclick="wrap('*','*')"><i>I</i></button>
-                <button class="btn btn-p" onclick="deleteItem()" style="background:var(--fail);margin-left:auto;">🗑️</button>
+                <button class="btn btn-p" onclick="deleteCurrent()" style="background:var(--fail); color:white; margin-left:auto;">BORRAR</button>
             </div>
-            <textarea id="editor" oninput="updateLocal()"></textarea>
+            <textarea id="editor" oninput="saveContent()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
-    <div id="global-modal" class="overlay" onclick="this.style.display='none'">
+    <div id="modal-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" id="modal-body"></div>
     </div>
 
     <script>
-        const KEY = "MYDASHES_100V_PRO";
-        const LOG = "MYDASHES_LOG_PRO";
-        let state = { items: {}, id: null, editMode: true, uid: 'local', uname: 'Player', dragId: null, openFolders: {} };
+        const METADATA_KEY = "com.mydashes.v100.data";
+        const LOG_KEY = "com.mydashes.v100.log";
+        
+        let state = { 
+            items: {}, 
+            log: [], 
+            collapsed: {}, 
+            currentId: null, 
+            isEditing: true,
+            uid: 'local',
+            uname: 'Jugador',
+            draggedId: null
+        };
 
+        // 1. INICIALIZACIÓN
         async function init() {
             try {
-                await OBR.onReady(async () => {
-                    state.uid = await OBR.player.getId();
-                    state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => {
-                        state.items = m[KEY] || {};
-                        drawList();
-                        drawLog(m[LOG] || []);
-                        if(state.id) syncDetails();
+                if (window.location.search.includes('obr')) {
+                    await OBR.onReady(async () => {
+                        state.uid = await OBR.player.getId();
+                        state.uname = await OBR.player.getName();
+                        
+                        OBR.scene.onMetadataChange((metadata) => {
+                            const data = metadata[METADATA_KEY] || { items: {}, collapsed: {} };
+                            state.items = data.items;
+                            state.collapsed = data.collapsed;
+                            state.log = metadata[LOG_KEY] || [];
+                            renderAll();
+                        });
+
+                        const initialMetadata = await OBR.scene.getMetadata();
+                        const data = initialMetadata[METADATA_KEY] || { items: {}, collapsed: {} };
+                        state.items = data.items;
+                        state.collapsed = data.collapsed;
+                        state.log = initialMetadata[LOG_KEY] || [];
+                        renderAll();
                     });
+                } else {
+                    // Modo Web Local para pruebas
+                    const localData = localStorage.getItem(METADATA_KEY);
+                    if(localData) state.items = JSON.parse(localData);
+                    renderAll();
+                }
+            } catch(e) { console.error("Error init:", e); }
+        }
+
+        // 2. PERSISTENCIA
+        async function sync() {
+            if (window.OBR && OBR.scene) {
+                await OBR.scene.setMetadata({
+                    [METADATA_KEY]: { items: state.items, collapsed: state.collapsed },
+                    [LOG_KEY]: state.log
                 });
-            } catch(e) { console.warn("Local Mode"); }
+            } else {
+                localStorage.setItem(METADATA_KEY, JSON.stringify(state.items));
+                renderAll();
+            }
         }
 
-        async function save() { await OBR.scene.setMetadata({ [KEY]: state.items }); }
-
-        function addItem(type) {
-            const name = document.getElementById('itemName').value || "Nuevo";
-            const id = "id_" + Date.now();
-            state.items[id] = { id, type, name, content: "# " + name + "\nFUE=10\n1d20+FUE", owner: null, parent: null };
-            document.getElementById('itemName').value = '';
-            save();
+        // 3. LOGICA DE CREACIÓN Y CARPETAS
+        function createNew(type) {
+            const nameInput = document.getElementById('itemName');
+            const name = nameInput.value.trim() || (type === 'folder' ? "Nueva Carpeta" : "Nuevo Dash");
+            const id = "id_" + Date.now() + Math.random().toString(36).substr(2, 5);
+            
+            state.items[id] = {
+                id,
+                type,
+                name,
+                content: type === 'dash' ? `# ${name}\nFUE=10\n1d20+FUE` : "",
+                parent: null,
+                owner: null
+            };
+            
+            nameInput.value = "";
+            sync();
         }
 
-        function drawList() {
+        function renderAll() {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
-            const all = Object.values(state.items);
-
-            // Carpetas
-            all.filter(i => i.type === 'folder').forEach(f => {
-                const fDiv = document.createElement('div');
-                fDiv.className = 'item-card folder-card';
-                fDiv.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <small>${state.openFolders[f.id] ? '▲' : '▼'}</small>`;
-                fDiv.onclick = () => { state.openFolders[f.id] = !state.openFolders[f.id]; drawList(); };
-                fDiv.ondragover = e => e.preventDefault();
-                fDiv.ondrop = e => { e.preventDefault(); move(state.dragId, f.id); };
-                container.appendChild(fDiv);
-
-                all.filter(c => c.parent === f.id).forEach(dash => {
-                    container.appendChild(makeDash(dash, true, state.openFolders[f.id]));
+            
+            const allItems = Object.values(state.items);
+            
+            // Primero carpetas
+            allItems.filter(i => i.type === 'folder').forEach(folder => {
+                const folderEl = createCardElement(folder);
+                container.appendChild(folderEl);
+                
+                // Hijos de esta carpeta
+                allItems.filter(i => i.parent === folder.id).forEach(child => {
+                    const childEl = createCardElement(child, true, state.collapsed[folder.id]);
+                    container.appendChild(childEl);
                 });
             });
 
-            // Dashes sueltos
-            all.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
-                container.appendChild(makeDash(dash, false));
+            // Luego dashes sin carpeta
+            allItems.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
+                const dashEl = createCardElement(dash);
+                container.appendChild(dashEl);
             });
+
+            renderLog();
+            if(state.currentId) updateDetailsUI();
         }
 
-        function makeDash(item, isChild, isVisible) {
+        function createCardElement(item, isChild = false, isHidden = false) {
             const div = document.createElement('div');
-            div.className = `item-card dash-card ${isChild ? 'child' : ''} ${isChild && isVisible ? 'is-open' : ''}`;
+            div.className = `item-card ${item.type === 'folder' ? 'folder-card' : 'dash-card'} ${isChild ? 'child-item' : ''} ${isHidden ? 'hidden' : ''}`;
             div.draggable = true;
-            div.innerHTML = `<span>📄 ${item.name}</span> ${item.owner ? '👤' : ''}`;
-            div.onclick = (e) => { e.stopPropagation(); state.id = item.id; openDetails(); };
-            div.ondragstart = () => state.dragId = item.id;
-            div.ondragover = e => e.preventDefault();
-            div.ondrop = e => { e.preventDefault(); move(state.dragId, null); };
+            
+            const icon = item.type === 'folder' ? (state.collapsed[item.id] ? '📁' : '📂') : '📄';
+            div.innerHTML = `<span>${icon} ${item.name}</span> ${item.owner ? '<span style="font-size:10px; opacity:0.5;">👤</span>' : ''}`;
+            
+            div.onclick = (e) => {
+                e.stopPropagation();
+                if(item.type === 'folder') {
+                    state.collapsed[item.id] = !state.collapsed[item.id];
+                    sync();
+                } else {
+                    openDash(item.id);
+                }
+            };
+
+            // Drag & Drop para meter en carpetas
+            div.ondragstart = () => { state.draggedId = item.id; };
+            div.ondragover = (e) => e.preventDefault();
+            div.ondrop = (e) => {
+                e.preventDefault();
+                if(state.draggedId === item.id) return;
+                if(item.type === 'folder') {
+                    state.items[state.draggedId].parent = item.id;
+                } else {
+                    state.items[state.draggedId].parent = null;
+                }
+                sync();
+            };
+
             return div;
         }
 
-        async function move(id, pid) { if(id !== pid) { state.items[id].parent = pid; await save(); } }
-
-        function openDetails() {
+        // 4. EDITOR Y VISUALIZADOR
+        function openDash(id) {
+            state.currentId = id;
+            state.isEditing = true;
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'flex';
-            state.editMode = true;
-            syncDetails();
+            updateDetailsUI();
         }
 
-        function syncDetails() {
-            const item = state.items[state.id];
+        function updateDetailsUI() {
+            const item = state.items[state.currentId];
             if(!item) return closeDetails();
-            document.getElementById('detail-title').innerText = item.name;
-            document.getElementById('editor-ui').style.display = state.editMode ? 'flex' : 'none';
-            document.getElementById('preview').style.display = state.editMode ? 'none' : 'block';
-            document.getElementById('mode-btn').innerText = state.editMode ? "VISUALIZAR" : "EDITAR";
             
-            if (document.activeElement !== document.getElementById('editor')) {
-                document.getElementById('editor').value = item.content;
+            document.getElementById('detail-title').innerText = item.name.toUpperCase();
+            document.getElementById('editor-ui').style.display = state.isEditing ? 'flex' : 'none';
+            document.getElementById('preview').style.display = state.isEditing ? 'none' : 'block';
+            document.getElementById('mode-btn').innerText = state.isEditing ? "VISUALIZAR" : "EDITAR";
+            
+            if(state.isEditing) {
+                const area = document.getElementById('editor');
+                if(document.activeElement !== area) area.value = item.content;
+            } else {
+                parsePreview(item.content);
             }
-            if(!state.editMode) renderPreview(item.content);
         }
 
-        function renderPreview(raw) {
-            const vars = {};
-            // 1. Detectar variables FUE=10
-            raw.replace(/(\w+)\s*=\s*([\-\d]+)/g, (m, k, v) => vars[k.toUpperCase()] = parseInt(v));
+        function saveContent() {
+            if(state.currentId) {
+                state.items[state.currentId].content = document.getElementById('editor').value;
+                // Debounce simple para no saturar OBR
+                clearTimeout(window.saveTimer);
+                window.saveTimer = setTimeout(sync, 500);
+            }
+        }
 
-            let html = raw
+        function toggleVisual() {
+            state.isEditing = !state.isEditing;
+            updateDetailsUI();
+        }
+
+        // 5. PARSER (Lógica de dados, variables y etiquetas)
+        function parsePreview(text) {
+            const stats = {};
+            // Extraer variables: FUE=10
+            text.replace(/(\w+)\s*=\s*([\-\d]+)/g, (m, key, val) => {
+                stats[key.toUpperCase()] = parseInt(val);
+            });
+
+            let html = text
                 .replace(/  /g, '<br>') // Doble espacio = renglón
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span class="glow" style="text-shadow: 0 0 10px $1; color:white;">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const safe = c.replace(/\n/g, '<br>').replace(/'/g, "\\'");
-                    return `<button class="note-btn" onclick="showNote('${t}', '${safe}')">${t}</button>`;
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span class="glow" style="text-shadow: 0 0 10px $1, 0 0 5px $1; color:white;">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
+                    const cleanContent = content.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showModal('${title}', '${cleanContent}')">${title}</button>`;
                 })
-                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, c) => {
-                    return `<div class="cb-box"><input type="checkbox" class="cb-check" onclick="transfer('${c.replace(/'/g, "\\'")}', this)"><span>${c}</span></div>`;
+                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, loot) => {
+                    const cleanLoot = loot.trim().replace(/'/g, "\\'");
+                    return `<div class="cb-box"><input type="checkbox" class="cb-check" onclick="transferLoot('${cleanLoot}', this)"><span>${loot}</span></div>`;
                 })
-                // Dados con variables avanzadas (+5FUE, 1d20+FUE*2, etc)
-                .replace(/([\d]*d\d+[\+\-\*\/\d\w\(\)]*|[\+\-]\d+\w+)/gi, f => {
-                    return `<span class="roll-trigger" onclick="doRoll('${f}', ${JSON.stringify(vars)})">${f}</span>`;
+                // Lógica de dados: 1d20+FUE, +5FUE, (FUE*2)
+                .replace(/(\d*d\d+[\+\-\*\/\d\w\(\)]*|[\+\-]\d+\w+)/gi, (formula) => {
+                    return `<span class="roll-link" onclick="handleRoll('${formula}', ${JSON.stringify(stats)})">${formula}</span>`;
                 });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        async function doRoll(formula, vars) {
-            let f = formula.toUpperCase();
-            // Reemplazar variables
-            for (let v in vars) { f = f.replace(new RegExp(v, 'g'), vars[v]); }
+        // 6. SISTEMA DE DADOS AVANZADO
+        async function handleRoll(formula, stats) {
+            let processed = formula.toUpperCase();
             
-            // Procesar Dados
-            let logs = [];
-            f = f.replace(/(\d*)D(\d+)/g, (m, n, d) => {
-                let count = parseInt(n) || 1;
-                let sides = parseInt(d);
-                let sum = 0;
-                for(let i=0; i<count; i++){
-                    let r = Math.floor(Math.random()*sides)+1;
-                    sum += r; logs.push(r);
+            // 1. Reemplazar variables (FUE -> 10)
+            for (let s in stats) {
+                const regex = new RegExp(`\\b${s}\\b`, 'g');
+                processed = processed.replace(regex, stats[s]);
+            }
+
+            // 2. Resolver tiradas XdY
+            let diceDetails = [];
+            processed = processed.replace(/(\d*)D(\d+)/g, (m, count, sides) => {
+                const n = parseInt(count) || 1;
+                const s = parseInt(sides);
+                let total = 0;
+                let rolls = [];
+                for(let i=0; i<n; i++) {
+                    const r = Math.floor(Math.random() * s) + 1;
+                    rolls.push(r);
+                    total += r;
                 }
-                return `(${sum})`;
+                diceDetails.push(`(${rolls.join('+')})`);
+                return total;
             });
 
-            let result;
-            try { result = eval(f); } catch(e) { result = "Error"; }
+            // 3. Evaluar resultado matemático final
+            let result = 0;
+            try {
+                // Sanitizar string para eval (solo números y operadores)
+                const safeEval = processed.replace(/[^-()\d/*+.]/g, '');
+                result = eval(safeEval);
+            } catch(e) { result = "Error"; }
 
-            const entry = { u: state.uname, f: formula, r: result, d: logs.join(', ') };
-            const currentLogs = (await OBR.scene.getMetadata())[LOG] || [];
-            await OBR.scene.setMetadata({ [LOG]: [entry, ...currentLogs].slice(0, 20) });
+            // 4. Registrar en el Log Global
+            const logEntry = {
+                user: state.uname,
+                formula: formula,
+                result: Math.floor(result),
+                details: diceDetails.join(' '),
+                time: Date.now()
+            };
+
+            state.log.unshift(logEntry);
+            if(state.log.length > 30) state.log.pop();
+            sync();
         }
 
-        async function transfer(txt, cb) {
+        // 7. CASILLAS PRO+
+        async function transferLoot(text, cb) {
             if(!cb.checked) return;
-            const target = Object.values(state.items).find(i => i.owner === state.uid);
-            if(target) {
-                target.content += "\n" + txt;
-                await save();
+            // Buscar dash del que el usuario es dueño
+            const myDash = Object.values(state.items).find(i => i.owner === state.uid);
+            if(myDash) {
+                state.items[myDash.id].content += `\n✅ Recibido: ${text}`;
                 cb.disabled = true;
                 cb.parentElement.style.opacity = "0.5";
+                sync();
             } else {
-                alert("Primero asígnate un Dash con el icono 👤");
+                alert("No tienes un Dash asignado. Usa el botón 👤 DUEÑO en uno de tus Dashes primero.");
                 cb.checked = false;
             }
         }
 
-        function drawLog(logs) {
-            document.getElementById('log-content').innerHTML = logs.map(l => `
-                <div class="log-row"><b>${l.u}:</b> ${l.f} ➔ <b>${l.r}</b> <small style="color:#555">(${l.d})</small></div>
+        // 8. UTILIDADES Y LOG
+        function renderLog() {
+            const content = document.getElementById('log-content');
+            content.innerHTML = state.log.map(l => `
+                <div class="log-row">
+                    <b>${l.user}:</b> ${l.formula} ➔ <span style="color:var(--accent); font-size:14px;">${l.result}</span>
+                    <span class="log-dice">${l.details}</span>
+                </div>
             `).join('');
         }
 
-        function showNote(t, c) {
-            const body = document.getElementById('modal-body');
-            body.innerHTML = `<h3 style="color:var(--p);margin-top:0;">${t}</h3><div style="line-height:1.5">${c}</div>`;
-            document.getElementById('global-modal').style.display = 'flex';
+        async function clearGlobalLog() {
+            if(confirm("¿Reiniciar el log de dados para todos?")) {
+                state.log = [];
+                sync();
+            }
         }
 
-        async function setOwnerMenu() {
-            const players = await OBR.party.getPlayers();
+        function showModal(title, content) {
             const body = document.getElementById('modal-body');
-            let h = `<h3 style="color:var(--p)">Asignar Dueño</h3>`;
+            body.innerHTML = `<h2 style="color:var(--p); margin-top:0;">${title}</h2><div style="font-size:15px; color:#ddd;">${content}</div>`;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        async function openOwnerMenu() {
+            const body = document.getElementById('modal-body');
+            let players = [];
+            try { players = await OBR.party.getPlayers(); } catch(e) {}
+            
+            let html = `<h3>Asignar Propietario</h3><p style="font-size:11px; color:#888;">El dueño recibe los items de las CasillasPro+</p>`;
             players.forEach(p => {
-                h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:var(--p); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">${p.name}</button>`;
+                html += `<button onclick="setOwner('${p.id}')" class="btn btn-p" style="width:100%; margin-bottom:5px;">${p.name}</button>`;
             });
-            body.innerHTML = h;
-            document.getElementById('global-modal').style.display = 'flex';
+            html += `<button onclick="setOwner('${state.uid}')" class="btn btn-ghost" style="width:100%;">Asignarme a mí</button>`;
+            
+            body.innerHTML = html;
+            document.getElementById('modal-overlay').style.display = 'flex';
         }
 
-        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-modal').style.display = 'none'; }
-        function toggleVisual() { state.editMode = !state.editMode; syncDetails(); }
-        function updateLocal() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function closeDetails() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
-        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); updateLocal(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateLocal(); }
-        async function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; await save(); closeDetails(); } }
+        function setOwner(uid) {
+            state.items[state.currentId].owner = uid;
+            sync();
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        function closeDetails() {
+            state.currentId = null;
+            document.getElementById('view-details').style.display = 'none';
+            document.getElementById('view-list').style.display = 'flex';
+        }
+
+        async function deleteCurrent() {
+            if(confirm("¿Eliminar este Dash permanentemente?")) {
+                delete state.items[state.currentId];
+                state.currentId = null;
+                sync();
+                closeDetails();
+            }
+        }
+
+        function ins(a, b) {
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + b + e.value.substring(end);
+            saveContent();
+        }
+
+        function wrap(a, b) {
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            saveContent();
+        }
 
         init();
     </script>
