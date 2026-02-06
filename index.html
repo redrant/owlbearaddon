@@ -2,495 +2,283 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; --bg: #121212; --surf: #1e1e1e; --t: #e0e0e0; 
+            --p: #bb86fc; --bg: #0d0d0f; --c: #1a1a1d; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
         }
         
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; }
         
         /* HEADER */
-        .header { background: var(--surf); padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .title { font-weight: bold; color: var(--p); letter-spacing: 1px; font-size: 14px; }
-        .version { font-size: 10px; opacity: 0.6; }
+        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .version { font-size: 10px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
+        .signature { font-size: 15px; font-weight: bold; color: var(--p); text-shadow: 0 0 8px var(--p); }
 
-        /* LIST VIEW */
-        #view-list { flex: 1; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
-        .controls { display: flex; gap: 5px; margin-bottom: 10px; }
-        input { background: #2c2c2c; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; flex: 1; outline: none; }
-        input:focus { border-color: var(--p); }
-        
-        .btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s; color: #000; }
-        .btn-p { background: var(--p); } .btn-p:hover { background: #d0aeff; }
-        .btn-f { background: var(--folder); } .btn-f:hover { background: #ffb74d; }
-        .btn-d { background: var(--fail); color: white; }
-        .btn-ghost { background: transparent; color: var(--t); border: 1px solid #444; }
-        .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+        /* INPUTS */
+        .input-group { display: flex; gap: 5px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 10px; background: #1a1a1d; color: white; border: 1px solid #333; border-radius: 8px; outline: none; }
+        .tool { background: #2d2d30; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .tool:hover { background: var(--p); color: #000; }
 
-        .list-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-        
-        /* CARDS */
-        .card { padding: 10px; background: #252525; border-radius: 6px; border: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .card:hover { background: #303030; border-color: #555; }
-        .is-folder { border-left: 4px solid var(--folder); }
-        .is-dash { border-left: 4px solid var(--p); }
-        .is-child { margin-left: 20px; border-left: 2px solid var(--p); }
-        .owner-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 10px; color: var(--accent); border: 1px solid var(--accent); }
+        /* LISTA Y CARPETAS */
+        #list-container { display: flex; flex-direction: column; gap: 5px; }
+        .item-card { padding: 10px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
+        .folder-card { background: #1d170e; border-left: 4px solid var(--folder); color: var(--folder); }
+        .dash-card { border-left: 4px solid var(--p); }
+        .child { margin-left: 20px; display: none; } /* Escondido por defecto */
+        .show-child { display: flex !important; }
 
-        /* LOG AREA */
-        .log-panel { height: 120px; background: #000; border-top: 1px solid #333; padding: 8px; overflow-y: auto; font-family: monospace; font-size: 11px; }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
-        .dice-detail { color: #888; font-size: 10px; }
-        .res-crit { color: var(--crit); } .res-fail { color: var(--fail); } .res-high { color: var(--accent); }
+        /* VISUALIZADOR */
+        #editor-ui { display: none; }
+        textarea { width: 100%; height: 250px; background: #0f0f11; color: #ccc; padding: 15px; border: 1px solid #333; border-radius: 0 0 8px 8px; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
+        .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; flex-wrap: wrap; }
 
-        /* DETAILS VIEW */
-        #view-details { display: none; flex-direction: column; height: 100%; }
-        .editor-container { flex: 1; display: flex; flex-direction: column; position: relative; }
-        textarea { flex: 1; background: #151515; color: #ddd; border: none; padding: 15px; resize: none; outline: none; font-family: 'Consolas', monospace; line-height: 1.5; font-size: 14px; }
-        
-        #preview-area { flex: 1; padding: 15px; overflow-y: auto; line-height: 1.6; display: none; background: #151515; }
-        
-        /* Elements in Preview */
-        .cb-row { display: flex; align-items: flex-start; background: rgba(3,218,198,0.05); border: 1px solid rgba(3,218,198,0.2); padding: 8px; border-radius: 6px; margin: 5px 0; }
-        .cb-check { margin-top: 3px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; width: 16px; height: 16px; }
-        .note-tag { display: inline-block; background: rgba(187,134,252,0.15); border: 1px solid var(--p); color: var(--p); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; margin: 0 4px; }
-        .note-tag:hover { background: var(--p); color: #000; }
-        .rollable { color: var(--accent); font-weight: bold; cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
-        .rollable:hover { background: rgba(3,218,198,0.1); }
+        #preview { padding: 15px; display: none; background: #0d0d0f; border: 1px solid #333; border-radius: 8px; line-height: 1.6; min-height: 200px; }
 
-        /* MODAL */
-        .modal-bg { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal { background: #222; width: 85%; max-width: 400px; border-radius: 12px; border: 1px solid #444; overflow: hidden; box-shadow: 0 10px 25px black; }
-        .modal-head { background: #2a2a2a; padding: 12px; font-weight: bold; border-bottom: 1px solid #333; color: var(--p); }
-        .modal-body { padding: 20px; color: #ccc; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
-        .modal-foot { padding: 10px; display: flex; justify-content: flex-end; }
+        /* ELEMENTOS PRO */
+        .cb-container { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 8px; border-radius: 8px; margin: 5px 0; border-left: 3px solid var(--accent); }
+        .cb-check { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; accent-color: var(--accent); }
+        .note-btn { background: rgba(187,134,252,0.1); color: var(--p); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 2px; }
+        .glow { font-weight: bold; }
 
-        /* Utilities */
-        .hidden { display: none !important; }
-        .mode-toggle { position: absolute; bottom: 20px; right: 20px; z-index: 100; box-shadow: 0 4px 10px black; }
+        /* LOG */
+        .log-panel { background: #000; border: 1px solid #222; border-radius: 8px; margin-top: 15px; }
+        #log-content { height: 100px; overflow-y: auto; padding: 8px; font-size: 11px; font-family: monospace; }
+        .log-entry { border-bottom: 1px solid #111; padding: 3px 0; }
+
+        /* MODALES */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .modal { background: #1a1a1d; border: 1px solid #333; padding: 20px; border-radius: 12px; width: 80%; max-width: 400px; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
-        <div class="header">
-            <div class="title">MY DASHES <span class="version">v1.0.0</span></div>
-            <div id="status-ind" style="width:8px; height:8px; border-radius:50%; background:red;"></div>
+        <div class="header-main">
+            <div class="version">V 1.0.0v</div>
+            <div class="signature">By Redrant :v</div>
         </div>
-        <div class="controls">
-            <input type="text" id="input-name" placeholder="Nombre...">
-            <button class="btn btn-p" onclick="add('dash')">+DASH</button>
-            <button class="btn btn-f" onclick="add('folder')">+CARPETA</button>
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="Nombre...">
+            <button onclick="create('dash')" class="tool" style="background:var(--p); color:#000;">+DASH</button>
+            <button onclick="create('folder')" class="tool" style="background:var(--folder); color:#000;">+CARPETA</button>
         </div>
-        <div id="list-container" class="list-area"></div>
-        <div class="log-panel" id="log-container"></div>
-    </div>
-
-    <div id="view-details">
-        <div class="header">
-            <button class="btn btn-ghost" onclick="goBack()">⬅ Atrás</button>
-            <span id="dash-title" class="title">TITULO</span>
-            <button class="btn btn-ghost" onclick="openOwnerModal()">👤 Dueño</button>
-        </div>
-        
-        <div class="editor-container">
-            <textarea id="editor" oninput="localUpdate()" spellcheck="false"></textarea>
-            <div id="preview-area"></div>
-            <button id="btn-mode" class="btn btn-p mode-toggle" onclick="toggleMode()">JUGAR ▶</button>
-        </div>
-        
-        <div style="padding:5px; background:#111; display:flex; gap:5px; justify-content:center; border-top:1px solid #333;" id="toolbar">
-            <button class="btn btn-ghost" onclick="insertTag('[cb] ', '')">☑ Casilla</button>
-            <button class="btn btn-ghost" onclick="insertTag('[note=Titulo]', '[/note]')">📝 Nota</button>
-            <button class="btn btn-ghost" onclick="insertTag('**', '**')">B</button>
-            <button class="btn btn-d" onclick="deleteCurrent()">🗑</button>
+        <div id="list-container"></div>
+        <div class="log-panel">
+            <div style="font-size:9px; padding:4px; color:#555;">LOG DE DADOS</div>
+            <div id="log-content"></div>
         </div>
     </div>
 
-    <div id="modal-overlay" class="modal-bg" onclick="closeModal()">
-        <div class="modal" onclick="event.stopPropagation()">
-            <div class="modal-head" id="modal-title">Info</div>
-            <div class="modal-body" id="modal-content">...</div>
-            <div class="modal-foot">
-                <button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
+    <div id="view-details" style="display:none;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+            <button onclick="showList()" class="tool">⬅ ATRÁS</button>
+            <div id="current-title" class="signature"></div>
+            <button onclick="openOwnerMenu()" class="tool">👤</button>
+        </div>
+
+        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:10px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">VISUALIZAR</button>
+
+        <div id="editor-ui">
+            <div class="toolbar">
+                <button class="tool" onclick="ins('[cb] ','')">🔘 CasillaPro+</button>
+                <button class="tool" onclick="ins('[note=TÍTULO]CONTENIDO[/note]','')">📝 NotaPro+</button>
+                <button class="tool" onclick="wrap('<g=gold>','</g>')">✨ Glow</button>
+                <button class="tool" onclick="wrap('**','**')"><b>B</b></button>
+                <button class="tool" onclick="wrap('*','*')"><i>I</i></button>
+                <button class="tool" onclick="deleteItem()" style="background:var(--fail)">🗑️</button>
             </div>
+            <textarea id="editor" oninput="handleInput()"></textarea>
         </div>
+        <div id="preview"></div>
     </div>
+
+    <div id="global-overlay" class="overlay" onclick="this.style.display='none'"><div id="modal-content" class="modal" onclick="event.stopPropagation()"></div></div>
 
     <script>
-        // CONFIGURACIÓN 1.0.0v
-        const APP_ID = "com.mydashes.v100";
-        let state = { items: {}, log: [] };
-        let app = { id: null, editing: true, user: "Local", uid: "local", role: "PLAYER", dragId: null };
+        let state = { items: {}, id: null, editing: true, uid: 'local', uname: 'User', dragId: null, collapsed: {} };
+        const DB = "MYDASHES_100V";
+        const LOG = "MYDASHES_LOG";
 
-        // 1. INICIALIZACIÓN
         async function init() {
             try {
-                if (window.OBR) {
-                    await OBR.onReady(async () => {
-                        app.user = await OBR.player.getName();
-                        app.uid = await OBR.player.getId();
-                        app.role = await OBR.player.getRole();
-                        document.getElementById('status-ind').style.background = "var(--crit)"; // Online
-                        
-                        // Sincronización Real
-                        OBR.scene.onMetadataChange(refreshData);
-                        refreshData(await OBR.scene.getMetadata());
+                await OBR.onReady(async () => {
+                    state.uid = await OBR.player.getId();
+                    state.uname = await OBR.player.getName();
+                    OBR.scene.onMetadataChange(m => {
+                        state.items = m[DB] || {};
+                        renderList();
+                        renderLog(m[LOG] || []);
+                        if(state.id) syncView();
                     });
-                } else {
-                    throw new Error("Web Mode");
-                }
-            } catch (e) {
-                console.log("Modo Web Local");
-                document.getElementById('status-ind').style.background = "var(--folder)"; // Local
-                const localData = localStorage.getItem(APP_ID);
-                if (localData) refreshData({ [APP_ID]: JSON.parse(localData) });
-            }
+                });
+            } catch(e) { /* Web Mode */ }
         }
 
-        // 2. CORE DE DATOS
-        function refreshData(metadata) {
-            // Recuperar datos o iniciar vacíos
-            const data = metadata[APP_ID] || { items: {}, log: [] };
-            state = data;
-            
-            // Renderizar Log (siempre visible)
-            renderLog();
+        async function save() { await OBR.scene.setMetadata({ [DB]: state.items }); }
 
-            // Si estamos en la lista, redibujarla. Si estamos en detalle, actualizar contenido si no estamos escribiendo nosotros
-            if (!app.id) {
-                renderList();
-            } else {
-                const item = state.items[app.id];
-                if (!item) { goBack(); return; } // Si lo borraron
-                
-                // Actualizar visualización en tiempo real si estoy en modo juego
-                if (!app.editing) {
-                    renderPreview(item.content);
-                } else {
-                    // Si edito, solo actualizo si el foco no es mío para no borrar lo que escribo
-                    if (document.activeElement !== document.getElementById('editor')) {
-                        document.getElementById('editor').value = item.content;
-                    }
-                }
-            }
-        }
-
-        async function saveData() {
-            try {
-                if (window.OBR && OBR.scene) {
-                    await OBR.scene.setMetadata({ [APP_ID]: state });
-                } else {
-                    localStorage.setItem(APP_ID, JSON.stringify(state));
-                    refreshData({ [APP_ID]: state });
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        // 3. LOGICA DE LISTA Y CARPETAS (DRAG & DROP)
-        function add(type) {
-            const name = document.getElementById('input-name').value || (type === 'folder' ? "Nueva Carpeta" : "Nuevo Dash");
-            const id = Date.now().toString(36);
-            state.items[id] = { 
-                id, type, name, 
-                content: type==='dash' ? `# ${name}\n\n[cb] Item de ejemplo\nFUE=10\n1d20+FUE` : null,
-                parent: null,
-                owner: null
-            };
-            document.getElementById('input-name').value = "";
-            saveData();
+        function create(type) {
+            const n = document.getElementById('itemName').value || "Nuevo";
+            const id = "i" + Date.now();
+            state.items[id] = { id, type, name: n, content: "# " + n, owner: null, parent: null };
+            document.getElementById('itemName').value = '';
+            save();
         }
 
         function renderList() {
-            const c = document.getElementById('list-container');
-            c.innerHTML = "";
-            const list = Object.values(state.items);
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            const items = Object.values(state.items);
 
-            // 1. Carpetas y sus hijos
-            list.filter(i => i.type === 'folder').forEach(folder => {
-                c.appendChild(createCard(folder));
-                list.filter(child => child.parent === folder.id).forEach(child => {
-                    c.appendChild(createCard(child, true));
+            items.filter(i => i.type === 'folder').forEach(f => {
+                const fDiv = document.createElement('div');
+                fDiv.className = 'item-card folder-card';
+                fDiv.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <small>${state.collapsed[f.id] ? '▲' : '▼'}</small>`;
+                fDiv.onclick = () => { state.collapsed[f.id] = !state.collapsed[f.id]; renderList(); };
+                fDiv.ondragover = e => e.preventDefault();
+                fDiv.ondrop = e => { e.preventDefault(); move(state.dragId, f.id); };
+                container.appendChild(fDiv);
+
+                items.filter(c => c.parent === f.id).forEach(dash => {
+                    container.appendChild(createDashEl(dash, true, state.collapsed[f.id]));
                 });
             });
 
-            // 2. Huérfanos
-            list.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
-                c.appendChild(createCard(dash));
+            items.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
+                container.appendChild(createDashEl(dash, false));
             });
         }
 
-        function createCard(item, isChild = false) {
-            const el = document.createElement('div');
-            el.className = `card ${item.type === 'folder' ? 'is-folder' : 'is-dash'} ${isChild ? 'is-child' : ''}`;
-            
-            let html = `<span>${item.type === 'folder' ? '📁' : '📄'} ${item.name}</span>`;
-            if (item.owner) html += `<span class="owner-tag">👤 Asignado</span>`;
-            el.innerHTML = html;
-
-            el.draggable = true;
-            el.ondragstart = (e) => { app.dragId = item.id; e.stopPropagation(); };
-            el.ondragover = (e) => { e.preventDefault(); el.style.background = "#444"; };
-            el.ondragleave = () => { el.style.background = ""; };
-            el.ondrop = (e) => { 
-                e.preventDefault(); 
-                el.style.background = ""; 
-                handleDrop(app.dragId, item.id, item.type); 
-            };
-            
-            el.onclick = () => {
-                if (item.type === 'dash') openDash(item.id);
-            };
-
-            return el;
+        function createDashEl(dash, isChild, isHidden) {
+            const d = document.createElement('div');
+            d.className = `item-card dash-card ${isChild ? 'child' : ''} ${isChild && !isHidden ? 'show-child' : ''}`;
+            d.draggable = true;
+            d.innerHTML = `<span>📄 ${dash.name}</span> ${dash.owner ? '👤' : ''}`;
+            d.onclick = (e) => { e.stopPropagation(); state.id = dash.id; openDash(); };
+            d.ondragstart = () => state.dragId = dash.id;
+            d.ondragover = e => e.preventDefault();
+            d.ondrop = e => { e.preventDefault(); move(state.dragId, null); };
+            return d;
         }
 
-        function handleDrop(draggedId, targetId, targetType) {
-            if (draggedId === targetId) return;
-            // Si suelto sobre carpeta -> entra. Si suelto sobre dash -> se pone al mismo nivel (o root)
-            if (targetType === 'folder') {
-                state.items[draggedId].parent = targetId;
-            } else {
-                state.items[draggedId].parent = null; // Sacar de carpeta
-            }
-            saveData();
+        async function move(id, pid) { state.items[id].parent = pid; await save(); }
+
+        function openDash() {
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'block';
+            state.editing = true;
+            syncView();
         }
 
-        // 4. EDITOR Y PREVISUALIZACIÓN (PARSER)
-        function openDash(id) {
-            app.id = id;
-            const item = state.items[id];
-            document.getElementById('view-list').classList.add('hidden');
-            document.getElementById('view-details').style.display = 'flex';
-            document.getElementById('dash-title').innerText = item.name.toUpperCase();
+        function syncView() {
+            const item = state.items[state.id];
+            if(!item) return;
+            document.getElementById('current-title').innerText = item.name;
+            document.getElementById('editor-ui').style.display = state.editing ? 'block' : 'none';
+            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
+            document.getElementById('btn-mode').innerText = state.editing ? "VISUALIZAR" : "EDITAR";
             document.getElementById('editor').value = item.content;
-            
-            // Por defecto abrir en modo ver
-            app.editing = false;
-            updateModeUI();
+            if(!state.editing) renderPreview(item.content);
         }
 
-        function localUpdate() {
-            if (app.id && state.items[app.id]) {
-                state.items[app.id].content = document.getElementById('editor').value;
-                // Debounce simple para no saturar Owlbear
-                if (window.saveTimeout) clearTimeout(window.saveTimeout);
-                window.saveTimeout = setTimeout(saveData, 500);
-            }
-        }
+        function renderPreview(txt) {
+            const vars = {};
+            // 1. Procesar variables (FUE=10)
+            txt.replace(/(\w+)=(\d+)/g, (m, k, v) => vars[k] = parseInt(v));
 
-        function toggleMode() {
-            app.editing = !app.editing;
-            updateModeUI();
-        }
-
-        function updateModeUI() {
-            const editor = document.getElementById('editor');
-            const preview = document.getElementById('preview-area');
-            const btn = document.getElementById('btn-mode');
-            const tool = document.getElementById('toolbar');
-
-            if (app.editing) {
-                editor.classList.remove('hidden');
-                preview.classList.add('hidden');
-                tool.style.display = 'flex';
-                btn.innerText = "JUGAR ▶";
-                btn.style.background = "var(--p)";
-                btn.style.color = "black";
-            } else {
-                editor.classList.add('hidden');
-                preview.classList.remove('hidden');
-                tool.style.display = 'none';
-                btn.innerText = "✎ EDITAR";
-                btn.style.background = "#333";
-                btn.style.color = "white";
-                renderPreview(state.items[app.id].content);
-            }
-        }
-
-        function renderPreview(text) {
-            // 1. Parseo de Stats para las fórmulas
-            const stats = {};
-            text.replace(/([A-Z0-9]+)\s*=\s*([0-9]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
-
-            let html = text
-                // Escape simple
-                .replace(/</g, "&lt;").replace(/>/g, "&gt;")
-                // Negrita e Itálica
+            let html = txt
+                .replace(/  /g, '<br>') // Doble espacio = Renglón
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                // NotasPro+ [note=Titulo]Texto[/note]
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (match, title, content) => {
-                    // Limpiamos comillas para que no rompa el HTML onclick
-                    const safeContent = encodeURIComponent(content); 
-                    return `<span class="note-tag" onclick="showModal('${title}', '${safeContent}')">📌 ${title}</span>`;
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span class="glow" style="text-shadow: 0 0 10px $1, 0 0 5px $1; color:white;">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    return `<button class="note-btn" onclick="showNote('${t}', '${c.replace(/\n/g, '<br>').replace(/'/g, "\\'")}')">${t}</button>`;
                 })
-                // CasillasPro+ [cb] Texto
-                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (match, txt) => {
-                    const safeTxt = txt.trim().replace(/'/g, "&apos;");
-                    return `<div class="cb-row">
-                        <input type="checkbox" class="cb-check" onclick="transferLoot('${safeTxt}', this)">
-                        <span>${txt}</span>
-                    </div>`;
+                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, c) => {
+                    return `<div class="cb-container"><input type="checkbox" class="cb-check" onclick="transfer('${c.replace(/'/g, "\\'")}', this)"><div>${c}</div></div>`;
                 })
-                // Dados (ej: 1d20+5, 1d20+FUE)
-                .replace(/\b(\d*d\d+[\+\-\*\/A-Z0-9]*)\b/gi, (match) => {
-                    return `<span class="rollable" onclick="rollDice('${match}', '${JSON.stringify(stats).replace(/"/g, "&quot;")}')">${match}</span>`;
+                // 2. Lógica de dados avanzada (+5FUE, 2d4+FUE, etc)
+                .replace(/([\+\-\d]*d\d+[\+\-\*\/\d\w\(\)]*|[\+\-]\d+\w+)/gi, f => {
+                    return `<span style="color:var(--accent);cursor:pointer;font-weight:bold;" onclick="roll('${f}', ${JSON.stringify(vars)})">${f}</span>`;
                 });
 
-            document.getElementById('preview-area').innerHTML = html.replace(/\n/g, "<br>");
+            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        // 5. SISTEMAS ACTIVOS: DADOS Y CASILLAS
-
-        async function rollDice(formula, statsJson) {
-            const stats = JSON.parse(statsJson);
-            let parsedFormula = formula.toUpperCase();
+        async function roll(formula, vars) {
+            let fClean = formula.toUpperCase();
+            // Reemplazar variables en la fórmula
+            for (let v in vars) {
+                fClean = fClean.replace(new RegExp(v, 'g'), vars[v]);
+            }
             
-            // Reemplazar stats
-            Object.keys(stats).forEach(k => {
-                parsedFormula = parsedFormula.replace(new RegExp(`\\b${k}\\b`, 'g'), stats[k]);
+            // Resolver XdY
+            let totalDice = 0;
+            let diceLog = [];
+            fClean = fClean.replace(/(\d*)D(\d+)/g, (m, n, d) => {
+                let num = parseInt(n) || 1;
+                let sides = parseInt(d);
+                let sub = 0;
+                for(let i=0; i<num; i++) {
+                    let r = Math.floor(Math.random()*sides)+1;
+                    sub += r;
+                    diceLog.push(r);
+                }
+                return sub;
             });
 
-            // Parsear dados XdY
-            const match = parsedFormula.match(/(\d*)D(\d+)/);
-            if (!match) return;
+            let final;
+            try { final = eval(fClean); } catch(e) { final = "Error"; }
 
-            const count = parseInt(match[1]) || 1;
-            const sides = parseInt(match[2]);
-            let rolls = [];
-            let rollSum = 0;
-
-            for(let i=0; i<count; i++) {
-                const r = Math.floor(Math.random() * sides) + 1;
-                rolls.push(r);
-                rollSum += r;
-            }
-
-            // Calcular final
-            let mathString = parsedFormula.replace(match[0], rollSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-            let finalResult = 0;
-            try { finalResult = eval(mathString); } catch(e) { finalResult = rollSum; }
-
-            // LOG
-            const logEntry = {
-                user: app.user,
-                formula: formula, // Mostrar original
-                rolls: rolls,
-                result: Math.floor(finalResult), // Redondear por si acaso
-                ts: Date.now()
-            };
-
-            // Añadir al inicio y recortar historial
-            state.log.unshift(logEntry);
-            if (state.log.length > 50) state.log.pop();
-            await saveData();
+            const entry = { u: state.uname, f: formula, r: final, d: diceLog.join(', ') };
+            const m = await OBR.scene.getMetadata();
+            const logs = [entry, ...(m[LOG] || [])].slice(0, 20);
+            await OBR.scene.setMetadata({ [LOG]: logs });
         }
 
-        async function transferLoot(text, checkbox) {
-            // Buscar Dash propiedad del usuario actual
-            const myDashId = Object.keys(state.items).find(key => state.items[key].owner === app.uid);
-            
-            if (myDashId) {
-                state.items[myDashId].content += `\n\n✅ ${text}`; // Añadir al dash del dueño
-                checkbox.disabled = true; // Desactivar visualmente
-                checkbox.parentElement.style.opacity = "0.5";
-                await saveData();
-                
-                // Feedback visual pequeño
-                const toast = document.createElement('div');
-                toast.innerText = `Enviado a ${state.items[myDashId].name}`;
-                toast.style = "position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:5px 10px; border-radius:4px; font-size:12px;";
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
+        async function transfer(text, cb) {
+            if(!cb.checked) return;
+            const target = Object.values(state.items).find(i => i.owner === state.uid);
+            if(target) {
+                target.content += "\n" + text;
+                await save();
+                cb.disabled = true;
+                cb.parentElement.style.opacity = "0.5";
             } else {
-                alert("¡No tienes un Dash asignado! Usa el botón 👤 Dueño en tu Dash para reclamarlo.");
-                checkbox.checked = false;
+                alert("Asignate un Dash con el icono 👤");
+                cb.checked = false;
             }
         }
 
-        // 6. RENDERIZADO DEL LOG Y UTILIDADES
-        function renderLog() {
-            const c = document.getElementById('log-container');
-            // Solo redibujar si hay cambios para evitar saltos locos (simple check de longitud o primer elemento)
-            // Para v1.0 simple: redibujamos todo. Es rápido.
-            c.innerHTML = state.log.map(l => {
-                const rollsStr = l.rolls.map(r => `[${r}]`).join('+');
-                return `<div class="log-entry">
-                    <span style="color:var(--p); font-weight:bold;">${l.user}:</span> 
-                    <span>${l.formula}</span> ➔ <span style="font-weight:bold; color:var(--t); font-size:1.1em;">${l.result}</span>
-                    <div class="dice-detail">${rollsStr}</div>
-                </div>`;
-            }).join('');
+        function renderLog(logs) {
+            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <b>${l.r}</b> <small style="color:#555">(${l.d})</small></div>`).join('');
         }
 
-        function insertTag(start, end) {
-            const txt = document.getElementById('editor');
-            const s = txt.selectionStart;
-            const e = txt.selectionEnd;
-            const val = txt.value;
-            txt.value = val.substring(0, s) + start + val.substring(s, e) + end + val.substring(e);
-            localUpdate();
-            txt.focus();
+        function showNote(t, c) {
+            document.getElementById('modal-content').innerHTML = `<h3 style="color:var(--p);margin-top:0;">${t}</h3><div style="text-align:left;color:#ccc;">${c}</div>`;
+            document.getElementById('global-overlay').style.display = 'flex';
         }
 
-        function goBack() {
-            app.id = null;
-            document.getElementById('view-details').style.display = 'none';
-            document.getElementById('view-list').classList.remove('hidden');
-            renderList();
+        function toggleMode() { state.editing = !state.editing; syncView(); }
+        function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
+        
+        async function openOwnerMenu() {
+            const players = await OBR.party.getPlayers();
+            let h = `<h3 style="color:var(--p)">Dueño</h3>`;
+            players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:var(--p); border:none; border-radius:8px; font-weight:bold;">${p.name}</button>`);
+            document.getElementById('modal-content').innerHTML = h;
+            document.getElementById('global-overlay').style.display = 'flex';
         }
 
-        function deleteCurrent() {
-            if(confirm("¿Borrar este Dash permanentemente?")) {
-                delete state.items[app.id];
-                saveData();
-                goBack();
-            }
-        }
+        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-overlay').style.display='none'; }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
+        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
+        async function deleteItem() { if(confirm("¿Eliminar?")) { delete state.items[state.id]; await save(); showList(); } }
 
-        // Gestión de Dueños
-        async function openOwnerModal() {
-            let html = `<h3>Asignar Dueño</h3><p>El dueño recibe los items de las CasillasPro+.</p>`;
-            if (window.OBR) {
-                const players = await OBR.party.getPlayers();
-                players.forEach(p => {
-                    html += `<button class="btn btn-p" style="width:100%; margin-bottom:5px;" onclick="setOwner('${p.id}')">${p.name}</button>`;
-                });
-            } else {
-                html += `<button class="btn btn-p" onclick="setOwner('local')">Usuario Local</button>`;
-            }
-            showModal("Propietario", encodeURIComponent(html), true);
-        }
-
-        function setOwner(uid) {
-            state.items[app.id].owner = uid;
-            saveData();
-            closeModal();
-            document.getElementById('dash-title').innerHTML += " (👤)";
-        }
-
-        // Sistema Modal Genérico
-        function showModal(title, contentEncoded, isHtml = false) {
-            const content = decodeURIComponent(contentEncoded);
-            document.getElementById('modal-title').innerText = title;
-            const body = document.getElementById('modal-content');
-            if(isHtml) body.innerHTML = content;
-            else body.innerText = content;
-            
-            document.getElementById('modal-overlay').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
-        }
-
-        // Arrancar
         init();
-
     </script>
 </body>
 </html>
