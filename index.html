@@ -2,268 +2,274 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; --bg: #050505; --surf: #111111; --t: #e0e0e0; 
+            --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header { padding: 10px; text-align: center; border-bottom: 1px solid #222; background: var(--surf); }
-        .sig { font-size: 10px; font-weight: bold; color: var(--p); letter-spacing: 3px; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* UI Geral */
+        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
+        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
-        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
+        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
         #view-details { display: none; }
 
-        /* LISTA */
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .card { padding: 14px; background: #1a1a1d; border-radius: 12px; border: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
-        .card:hover { border-color: var(--p); }
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .folder { border-left: 4px solid var(--var); background: #1e1e1a; }
+        .dash { border-left: 4px solid var(--p); }
 
-        /* TABS NAVEGACIÓN */
-        .tabs { display: flex; background: #1a1a1d; border-radius: 10px; padding: 4px; border: 1px solid #333; }
-        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: bold; border-radius: 6px; }
-        .tab-btn.active { background: var(--p); color: #000; }
+        /* Preview Elements */
+        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 1px dotted var(--p); }
+        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; }
+        .cb-row { display: flex; align-items: start; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin: 8px 0; border-left: 3px solid var(--accent); }
 
-        /* EDITOR */
-        .toolbar { display: flex; gap: 5px; background: #151515; padding: 8px; border-radius: 10px 10px 0 0; border: 1px solid #333; }
-        .tool { background: #222; color: #fff; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        textarea { flex: 1; background: #080808; color: #aaa; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; font-size: 14px; }
+        /* Editor */
+        .toolbar { display: flex; gap: 4px; background: #222; padding: 6px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
+        .tool { background: #333; color: #eee; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        textarea { flex: 1; background: #080808; color: #bbb; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: none; outline: none; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg); display: none; line-height: 1.6; }
+
+        /* Modales */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         
-        /* VISUALIZADOR */
-        #preview { flex: 1; overflow-y: auto; padding: 10px; display: none; line-height: 1.8; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); padding: 0 4px; background: rgba(187,134,252,0.1); border-radius: 4px; }
-        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; border: 1px solid rgba(255,171,64,0.3); padding: 1px 4px; border-radius: 4px; }
+        /* Animación Dado */
+        .slot { font-size: 50px; font-weight: bold; margin: 15px 0; height: 60px; color: white; }
+        .crit { color: var(--crit) !important; text-shadow: 0 0 15px var(--crit); }
+        .fail { color: var(--fail) !important; text-shadow: 0 0 15px var(--fail); }
 
-        /* MODAL TRAGAPERRAS */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #000; border: 1px solid #333; padding: 30px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; }
-        .dice-row { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-        .slot { width: 60px; height: 80px; background: #111; border: 2px solid #333; border-radius: 12px; font-size: 40px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .slot.done { border-color: var(--p); color: #fff; box-shadow: 0 0 15px var(--p); }
-        .total-box { font-size: 70px; font-weight: 900; color: var(--accent); opacity: 0; transform: scale(0.8); transition: 0.4s; }
-        .total-box.show { opacity: 1; transform: scale(1); }
-
-        /* LOG */
-        .log-area { height: 130px; background: #000; padding: 10px; font-size: 11px; border-radius: 12px; border: 1px solid #222; overflow-y: auto; }
-        .log-line { border-bottom: 1px solid #111; padding: 5px 0; }
+        .log { height: 100px; background: #000; padding: 8px; font-size: 10px; border-radius: 8px; overflow-y: auto; margin-top: 10px; border: 1px solid #222; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v15.0 • DEEP MEMORY</div></div>
+    <div class="header"><div class="sig">MY DASHES v5.1 PRO</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
-            <button onclick="addItem()" class="tool" style="background:var(--p); color:black;">CREAR</button>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:5px;">
+            <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
+            <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
         </div>
         <div id="items-container" class="items-area"></div>
-        <div class="log-area" id="log-content"></div>
+        <div class="log" id="log-content"></div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button onclick="deleteItem()" class="tool" style="background:var(--fail);">BORRAR</button>
+            <button onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
-        <div class="tabs">
-            <button id="t-edit" class="tab-btn" onclick="setTab(true)">EDITAR</button>
-            <button id="t-view" class="tab-btn active" onclick="setTab(false)">VISUALIZAR</button>
-        </div>
+        <button id="toggle-btn" onclick="toggleVisual()" style="width:100%; padding:10px; background:var(--p); border:none; border-radius:5px; font-weight:bold; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
+        
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
                 <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="ins('FUE=11\n-5FUE','')">PLANTILLA VAR</button>
+                <button class="tool" onclick="wrap('*','*')">I</button>
+                <button class="tool" onclick="ins('[cb] ','')">Casilla</button>
+                <button class="tool" onclick="askNote()">Nota+</button>
+                <button class="tool" onclick="askGlow()">Glow</button>
+                <button onclick="deleteItem()" class="tool" style="background:var(--fail); margin-left:auto;">🗑️</button>
             </div>
-            <textarea id="editor" oninput="saveContent()"></textarea>
+            <textarea id="editor" oninput="updateContent()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
+    <div id="dice-overlay" class="overlay" onclick="closeDice()">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-formula" style="color:#555; font-family:monospace;"></div>
-            <div id="dice-slots" class="dice-row"></div>
-            <div id="total-val" class="total-box">0</div>
-            <div id="d-log" style="font-size:10px; color:#444; margin-top:10px;"></div>
+            <div id="d-user" style="font-size:10px; color:var(--p); letter-spacing:2px;"></div>
+            <div id="d-form" style="opacity:0.5; font-size:12px; margin-top:5px;"></div>
+            <div id="d-slot" class="slot">0</div>
+            <div id="d-faces" style="font-size:14px; opacity:0.6;"></div>
+        </div>
+    </div>
+
+    <div id="msg-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="msg-title" style="color:var(--accent); margin:0 0 10px 0;"></h3>
+            <div id="msg-body" style="text-align:left; font-size:14px; line-height:1.5;"></div>
+            <button onclick="document.getElementById('msg-overlay').style.display='none'" class="tool" style="width:100%; margin-top:15px; padding:8px;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, logs: [], id: null, edit: false, uname: 'User' };
-        const DB = "MD15_DATA", LG = "MD15_LOGS";
+        let state = { items: {}, log: [], id: null, edit: true, uid: 'local', uname: 'DM', drag: null };
+        const DB = "MD_51_DB"; const LG = "MD_51_LG";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
+                    state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.logs = m[LG]||[]; render(); });
+                    OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.log = m[LG]||[]; render(); });
                     const m = await OBR.scene.getMetadata();
-                    state.items = m[DB]||{}; state.logs = m[LG]||[]; render();
+                    state.items = m[DB]||{}; state.log = m[LG]||[]; render();
                 });
-            } catch(e) { render(); }
+            } catch(e) { 
+                const s = localStorage.getItem(DB); if(s) state.items = JSON.parse(s); render(); 
+            }
         }
 
         async function save() {
-            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.logs });
-            render();
+            if(window.OBR && OBR.scene.isReady) {
+                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log });
+            } else {
+                localStorage.setItem(DB, JSON.stringify(state.items)); render();
+            }
         }
 
-        function addItem() {
+        function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
-            const id = "i" + Date.now();
-            state.items[id] = { id, name: n, content: 'FUE=11\n-5FUE\n\nTirada: 1d20+FUE' };
+            const id = "id" + Date.now();
+            state.items[id] = { id, type, name: n, content: type==='dash'?'FUE=10\n1d20+FUE':'', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
 
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
-            Object.values(state.items).forEach(it => {
-                const d = document.createElement('div'); d.className = "card";
-                d.innerHTML = `<span>📄 ${it.name}</span>`;
-                d.onclick = () => { state.id = it.id; openDash(); };
-                cont.appendChild(d);
+            const vals = Object.values(state.items);
+            
+            vals.filter(f => f.type === 'folder').forEach(f => {
+                const div = document.createElement('div');
+                div.className = "card folder"; div.innerHTML = `<span>📁 ${f.name}</span>`;
+                div.ondragover = e => e.preventDefault();
+                div.ondrop = () => { state.items[state.drag].parent = f.id; save(); };
+                cont.appendChild(div);
+                vals.filter(d => d.parent === f.id).forEach(d => cont.appendChild(createCard(d, true)));
             });
-            document.getElementById('log-content').innerHTML = state.logs.map(l => `<div class="log-line"><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b></div>`).join('');
-            if(state.id) sync();
+
+            vals.filter(d => d.type === 'dash' && !d.parent).forEach(d => cont.appendChild(createCard(d, false)));
+            
+            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} -> <span style="color:var(--accent)">${l.r}</span></div>`).join('');
+            if(state.id) syncView();
         }
 
-        function openDash() { 
-            document.getElementById('view-list').style.display='none'; 
+        function createCard(it, child) {
+            const d = document.createElement('div');
+            d.className = "card dash"; if(child) d.style.marginLeft = "20px";
+            d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner?'👤':''}`;
+            d.onclick = () => { state.id = it.id; openDetails(); };
+            d.ondragstart = () => state.drag = it.id;
+            d.ondrop = () => { state.items[state.drag].parent = null; save(); };
+            return d;
+        }
+
+        function openDetails() {
+            document.getElementById('view-list').style.display='none';
             document.getElementById('view-details').style.display='flex';
-            setTab(false);
+            state.edit = false; syncView();
         }
 
-        function setTab(isEdit) {
-            state.edit = isEdit;
-            document.getElementById('t-edit').className = isEdit ? "tab-btn active" : "tab-btn";
-            document.getElementById('t-view').className = !isEdit ? "tab-btn active" : "tab-btn";
-            sync();
-        }
-
-        function sync() {
+        function syncView() {
             const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
+            document.getElementById('det-title').innerText = it.name;
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
+            document.getElementById('toggle-btn').innerText = state.edit ? "GUARDAR" : "EDITAR DASH";
             if(state.edit) document.getElementById('editor').value = it.content;
-            else parsePreview(it.content);
+            else renderPreview(it.content);
         }
 
-        // --- EL LEXER DE DOS PASOS ---
-        function parsePreview(txt) {
-            const memory = {};
-            // Paso 1: Limpiar texto de HTML para no romper el cálculo
-            const clean = txt.replace(/<\/?[^>]+(>|$)/g, "");
-
-            // Paso 2: Identificar Base (FUE=11)
-            clean.replace(/\b([A-Z]{3,})\b\s*=\s*(\d+)/gi, (m, key, val) => {
-                memory[key.toUpperCase()] = parseInt(val);
-            });
-
-            // Paso 3: Aplicar Antivariables (-5FUE, +11FUE) al valor base
-            // Buscamos patrones de [signo][numero][VARIABLE]
-            clean.replace(/([\+\-])(\d+)\b([A-Z]{3,})\b/gi, (m, sign, amount, key) => {
-                const k = key.toUpperCase();
-                if(memory[k] !== undefined) {
-                    if(sign === '-') memory[k] -= parseInt(amount);
-                    else memory[k] += parseInt(amount);
-                }
-            });
-
-            // Paso 4: Renderizar HTML
+        function renderPreview(txt) {
+            const stats = {};
+            // Captura variables FUE=10 o MOD=+2
+            txt.replace(/([A-Z]+)\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\b([A-Z]{3,})\b/g, m => memory[m] !== undefined ? `<span class="var-tag" title="Valor calculado: ${memory[m]}">${m}</span>` : m);
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    const safe = c.replace(/\n/g, '<br>').replace(/  /g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showMsg('${t}','${safe}')">${t}</button>`;
+                })
+                .replace(/\b([A-Z]+)\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
-            // Paso 5: Inyectar Dados (usando el valor final de memory)
-            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
+            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
-                return `<span class="roll-link" onclick="runDice('${f}',${JSON.stringify(memory)})">${f}</span>`;
+                return `<span class="roll-link" onclick="runRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        async function runDice(formula, memory) {
-            let finalFormula = formula.toUpperCase();
+        function runRoll(formula, stats) {
+            let f = formula.toUpperCase();
+            for(let s in stats) f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
             
-            // Sustituir variables por su valor ya calculado
-            for(let key in memory) {
-                const reg = new RegExp(`\\b${key}\\b`, 'g');
-                finalFormula = finalFormula.replace(reg, memory[key]);
-            }
-
-            const match = finalFormula.match(/(\d*)D(\d+)/i);
+            const match = f.match(/(\d*)D(\d+)/i);
             const n = parseInt(match[1]) || 1;
-            const s = parseInt(match[2]);
-            const rolls = [];
-            for(let i=0; i<n; i++) rolls.push(Math.floor(Math.random()*s)+1);
+            const sides = parseInt(match[2]);
+            let rolls = [], sum = 0;
 
-            // UI Animación Progresiva
+            for(let i=0; i<n; i++) {
+                const r = Math.floor(Math.random()*sides)+1;
+                sum += r; rolls.push(r);
+            }
+
+            let total;
+            try { total = eval(sum + f.replace(match[0], '').replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { total = sum; }
+
+            // Animación Slot
             const ov = document.getElementById('dice-overlay');
-            const slotCont = document.getElementById('dice-slots');
-            const tot = document.getElementById('total-val');
+            const slot = document.getElementById('d-slot');
             ov.style.display = 'flex';
-            slotCont.innerHTML = "";
-            tot.innerText = "0";
-            tot.classList.remove('show');
-            document.getElementById('d-formula').innerText = formula;
+            document.getElementById('d-user').innerText = state.uname.toUpperCase();
+            document.getElementById('d-form').innerText = formula;
+            
+            let c = 0;
+            const anim = setInterval(() => {
+                slot.innerText = Math.floor(Math.random()*sides*n);
+                if(c++ > 12) {
+                    clearInterval(anim);
+                    slot.innerText = total;
+                    slot.className = "slot " + (sum === sides*n ? 'crit' : (sum === n ? 'fail' : ''));
+                    document.getElementById('d-faces').innerText = `Caras: [${rolls.join(', ')}]`;
+                }
+            }, 60);
 
-            const slots = [];
-            for(let i=0; i<n; i++) {
-                const div = document.createElement('div'); div.className = "slot"; div.innerText = "?";
-                slotCont.appendChild(div); slots.push(div);
-            }
-
-            let sumDice = 0;
-            for(let i=0; i<n; i++) {
-                await new Promise(r => {
-                    let c = 0;
-                    const itv = setInterval(() => {
-                        slots[i].innerText = Math.floor(Math.random()*s)+1;
-                        if(c++ > 8) {
-                            clearInterval(itv);
-                            slots[i].innerText = rolls[i];
-                            slots[i].classList.add('done');
-                            sumDice += rolls[i];
-                            r();
-                        }
-                    }, 60);
-                });
-            }
-
-            // Cálculo final matemático
-            let result;
-            try {
-                // Reemplazamos el XdY por la suma de los dados
-                const evalStr = finalFormula.replace(match[0], sumDice).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                result = Math.floor(eval(evalStr));
-            } catch(e) { result = sumDice; }
-
-            tot.innerText = result;
-            tot.classList.add('show');
-            document.getElementById('d-log').innerText = `Dados: [${rolls.join('+')}] | Fórmula procesada: ${finalFormula}`;
-
-            state.logs.unshift({ u: state.uname, f: formula, r: result });
-            if(state.logs.length > 15) state.logs.pop();
+            state.log.unshift({ u: state.uname, f: formula, r: total });
+            if(state.log.length > 15) state.log.pop();
             save();
         }
 
-        function saveContent() { state.items[state.id].content = document.getElementById('editor').value; }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
-        function wrap(a, b) { 
-            const e = document.getElementById('editor');
-            const s = e.selectionStart, end = e.selectionEnd;
-            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
-            saveContent();
+        function showMsg(t, b) {
+            document.getElementById('msg-title').innerText = t;
+            document.getElementById('msg-body').innerHTML = b;
+            document.getElementById('msg-overlay').style.display = 'flex';
         }
+
+        function toggleVisual() { state.edit = !state.edit; syncView(); }
+        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
+        function closeDice() { document.getElementById('dice-overlay').style.display='none'; document.getElementById('d-slot').className="slot"; }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
+        function ins(a, b) { const e = document.getElementById('editor'); e.value += a + b; updateContent(); }
+        function askNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function askGlow() { const c = prompt("Color:", "gold"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        
+        async function openOwnerMenu() {
+            let p = [{id:'local', name:'DM'}];
+            try { p = await OBR.party.getPlayers(); } catch(e){}
+            let h = `<h3>Dueño</h3>`;
+            p.forEach(x => h += `<button onclick="setOwner('${x.id}')" class="tool" style="width:100%; margin-bottom:5px; padding:10px;">${x.name}</button>`);
+            document.getElementById('msg-body').innerHTML = h;
+            document.getElementById('msg-title').innerText = "ASIGNAR";
+            document.getElementById('msg-overlay').style.display = 'flex';
+        }
+        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('msg-overlay').style.display='none'; }
 
         init();
     </script>
