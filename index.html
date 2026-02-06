@@ -5,354 +5,256 @@
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; --bg: #050507; --surf: #121214; --t: #e0e0e0; 
+            --p: #bb86fc; --bg: #050505; --surf: #111111; --t: #e0e0e0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-            --panel: #1a1a1d;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        .header { padding: 12px; text-align: center; border-bottom: 1px solid #222; background: var(--surf); flex-shrink: 0; }
-        .sig { font-size: 11px; font-weight: bold; color: var(--p); letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 10px var(--p); }
+        .header { padding: 10px; text-align: center; border-bottom: 1px solid #222; background: var(--surf); }
+        .sig { font-size: 10px; font-weight: bold; color: var(--p); letter-spacing: 3px; }
 
-        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 12px; }
+        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
         #view-details { display: none; }
 
-        /* LISTA & CARPETAS */
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
-        .card { padding: 14px; background: var(--panel); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
-        .card:hover { background: #222226; border-color: #333; }
-        .folder { border-left: 5px solid #555; font-weight: bold; }
-        .dash { border-left: 5px solid var(--p); }
-        .f-content { display: none; flex-direction: column; gap: 6px; padding-left: 18px; border-left: 1px solid #222; margin-left: 10px; margin-top: 4px; }
-        .f-content.open { display: flex; }
+        /* LISTA */
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .card { padding: 14px; background: #1a1a1d; border-radius: 12px; border: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
+        .card:hover { border-color: var(--p); }
 
-        /* PREVIEW / MODO JUEGO */
-        #preview { flex: 1; overflow-y: auto; padding: 10px; display: none; line-height: 1.8; font-size: 15px; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); background: rgba(187,134,252,0.08); padding: 2px 6px; border-radius: 4px; transition: 0.2s; }
-        .roll-link:hover { background: var(--p); color: black; }
-        .var-tag { color: var(--var); font-weight: bold; font-family: 'Consolas', monospace; background: rgba(255,171,64,0.1); padding: 2px 5px; border-radius: 4px; }
-        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.03); padding: 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(3,218,198,0.1); }
-        .cb-input { width: 20px; height: 20px; margin-right: 15px; accent-color: var(--accent); cursor: pointer; }
+        /* TABS NAVEGACIÓN */
+        .tabs { display: flex; background: #1a1a1d; border-radius: 10px; padding: 4px; border: 1px solid #333; }
+        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: bold; border-radius: 6px; }
+        .tab-btn.active { background: var(--p); color: #000; }
 
         /* EDITOR */
-        .toolbar { display: flex; gap: 6px; background: #1a1a1d; padding: 10px; border-radius: 10px 10px 0 0; border: 1px solid #333; overflow-x: auto; }
-        .tool { background: #2a2a2e; color: white; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
-        .tool:hover { background: #3a3a3e; border-color: var(--p); }
-        textarea { flex: 1; background: #08080a; color: #bbb; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; font-size: 14px; }
-
-        /* SLOT MACHINE MODAL (TRAGAPERRAS) */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(5px); }
-        .modal { background: #000; border: 1px solid #333; padding: 40px; border-radius: 35px; width: 95%; max-width: 550px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .toolbar { display: flex; gap: 5px; background: #151515; padding: 8px; border-radius: 10px 10px 0 0; border: 1px solid #333; }
+        .tool { background: #222; color: #fff; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        textarea { flex: 1; background: #080808; color: #aaa; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; font-size: 14px; }
         
-        .dice-window { display: flex; justify-content: center; gap: 12px; margin: 25px 0; flex-wrap: wrap; perspective: 1000px; }
-        .slot-machine-box { 
-            width: 75px; height: 90px; background: #111; border-radius: 15px; 
-            border: 2px solid #222; overflow: hidden; position: relative;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .slot-machine-box.active { border-color: var(--p); box-shadow: 0 0 15px rgba(187,134,252,0.3); }
-        .slot-machine-box.stopped { border-color: var(--accent); }
-        
-        .slot-strip { position: absolute; top: 0; transition: top 0.1s cubic-bezier(0.1, 0, 0.1, 1); display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .slot-number { font-size: 45px; font-weight: 900; height: 90px; display: flex; align-items: center; justify-content: center; color: #444; }
-        .slot-number.winner { color: #fff; text-shadow: 0 0 15px var(--p); }
+        /* VISUALIZADOR */
+        #preview { flex: 1; overflow-y: auto; padding: 10px; display: none; line-height: 1.8; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); padding: 0 4px; background: rgba(187,134,252,0.1); border-radius: 4px; }
+        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; border: 1px solid rgba(255,171,64,0.3); padding: 1px 4px; border-radius: 4px; }
 
-        .total-display { font-size: 85px; font-weight: 900; color: var(--accent); height: 100px; opacity: 0; transform: scale(0.5); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .total-display.show { opacity: 1; transform: scale(1); }
-        .crit-glow { color: var(--crit) !important; text-shadow: 0 0 30px var(--crit); }
-        .fail-glow { color: var(--fail) !important; text-shadow: 0 0 30px var(--fail); }
+        /* MODAL TRAGAPERRAS */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #000; border: 1px solid #333; padding: 30px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; }
+        .dice-row { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .slot { width: 60px; height: 80px; background: #111; border: 2px solid #333; border-radius: 12px; font-size: 40px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .slot.done { border-color: var(--p); color: #fff; box-shadow: 0 0 15px var(--p); }
+        .total-box { font-size: 70px; font-weight: 900; color: var(--accent); opacity: 0; transform: scale(0.8); transition: 0.4s; }
+        .total-box.show { opacity: 1; transform: scale(1); }
 
-        /* LOG INTEGRADO */
-        .log-container { height: 150px; background: #0a0a0c; padding: 12px; font-size: 12px; border-radius: 12px; overflow-y: auto; margin-top: 10px; border: 1px solid #1a1a1c; }
-        .log-item { border-bottom: 1px solid #151517; padding: 8px 0; animation: fadeIn 0.4s ease; }
-        .log-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
-        .log-formula { color: #777; font-family: monospace; }
-        .log-detail { font-size: 10px; color: #555; font-style: italic; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* LOG */
+        .log-area { height: 130px; background: #000; padding: 10px; font-size: 11px; border-radius: 12px; border: 1px solid #222; overflow-y: auto; }
+        .log-line { border-bottom: 1px solid #111; padding: 5px 0; }
     </style>
 </head>
-<body ondragover="event.preventDefault()" ondrop="dropOnRoot(event)">
+<body>
 
-    <div class="header"><div class="sig">MY DASHES v12.0 • QUANTUM ENGINE</div></div>
+    <div class="header"><div class="sig">MY DASHES v15.0 • DEEP MEMORY</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="newName" placeholder="Nombre del nuevo dash..." style="flex:1; padding:12px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:10px; outline:none;">
-            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black; padding:0 20px;">+DASH</button>
-            <button onclick="addItem('folder')" class="tool" style="background:#444; color:white;">+FOLDER</button>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="addItem()" class="tool" style="background:var(--p); color:black;">CREAR</button>
         </div>
         <div id="items-container" class="items-area"></div>
-        <div class="log-container" id="log-content"></div>
+        <div class="log-area" id="log-content"></div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:5px;">
-            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
-            <b id="det-title" style="color:var(--p); letter-spacing:1px; font-size:16px;"></b>
-            <button onclick="deleteItem()" class="tool" style="background:var(--fail); border:none;">ELIMINAR</button>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
+            <b id="det-title" style="color:var(--p)"></b>
+            <button onclick="deleteItem()" class="tool" style="background:var(--fail);">BORRAR</button>
         </div>
-        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:16px; background:var(--p); color:black; border:none; border-radius:12px; font-weight:900; cursor:pointer; font-size:15px; box-shadow: 0 4px 15px rgba(187,134,252,0.2);">ENTRAR EN MODO JUEGO</button>
-        
+        <div class="tabs">
+            <button id="t-edit" class="tab-btn" onclick="setTab(true)">EDITAR</button>
+            <button id="t-view" class="tab-btn active" onclick="setTab(false)">VISUALIZAR</button>
+        </div>
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
-                <button class="tool" onclick="wrap('**','**')">NEGRILLA</button>
-                <button class="tool" onclick="promptGlow()">BRILLO</button>
-                <button class="tool" onclick="ins('[cb] ','')">CASILLA</button>
-                <button class="tool" onclick="promptNote()">NOTA</button>
-                <button class="tool" onclick="ins('KAS=10\n','')">VAR</button>
+                <button class="tool" onclick="wrap('**','**')">B</button>
+                <button class="tool" onclick="ins('FUE=11\n-5FUE','')">PLANTILLA VAR</button>
             </div>
-            <textarea id="editor" oninput="saveContent()" placeholder="Ejemplo:&#10;ASD=12&#10;Tirada: 2d10+ASD-5ASD"></textarea>
+            <textarea id="editor" oninput="saveContent()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" class="overlay" onclick="closeDice()">
+    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-user" style="font-size:11px; color:var(--p); font-weight:bold; letter-spacing:4px; margin-bottom:10px;">TIRADA DE DADOS</div>
-            <div id="d-formula" style="color:#555; font-size:15px; font-family:monospace; margin-bottom:5px;"></div>
-            <div id="dice-slots" class="dice-window"></div>
-            <div id="total-val" class="total-display">0</div>
-            <div id="d-breakdown" style="font-size:11px; color:#444; margin-top:15px; border-top: 1px solid #111; padding-top:10px;"></div>
+            <div id="d-formula" style="color:#555; font-family:monospace;"></div>
+            <div id="dice-slots" class="dice-row"></div>
+            <div id="total-val" class="total-box">0</div>
+            <div id="d-log" style="font-size:10px; color:#444; margin-top:10px;"></div>
         </div>
     </div>
 
     <script>
-        // --- MOTOR DE ESTADO ---
-        let state = { items: {}, logs: [], id: null, edit: true, folders: {}, dragId: null, uname: 'Player' };
-        const DB_KEY = "MD12_DATA", LG_KEY = "MD12_LOGS";
+        let state = { items: {}, logs: [], id: null, edit: false, uname: 'User' };
+        const DB = "MD15_DATA", LG = "MD15_LOGS";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { 
-                        state.items = m[DB_KEY]||{}; state.logs = m[LG_KEY]||[]; render(); 
-                    });
+                    OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.logs = m[LG]||[]; render(); });
                     const m = await OBR.scene.getMetadata();
-                    state.items = m[DB_KEY]||{}; state.logs = m[LG_KEY]||[]; 
-                    render();
+                    state.items = m[DB]||{}; state.logs = m[LG]||[]; render();
                 });
             } catch(e) { render(); }
         }
 
         async function save() {
-            if(window.OBR) await OBR.scene.setMetadata({ [DB_KEY]: state.items, [LG_KEY]: state.logs });
+            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.logs });
             render();
         }
 
-        // --- GESTIÓN DE ITEMS ---
-        function addItem(type) {
-            const nameInput = document.getElementById('newName');
-            const n = nameInput.value.trim() || (type==='dash'?'Nuevo Dash':'Carpeta');
-            const id = "ID" + Date.now();
-            state.items[id] = { id, type, name: n, content: type==='dash'?'ASD=12\n1d20+ASD':'', parent: null };
-            nameInput.value = "";
+        function addItem() {
+            const n = document.getElementById('newName').value || "Nuevo";
+            const id = "i" + Date.now();
+            state.items[id] = { id, name: n, content: 'FUE=11\n-5FUE\n\nTirada: 1d20+FUE' };
+            document.getElementById('newName').value = "";
             save();
         }
 
         function render() {
-            const cont = document.getElementById('items-container'); 
-            cont.innerHTML = "";
-            const items = Object.values(state.items);
-            
-            // Render Carpetas
-            items.filter(f => f.type === 'folder').forEach(f => {
-                const div = document.createElement('div');
-                div.className = "card folder"; div.draggable = true;
-                div.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
-                div.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
-                div.ondragstart = () => state.dragId = f.id;
-                div.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = f.id; save(); };
-                cont.appendChild(div);
-
-                const sub = document.createElement('div');
-                sub.className = "f-content" + (state.folders[f.id] ? " open" : "");
-                items.filter(i => i.parent === f.id).forEach(dash => sub.appendChild(createDashCard(dash)));
-                cont.appendChild(sub);
+            const cont = document.getElementById('items-container'); cont.innerHTML = "";
+            Object.values(state.items).forEach(it => {
+                const d = document.createElement('div'); d.className = "card";
+                d.innerHTML = `<span>📄 ${it.name}</span>`;
+                d.onclick = () => { state.id = it.id; openDash(); };
+                cont.appendChild(d);
             });
-
-            // Dashboards en raíz
-            items.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
-                cont.appendChild(createDashCard(dash));
-            });
-
-            // Log
-            const logEl = document.getElementById('log-content');
-            logEl.innerHTML = state.logs.map(l => `
-                <div class="log-item">
-                    <div class="log-header">
-                        <b style="color:var(--p)">${l.u}</b>
-                        <span style="color:var(--accent); font-weight:bold; font-size:16px;">${l.r}</span>
-                    </div>
-                    <div class="log-formula">${l.f}</div>
-                    <div class="log-detail">${l.d}</div>
-                </div>
-            `).join('');
-            if(state.id) syncView();
+            document.getElementById('log-content').innerHTML = state.logs.map(l => `<div class="log-line"><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b></div>`).join('');
+            if(state.id) sync();
         }
 
-        function createDashCard(it) {
-            const d = document.createElement('div'); d.className = "card dash";
-            d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span>`;
-            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; openDash(); };
-            d.ondragstart = () => state.dragId = it.id;
-            return d;
-        }
-
-        function dropOnRoot(e) { if(state.dragId) { state.items[state.dragId].parent = null; save(); } }
         function openDash() { 
             document.getElementById('view-list').style.display='none'; 
-            document.getElementById('view-details').style.display='flex'; 
-            state.edit = false; 
-            syncView(); 
+            document.getElementById('view-details').style.display='flex';
+            setTab(false);
         }
 
-        // --- COMPILADOR DE VARIABLES Y PREVIEW ---
-        function syncView() {
+        function setTab(isEdit) {
+            state.edit = isEdit;
+            document.getElementById('t-edit').className = isEdit ? "tab-btn active" : "tab-btn";
+            document.getElementById('t-view').className = !isEdit ? "tab-btn active" : "tab-btn";
+            sync();
+        }
+
+        function sync() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content;
-            else renderGameUI(it.content);
+            else parsePreview(it.content);
         }
 
-        function renderGameUI(rawText) {
-            const stats = {};
-            // Limpiamos el texto para evitar que etiquetas HTML rompan el ASD=12
-            const cleanText = rawText.replace(/<\/?[^>]+(>|$)/g, "");
-            
-            // Scanner de Variables (Cualquier palabra MAYÚSCULA de 3+ letras seguido de =)
-            cleanText.replace(/\b([A-Z]{3,})\b\s*=\s*([\+\-]?\d+)/gi, (m, key, val) => {
-                stats[key.toUpperCase()] = parseInt(val);
+        // --- EL LEXER DE DOS PASOS ---
+        function parsePreview(txt) {
+            const memory = {};
+            // Paso 1: Limpiar texto de HTML para no romper el cálculo
+            const clean = txt.replace(/<\/?[^>]+(>|$)/g, "");
+
+            // Paso 2: Identificar Base (FUE=11)
+            clean.replace(/\b([A-Z]{3,})\b\s*=\s*(\d+)/gi, (m, key, val) => {
+                memory[key.toUpperCase()] = parseInt(val);
             });
 
-            let html = rawText
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow: 0 0 8px $1">$2</span>')
-                .replace(/\[cb\] (.*)/g, '<div class="cb-row"><input type="checkbox" class="cb-input"><span>$1</span></div>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="tool" onclick="alert('${c.replace(/\n/g,' ')}')">${t}</button>`)
-                .replace(/\b([A-Z]{3,})\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
+            // Paso 3: Aplicar Antivariables (-5FUE, +11FUE) al valor base
+            // Buscamos patrones de [signo][numero][VARIABLE]
+            clean.replace(/([\+\-])(\d+)\b([A-Z]{3,})\b/gi, (m, sign, amount, key) => {
+                const k = key.toUpperCase();
+                if(memory[k] !== undefined) {
+                    if(sign === '-') memory[k] -= parseInt(amount);
+                    else memory[k] += parseInt(amount);
+                }
+            });
 
-            // Reconocedor de Tiradas
-            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
+            // Paso 4: Renderizar HTML
+            let html = txt
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\b([A-Z]{3,})\b/g, m => memory[m] !== undefined ? `<span class="var-tag" title="Valor calculado: ${memory[m]}">${m}</span>` : m);
+
+            // Paso 5: Inyectar Dados (usando el valor final de memory)
+            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
-                return `<span class="roll-link" onclick="startQuantumRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
+                return `<span class="roll-link" onclick="runDice('${f}',${JSON.stringify(memory)})">${f}</span>`;
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        // --- MOTOR QUANTUM: TIRADAS Y SLOTS ---
-        async function startQuantumRoll(formula, stats) {
-            let procFormula = formula.toUpperCase();
-            let breakdown = "";
-
-            // 1. Reemplazo de Modificadores (Ej: -5ASD)
-            for(let key in stats) {
-                const val = stats[key];
-                // Caso Modificador: Signo + Numero + Variable (Ej: -5ASD)
-                const modReg = new RegExp(`([\\+\\-])(\\d+)${key}`, 'g');
-                procFormula = procFormula.replace(modReg, (m, sign, num) => {
-                    const res = parseInt(num) * val;
-                    breakdown += ` ${sign}${num}*${key}(${val})`;
-                    return `${sign}${res}`;
-                });
-                // Caso Variable simple: ASD
-                const simpleReg = new RegExp(`\\b${key}\\b`, 'g');
-                if(simpleReg.test(procFormula)) {
-                    procFormula = procFormula.replace(simpleReg, val);
-                    breakdown += ` +${key}(${val})`;
-                }
+        async function runDice(formula, memory) {
+            let finalFormula = formula.toUpperCase();
+            
+            // Sustituir variables por su valor ya calculado
+            for(let key in memory) {
+                const reg = new RegExp(`\\b${key}\\b`, 'g');
+                finalFormula = finalFormula.replace(reg, memory[key]);
             }
 
-            // 2. Extraer Dados
-            const match = procFormula.match(/(\d*)D(\d+)/i);
-            const numDice = parseInt(match[1]) || 1;
-            const sides = parseInt(match[2]);
-            const finalRolls = [];
-            for(let i=0; i<numDice; i++) finalRolls.push(Math.floor(Math.random()*sides)+1);
+            const match = finalFormula.match(/(\d*)D(\d+)/i);
+            const n = parseInt(match[1]) || 1;
+            const s = parseInt(match[2]);
+            const rolls = [];
+            for(let i=0; i<n; i++) rolls.push(Math.floor(Math.random()*s)+1);
 
-            // 3. UI Modal Tragaperras
-            const overlay = document.getElementById('dice-overlay');
-            const slotContainer = document.getElementById('dice-slots');
-            const totalDisplay = document.getElementById('total-val');
-            
-            overlay.style.display = 'flex';
-            slotContainer.innerHTML = "";
-            totalDisplay.innerText = "0";
-            totalDisplay.className = "total-display";
+            // UI Animación Progresiva
+            const ov = document.getElementById('dice-overlay');
+            const slotCont = document.getElementById('dice-slots');
+            const tot = document.getElementById('total-val');
+            ov.style.display = 'flex';
+            slotCont.innerHTML = "";
+            tot.innerText = "0";
+            tot.classList.remove('show');
             document.getElementById('d-formula').innerText = formula;
-            document.getElementById('d-user').innerText = state.uname.toUpperCase();
 
-            // Generar los cilindros de la tragaperras
             const slots = [];
-            for(let i=0; i<numDice; i++) {
-                const box = document.createElement('div');
-                box.className = "slot-machine-box active";
-                const strip = document.createElement('div');
-                strip.className = "slot-strip";
-                // Crear 20 números falsos para el efecto de giro
-                for(let j=0; j<20; j++) {
-                    const n = document.createElement('div');
-                    n.className = "slot-number";
-                    n.innerText = Math.floor(Math.random()*sides)+1;
-                    strip.appendChild(n);
-                }
-                const winner = document.createElement('div');
-                winner.className = "slot-number winner";
-                winner.innerText = finalRolls[i];
-                strip.appendChild(winner);
-                
-                box.appendChild(strip);
-                slotContainer.appendChild(box);
-                slots.push({ box, strip });
+            for(let i=0; i<n; i++) {
+                const div = document.createElement('div'); div.className = "slot"; div.innerText = "?";
+                slotCont.appendChild(div); slots.push(div);
             }
 
-            // Animación en cascada (Izquierda a Derecha)
-            let currentDiceSum = 0;
-            for(let i=0; i<numDice; i++) {
-                await new Promise(res => {
-                    const strip = slots[i].strip;
-                    const box = slots[i].box;
-                    // El 1890 es aproximado para que el último número sea el ganador (90px * 20)
-                    strip.style.top = `-${20 * 90}px`;
-                    setTimeout(() => {
-                        box.classList.remove('active');
-                        box.classList.add('stopped');
-                        currentDiceSum += finalRolls[i];
-                        res();
-                    }, 500 + (i * 150)); // Cada dado tarda un poco más
+            let sumDice = 0;
+            for(let i=0; i<n; i++) {
+                await new Promise(r => {
+                    let c = 0;
+                    const itv = setInterval(() => {
+                        slots[i].innerText = Math.floor(Math.random()*s)+1;
+                        if(c++ > 8) {
+                            clearInterval(itv);
+                            slots[i].innerText = rolls[i];
+                            slots[i].classList.add('done');
+                            sumDice += rolls[i];
+                            r();
+                        }
+                    }, 60);
                 });
             }
 
-            // 4. Calcular Resultado Final
-            let total;
+            // Cálculo final matemático
+            let result;
             try {
-                // Reemplazamos la parte XdY por la suma de los dados
-                const mathStr = procFormula.replace(match[0], currentDiceSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                total = Math.floor(eval(mathStr));
-            } catch(e) { total = currentDiceSum; }
+                // Reemplazamos el XdY por la suma de los dados
+                const evalStr = finalFormula.replace(match[0], sumDice).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                result = Math.floor(eval(evalStr));
+            } catch(e) { result = sumDice; }
 
-            // 5. Finalizar UI
-            totalDisplay.innerText = total;
-            totalDisplay.classList.add('show');
-            if(currentDiceSum === (numDice * sides)) totalDisplay.classList.add('crit-glow');
-            if(currentDiceSum === numDice) totalDisplay.classList.add('fail-glow');
-            
-            const detailMsg = `Dados: [${finalRolls.join(', ')}]` + (breakdown ? " | Modificadores:" + breakdown : "");
-            document.getElementById('d-breakdown').innerText = detailMsg;
+            tot.innerText = result;
+            tot.classList.add('show');
+            document.getElementById('d-log').innerText = `Dados: [${rolls.join('+')}] | Fórmula procesada: ${finalFormula}`;
 
-            // Log
-            state.logs.unshift({ u: state.uname, f: formula, r: total, d: detailMsg });
-            if(state.logs.length > 20) state.logs.pop();
+            state.logs.unshift({ u: state.uname, f: formula, r: result });
+            if(state.logs.length > 15) state.logs.pop();
             save();
         }
 
-        // --- UTILIDADES ---
-        function toggleMode() { state.edit = !state.edit; syncView(); }
         function saveContent() { state.items[state.id].content = document.getElementById('editor').value; }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
         function wrap(a, b) { 
@@ -361,11 +263,7 @@
             e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
             saveContent();
         }
-        function ins(a, b) { document.getElementById('editor').value += a+b; saveContent(); }
-        function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function promptNote() { const t = prompt("Tít:"); const c = prompt("Cont:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
-        function deleteItem() { if(confirm("¿Eliminar?")) { delete state.items[state.id]; save(); goBack(); } }
-        function closeDice() { document.getElementById('dice-overlay').style.display = 'none'; }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
