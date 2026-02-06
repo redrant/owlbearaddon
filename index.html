@@ -12,49 +12,34 @@
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
-
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
         #view-details { display: none; }
-
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
-
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-        
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
-
-        .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; background: rgba(255,68,102,0.1) !important; }
-        .btn-owner-false { border-color: var(--crit) !important; color: var(--crit) !important; background: rgba(0,255,136,0.1) !important; }
-
-        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
-        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
-
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; }
+        .btn-owner-false { border-color: var(--crit) !important; color: var(--crit) !important; }
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
+        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
-
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
+        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; border: 1px solid #333; }
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
-        
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; }
     </style>
 </head>
 <body>
-
-    <div class="header"><div class="sig">My Dashesh v2.0</div></div>
-
+    <div class="header"><div class="sig">MY DASHES PLATINUM V.FIXED</div></div>
     <div id="view-list">
         <div style="display:flex; gap:8px;">
             <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
@@ -71,21 +56,11 @@
             <b id="det-title" style="color:var(--p)"></b>
             <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
         </div>
-
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
             <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
             <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
         </div>
-
         <div id="editor-ui" style="display:none; flex-direction:column; flex:1;">
-            <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
-                <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
-                <button class="tool" onclick="askNote()">Nota+</button>
-                <button class="tool" onclick="askGlow()">Glow</button>
-                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
-            </div>
             <textarea id="editor" oninput="updateContent()"></textarea>
         </div>
         <div id="preview"></div>
@@ -93,23 +68,15 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div>
+            <div id="d-f" style="color:#555; font-size:12px;"></div>
             <div id="dice-container" class="dice-display"></div>
             <div id="total-val" class="total-box">0</div>
-            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
-        </div>
-    </div>
-
-    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
-            <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
+            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; margin-top: 10px;"></div>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {} };
         const DB = "VPLAT_ITEMS", LG = "VPLAT_LOGS", OF = "VPLAT_FOLDERS";
 
         async function init() {
@@ -129,46 +96,23 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=20\n-10FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=20\n-10FUE\n1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
+        }
+
+        function createCard(it) {
+            const d = document.createElement('div'); d.className = "card dash";
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
+            d.onclick = () => { state.id = it.id; openDetails(); };
+            return d;
         }
 
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
-            
-            vals.filter(f => f.type === 'folder').forEach(f => {
-                const isOpen = state.openFolders[f.id];
-                const fd = document.createElement('div');
-                fd.className = "card folder"; 
-                fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
-                fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
-                fd.ondragover = e => e.preventDefault();
-                fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
-                cont.appendChild(fd);
-                if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
-                    const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
-                });
-            });
-
-            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
-                const card = createCard(d);
-                card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
-                cont.appendChild(card);
-            });
-            
-            document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
-            ).join('');
+            vals.filter(it => it.type === 'dash').forEach(d => cont.appendChild(createCard(d)));
+            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <b>${l.r}</b></div>`).join('');
             if(state.id) syncView();
-        }
-
-        function createCard(it) {
-            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
-            d.onclick = () => { state.id = it.id; openDetails(); };
-            d.ondragstart = () => state.dragId = it.id;
-            return d;
         }
 
         function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
@@ -180,150 +124,87 @@
             const obtn = document.getElementById('own-btn');
             if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
             else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
-            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
-            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
-        // CEREBRO LÓGICO DE VARIABLES
         function getMemory(txt) {
             const memory = {};
-            // 1. Bases (FUE=20)
-            const baseRegex = /([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi;
-            let m;
-            while ((m = baseRegex.exec(txt)) !== null) {
-                memory[m[1].toUpperCase()] = parseInt(m[2]);
-            }
-            // 2. Plus/Minus (+10FUE o -5FUE)
-            const plusRegex = /([\+\-])(\d+)([A-Z0-9_]+)/gi;
-            while ((m = plusRegex.exec(txt)) !== null) {
-                const sign = m[1], val = parseInt(m[2]), key = m[3].toUpperCase();
-                if(memory[key] !== undefined) {
-                    memory[key] += (sign === '+' ? 1 : -1) * val;
-                }
-            }
+            // 1. Bases FUE=20
+            txt.replace(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            // 2. Plus/Minus -10FUE
+            txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)/gi, (m, s, v, k) => {
+                const key = k.toUpperCase();
+                if(memory[key] !== undefined) memory[key] += (s === '+' ? 1 : -1) * parseInt(v);
+            });
             return memory;
         }
 
         function renderPreview(txt) {
             const memory = getMemory(txt);
-            const lines = txt.split('\n');
-            const processedLines = lines.map(line => {
-                if (line.trim().startsWith('[+]')) {
-                    const contentToClone = line.replace('[+]', '').trim();
-                    const innerRender = renderElements(contentToClone, memory);
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${contentToClone.replace(/`/g, "\\`")}\`)">${innerRender}</div>`;
-                }
-                return renderElements(line, memory);
+            const preview = document.getElementById('preview');
+            preview.style.display = 'block';
+            document.getElementById('editor-ui').style.display = 'none';
+            
+            const lines = txt.split('\n').map(line => {
+                return line.replace(/(\d*d\d+([^\s]*))/gi, (f) => {
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
+                }).replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
+                  .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>');
             });
-            document.getElementById('preview').innerHTML = processedLines.join('<br>');
-        }
-
-        function renderElements(txt, memory) {
-            return txt
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const safe = encodeURIComponent(c.replace(/  /g, '\n'));
-                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${safe}')">${t}</div>`;
-                })
-                .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
-                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`, ${JSON.stringify(memory)})">${f}</div>`;
-                });
+            preview.innerHTML = lines.join('<br>');
         }
 
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
-            let mods = [];
             
-            // Reemplazar variables por valores reales consolidando Plus
+            // Reemplazar variables por valores ANTES de evaluar
             const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            keys.forEach(k => {
-                const regex = new RegExp(k, 'g');
-                if(regex.test(logic)) {
-                    mods.push(`${k}:${memory[k]}`);
-                    logic = logic.replace(regex, memory[k]);
-                }
-            });
+            keys.forEach(k => { logic = logic.replace(new RegExp(k, 'g'), memory[k]); });
 
+            // Extraer el dado (NdS)
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
-            const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+            const rolls = Array.from({length: n}, () => Math.floor(Math.random() * s) + 1);
+            const sumRolls = rolls.reduce((a,b) => a+b, 0);
 
+            // Mostrar Overlay
             document.getElementById('dice-overlay').style.display = 'flex';
-            document.getElementById('d-f').innerText = formula;
             const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = ""; totalVal.classList.remove('show');
+            container.innerHTML = "";
+            rolls.forEach(r => { container.innerHTML += `<div class="die-num">${r}</div>`; });
 
-            let currentSum = 0; let logDetails = [];
-            for(let res of results) {
-                const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
-                await new Promise(r => {
-                    let t = 0;
-                    const iv = setInterval(() => {
-                        die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 8) {
-                            clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span style="color:var(--crit)">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span style="color:var(--fail)">${res}</span>`); }
-                            else logDetails.push(res);
-                            currentSum += res; r();
-                        }
-                    }, 60);
-                });
-            }
-
+            // Calcular final con eval limpio
             let final;
             try {
-                // Sustituir el dado por el total y limpiar CUALQUIER texto sobrante
-                let mathString = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathString));
-            } catch(e) { final = currentSum; }
+                // Reemplazamos la parte del dado por su suma y evaluamos el resto
+                let mathExpr = logic.replace(match[0], sumRolls).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                final = eval(mathExpr);
+            } catch(e) { final = sumRolls; }
 
-            setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `[${results.join('+')}] mods: ${mods.join(', ') || '0'}`; 
-            }, 200);
+            const totalBox = document.getElementById('total-val');
+            totalBox.innerText = final; totalBox.classList.add('show');
+            document.getElementById('d-f').innerText = formula;
+            document.getElementById('d-res').innerText = `Detalle: [${rolls.join('+')}] modificado`;
 
-            state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
+            state.log.unshift({ u: state.uname, f: formula, r: final });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
         function switchTab(isEdit) {
             state.edit = isEdit;
-            document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-edit').style.color = isEdit ? "black" : "white";
             document.getElementById('t-view').style.background = !isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-view').style.color = !isEdit ? "black" : "white";
+            document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
             syncView();
-        }
-
-        function cloneToMyDash(text) {
-            const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero OWNEA un Dash.");
-            myDash.content += "\n" + text; save(); alert("¡Clonado!");
         }
 
         function toggleOwnership() { 
             const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return alert("Dash ocupado.");
+            if(it.owner && it.owner !== state.uid) return;
             it.owner = it.owner ? null : state.uid; save(); 
         }
 
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
-        function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-
         init();
     </script>
 </body>
