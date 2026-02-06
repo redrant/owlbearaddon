@@ -1,22 +1,13 @@
 {
-  "name": "Dashisboard+",
-  "version": "1.0.2",
+  "name": "Dashisboard Plus",
+  "version": "1.2.0",
   "manifest_version": 1,
+  "id": "com.redrant.dashisboard",
   "action": {
     "title": "Dashisboard+",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
     "popover": "/index.html",
-    "width": 400,
-    "height": 600
-  },
-  "permissions": [
-    {
-      "trigger": "onSceneReady",
-      "action": "read"
-    },
-    {
-      "trigger": "onMetadataChange",
-      "action": "read"
-    }
-  ]
+    "width": 450,
+    "height": 650
+  }
 }
