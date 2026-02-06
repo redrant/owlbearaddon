@@ -23,25 +23,27 @@
         .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
+        .child-dash { margin-left: 20px; width: calc(100% - 20px) !important; }
 
-        /* Dados y Variables */
+        /* CASILLA CLEAN - Sin errores visuales */
+        .check-container { display: flex; align-items: center; margin: 8px 0; padding: 6px; background: rgba(255,255,255,0.03); border-radius: 6px; }
+        .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 12px; }
+        .check-label { font-size: 15px; color: #ccc; }
+
+        /* Bloques Dados y Variables */
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        /* Casillas estilo original pero limpias */
-        .check-line { display: flex; align-items: center; margin: 6px 0; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.03); }
-        .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 10px; }
-
         /* Editor */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        /* Modales */
+        /* Dados Modal */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; transition: 0.3s; }
+        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
@@ -50,7 +52,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v2.2 PLATINUM</div></div>
+    <div class="header"><div class="sig">MY DASHES v2.3 PLATINUM</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -78,9 +80,8 @@
             <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Check</button>
+                <button class="tool" onclick="ins('[+] ','')">Casilla</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
-                <button class="tool" onclick="askGlow()">Glow</button>
                 <button class="tool" onclick="moveItem()" style="background:var(--var); color:black;">MOVER</button>
                 <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
             </div>
@@ -91,7 +92,7 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-f" style="color:#555; font-family:monospace; font-size:12px;"></div>
+            <div id="d-f" style="color:#555; font-size:12px;"></div>
             <div id="dice-container" class="dice-display"></div>
             <div id="total-val" class="total-box">0</div>
             <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
@@ -101,14 +102,14 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h3 id="n-t" style="color:var(--accent); margin-top:0;"></h3>
-            <div id="n-b" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.5;"></div>
+            <div id="n-b" style="text-align:left; color:#ccc; white-space: pre-wrap;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:15px; background:var(--p); color:black;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, folded: {} };
-        const DB = "V2_ULT_ITEMS", LG = "V2_ULT_LOGS", CH = "V2_ULT_CHECKS", FL = "V2_ULT_FOLDED";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, openFolders: {} };
+        const DB = "V3_ITEMS_FINAL", LG = "V3_LOGS_FINAL", CH = "V3_CHECKS_FINAL", OF = "V3_FOLDERS_OPEN";
 
         async function init() {
             try {
@@ -116,15 +117,15 @@
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
                     OBR.scene.onMetadataChange(m => { 
-                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.folded=m[FL]||{}; render(); 
+                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.openFolders=m[OF]||{}; render(); 
                     });
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.folded=m[FL]||{}; render();
+                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.openFolders=m[OF]||{}; render();
                 });
             } catch(e) { render(); }
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [CH]: state.checks, [FL]: state.folded }); render(); }
+        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [CH]: state.checks, [OF]: state.openFolders }); render(); }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
@@ -138,37 +139,36 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const items = Object.values(state.items);
             
-            // Renderizar Carpetas primero
+            // Carpetas
             items.filter(it => it.type === 'folder').forEach(f => {
+                const isOpen = state.openFolders[f.id];
                 const card = document.createElement('div');
                 card.className = "card folder";
-                const isFolded = state.folded[f.id];
-                card.innerHTML = `<span>${isFolded ? '📁' : '📂'} ${f.name}</span>`;
-                card.onclick = () => { state.folded[f.id] = !isFolded; save(); };
+                card.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
+                card.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
                 cont.appendChild(card);
 
-                if(!isFolded) {
+                if(isOpen) {
                     items.filter(d => d.parent === f.id).forEach(d => {
-                        const child = createItemCard(d);
-                        child.style.marginLeft = "20px";
-                        child.style.width = "calc(100% - 20px)";
+                        const child = createCard(d);
+                        child.classList.add('child-dash');
                         cont.appendChild(child);
                     });
                 }
             });
 
-            // Dashboards sin carpeta
-            items.filter(it => it.type === 'dash' && !it.parent).forEach(it => cont.appendChild(createItemCard(it)));
+            // Dashboards sueltos
+            items.filter(it => it.type === 'dash' && !it.parent).forEach(it => cont.appendChild(createCard(it)));
 
             document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span></div>`).join('');
             if(state.id) syncView();
         }
 
-        function createItemCard(it) {
+        function createCard(it) {
             const d = document.createElement('div');
             d.className = "card dash";
             d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
-            d.onclick = () => { state.id = it.id; openDetails(); };
+            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; openDetails(); };
             return d;
         }
 
@@ -202,27 +202,24 @@
 
         function renderPreview(txt) {
             const memory = {};
-            txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, s, v, k) => {
-                const key = k.toUpperCase(); if(memory[key] !== undefined) memory[key] += (s === '+' ? 1 : -1) * parseInt(v);
-            });
+            txt.replace(/\b([A-Z]+)\s* = \s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
 
-            // Lógica de casillas Limpia (Reescrita)
+            // LIMPIEZA TOTAL DE CASILLAS
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[\+\]\s*(.*)/g, (m, label) => {
-                    const cid = state.id + label.trim().substring(0,10);
+                    const cleanLabel = label.trim();
+                    const cid = state.id + cleanLabel.replace(/\s/g, '');
                     const checked = state.checks[cid] ? 'checked' : '';
-                    return `<div class="check-line"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span>${label}</span></div>`;
+                    return `<div class="check-container"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span class="check-label">${cleanLabel}</span></div>`;
                 })
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const clean = c.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}', \`${clean}\`)">[${t}]</span>`;
+                    const cleanC = c.replace(/  /g, '\n').replace(/'/g, "&apos;");
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
                 });
 
-            html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
             html = html.replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
                 if(!/d/i.test(f)) return f;
                 return `<div class="block-roll" onclick='runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
@@ -261,34 +258,32 @@
                 });
             }
             let final; try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Caras: [${results.join('+')}]`; }, 200);
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `[${results.join('+')}]`; }, 200);
             state.log.unshift({ u: state.uname, f: formula, r: final });
             if(state.log.length > 15) state.log.pop();
             save();
         }
 
         function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
-        function showNote(t, b) { 
-            document.getElementById('n-t').innerText = t; 
-            // Interpretación de 2 espacios como salto de línea
-            document.getElementById('n-b').innerText = b.replace(/  /g, '\n'); 
-            document.getElementById('note-overlay').style.display='flex'; 
-        }
+        function showNote(t, b) { document.getElementById('n-t').innerText = t; document.getElementById('n-b').innerText = b; document.getElementById('note-overlay').style.display='flex'; }
         function toggleOwnership() { const it=state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
+        
         function moveItem() {
             const folders = Object.values(state.items).filter(i => i.type === 'folder');
-            if(folders.length === 0) return alert("No hay carpetas");
-            let msg = "ID de Carpeta:\n" + folders.map(f => `- ${f.name} (id: ${f.id})`).join("\n") + "\n(Vacio para sacar)";
-            const target = prompt(msg);
-            state.items[state.id].parent = target || null;
+            if(folders.length === 0) return alert("No hay carpetas creadas.");
+            const list = folders.map((f, i) => `${i}: ${f.name}`).join("\n");
+            const idx = prompt("Selecciona el número de carpeta (o deja vacío para sacar):\n" + list);
+            if(idx === null) return;
+            state.items[state.id].parent = (idx === "") ? null : folders[idx].id;
             save();
         }
+
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (2 espacios = salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
