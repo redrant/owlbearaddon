@@ -24,34 +24,34 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; }
         .dash { border-left: 5px solid var(--p); }
 
-        /* Dados y Variables */
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        /* Casillas estilo original pero en bloque */
-        .check-container { display: block; margin: 8px 0; width: 100%; }
-        .check-box { width: 20px; height: 20px; cursor: pointer; vertical-align: middle; accent-color: var(--p); }
-        .check-label { margin-left: 8px; vertical-align: middle; }
+        /* Casillas corregidas */
+        .check-line { display: flex; align-items: center; margin: 8px 0; padding: 5px; border-radius: 5px; transition: 0.2s; }
+        .check-line:hover { background: rgba(255,255,255,0.05); }
+        .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 10px; }
 
-        /* Editor */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        /* Modal Dados Mejorado */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; transition: 0.3s; }
+        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
-        .log { height: 110px; background: #000; padding: 10px; font-size: 12px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        .log b { color: #eee; }
+        .log-crit { color: var(--crit); font-weight: bold; }
+        .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v2.0.0 FINAL PLATINUM</div></div>
+    <div class="header"><div class="sig">MY DASHES v2.1 PLATINUM</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -67,11 +67,11 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <button onclick="goBack()" class="tool">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="tool" style="background:var(--p); color:black;">OWNEAR</button>
+            <button id="own-btn" onclick="toggleOwnership()" class="tool">OWNEAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
-            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">JUGAR</button>
+            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
             <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
         </div>
 
@@ -79,7 +79,7 @@
             <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Check+</button>
+                <button class="tool" onclick="ins('[+] ','')">Casilla</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
                 <button class="tool" onclick="askGlow()">Glow</button>
                 <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
@@ -98,17 +98,9 @@
         </div>
     </div>
 
-    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()">
-            <h3 id="n-t" style="color:var(--accent); margin-top:0;"></h3>
-            <div id="n-b" style="text-align:left; color:#ccc; white-space: pre-wrap;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:15px; background:var(--p); color:black;">CERRAR</button>
-        </div>
-    </div>
-
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {} };
-        const DB = "V2_FINAL_ITEMS", LG = "V2_FINAL_LOGS", CH = "V2_FINAL_CHECKS";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, dragId: null };
+        const DB = "V2_P_ITEMS", LG = "V2_P_LOGS", CH = "V2_P_CHECKS";
 
         async function init() {
             try {
@@ -127,22 +119,42 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n[+] Atacar con espada\n\n1d20+FUE', owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n[+] Acción\n\n1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
 
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
-            Object.values(state.items).forEach(it => {
-                const d = document.createElement('div');
-                d.className = `card ${it.type}`;
-                d.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> ${it.owner?'🔒':''}`;
-                d.onclick = () => { state.id = it.id; openDetails(); };
-                cont.appendChild(d);
+            const vals = Object.values(state.items);
+            
+            vals.filter(it => it.type === 'folder').forEach(f => {
+                const fd = document.createElement('div');
+                fd.className = "card folder"; fd.innerHTML = `<span>📁 ${f.name}</span>`;
+                fd.ondragover = e => e.preventDefault();
+                fd.ondrop = () => { state.items[state.dragId].parent = f.id; save(); };
+                cont.appendChild(fd);
+                vals.filter(d => d.parent === f.id).forEach(d => cont.appendChild(createCard(d, true)));
             });
-            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span></div>`).join('');
+
+            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => cont.appendChild(createCard(d, false)));
+            
+            document.getElementById('log-content').innerHTML = state.log.map(l => 
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.details})</small></div>`
+            ).join('');
             if(state.id) syncView();
+        }
+
+        function createCard(it, isChild) {
+            const d = document.createElement('div');
+            d.className = "card dash"; 
+            if(isChild) d.style.marginLeft = "20px";
+            d.draggable = true;
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner?'🔒':''}`;
+            d.onclick = () => { state.id = it.id; openDetails(); };
+            d.ondragstart = () => state.dragId = it.id;
+            d.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = null; save(); };
+            return d;
         }
 
         function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
@@ -167,14 +179,12 @@
 
         function renderPreview(txt) {
             const memory = {};
-            // 1. Calcular variables (incluyendo sumas/restas)
             txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, sign, val, k) => {
+            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, s, v, k) => {
                 const key = k.toUpperCase();
-                if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
+                if(memory[key] !== undefined) memory[key] += (s === '+' ? 1 : -1) * parseInt(v);
             });
 
-            // 2. Procesar Texto y Botones
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
@@ -182,17 +192,12 @@
                 .replace(/\[\+\] (.*)/g, (m, label) => {
                     const cid = state.id + label.trim();
                     const checked = state.checks[cid] ? 'checked' : '';
-                    return `<div class="check-container"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span class="check-label">${label}</span></div>`;
+                    return `<div class="check-line"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span>${label}</span></div>`;
                 })
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const cleanC = c.replace(/'/g, "&apos;").replace(/  /g, "\n");
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}',\`${cleanC}\`)">[${t}]</span>`;
-                });
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<span style="color:var(--accent); cursor:pointer; font-weight:bold;">[${t}]</span>`);
 
-            // Variables y Dados
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
             html = html.replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>');
-
             html = html.replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
                 if(!/d/i.test(f)) return f;
                 return `<div class="block-roll" onclick='runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
@@ -218,7 +223,6 @@
             const results = [];
             for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
 
-            // UI Reset
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formula;
             const container = document.getElementById('dice-container');
@@ -227,30 +231,31 @@
             totalVal.classList.remove('show');
 
             let currentSum = 0;
-            // Animación de cada cara de izquierda a derecha
+            let logDetails = [];
+
             for(let res of results) {
                 const die = document.createElement('div');
                 die.className = "die-num";
                 die.innerText = "?";
                 container.appendChild(die);
 
-                await new Promise(resolve => {
-                    let ticks = 0;
+                await new Promise(r => {
+                    let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
-                        if(ticks++ > 8) {
+                        if(t++ > 8) {
                             clearInterval(iv);
                             die.innerText = res;
-                            if(res === s) die.style.color = "var(--crit)";
-                            if(res === 1) die.style.color = "var(--fail)";
+                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
+                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
+                            else logDetails.push(res);
                             currentSum += res;
-                            resolve();
+                            r();
                         }
                     }, 60);
                 });
             }
 
-            // Cálculo final suave
             let final;
             try {
                 const mathStr = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
@@ -260,16 +265,15 @@
             setTimeout(() => {
                 totalVal.innerText = final;
                 totalVal.classList.add('show');
-                document.getElementById('d-res').innerText = `Caras: [${results.join(' + ')}] | Variables: ${breakdown}`;
-            }, 300);
+                document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`;
+            }, 200);
 
-            state.log.unshift({ u: state.uname, f: formula, r: final });
+            state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop();
             save();
         }
 
         function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
-        function showNote(t, b) { document.getElementById('n-t').innerText = t; document.getElementById('n-b').innerText = b; document.getElementById('note-overlay').style.display='flex'; }
         function toggleOwnership() { const it=state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
