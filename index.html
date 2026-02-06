@@ -6,202 +6,170 @@
     <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
         :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #03dac6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow-x: hidden; }
-        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
         .menu-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input, textarea { background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; }
-        button { background: var(--primary); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:hover { opacity: 0.8; }
-        .dash-item { background: var(--card); padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
-        .dash-item:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .tab-bar { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; border-bottom: 1px solid #444; padding-bottom: 2px; }
-        .tab { padding: 8px 16px; background: #333; cursor: pointer; border-radius: 8px 8px 0 0; font-size: 0.85em; white-space: nowrap; }
-        .tab.active { background: var(--primary); color: black; font-weight: bold; }
-        #preview-area { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px dashed #555; min-height: 50px; margin-top: 10px; }
-        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187, 134, 252, 0.1); padding: 2px 6px; border-radius: 4px; }
-        .result-box { background: #000; padding: 12px; border: 2px solid var(--accent); margin-top: 15px; border-radius: 8px; animation: slideIn 0.3s ease-out; }
+        input, textarea { background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        button { background: var(--primary); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .dash-button { background: var(--card); padding: 15px; margin: 10px 0; border-radius: 8px; display: block; width: 100%; text-align: left; border: 1px solid #333; color: var(--text); font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .dash-button:hover { border-color: var(--primary); background: #252525; }
+        .tab-bar { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid #444; }
+        .tab { padding: 8px 12px; background: #333; cursor: pointer; border-radius: 8px 8px 0 0; font-size: 0.8em; }
+        .tab.active { background: var(--primary); color: black; }
+        #preview-area { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px dashed #555; min-height: 40px; margin-top: 10px; line-height: 1.6; }
+        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; padding: 2px 4px; background: rgba(187,134,252,0.1); border-radius: 4px; }
+        .result-box { background: #000; padding: 12px; border: 2px solid var(--accent); margin-top: 15px; border-radius: 8px; }
         .stat-tag { color: var(--accent); font-weight: bold; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div id="view-list">
-            <h2>Dashisboard+</h2>
-            <div class="menu-section">
-                <input type="text" id="dashName" placeholder="Nombre del nuevo Dash...">
-                <button onclick="createDash()">+ Crear Nuevo Dash</button>
-            </div>
-            <div id="list-container"></div>
+    <div id="view-list">
+        <h2>Mis Dashes</h2>
+        <div class="menu-section">
+            <input type="text" id="dashName" placeholder="Nombre del personaje...">
+            <button onclick="createDash()">+ CREAR NUEVO DASH</button>
         </div>
+        <div id="list-container"></div>
+    </div>
 
-        <div id="view-details" style="display:none;">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 id="current-dash-title" style="margin:0; cursor:pointer;" onclick="showDashMenu()">Cargando...</h3>
-                <button onclick="showList()" style="background:#444; color:white; padding: 5px 10px; font-size: 12px;">⬅ Lista</button>
-            </div>
-            <div class="tab-bar" id="tab-bar"></div>
-            <div style="display:flex; gap: 5px; margin-bottom: 10px;">
-                <button onclick="addPage('normal')" style="font-size: 11px; background: #333; color: white;">+ Pág. Normal</button>
-                <button onclick="addPage('stats')" style="font-size: 11px; background: #333; color: var(--accent);">+ Pág. Stats</button>
-            </div>
-            <textarea id="main-editor" rows="10" placeholder="Ej: FUE=10 o 1d20+FUE" oninput="handleInput()"></textarea>
-            <div id="preview-area"></div>
-            <div id="dice-output"></div>
+    <div id="view-details" style="display:none;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+            <button onclick="showList()" style="background:#444; color:white;">⬅ Volver</button>
+            <h3 id="current-title" style="margin:0; color:var(--primary);"></h3>
+            <button onclick="deleteCurrent()" style="background:#600; color:white; font-size:10px;">Borrar</button>
         </div>
+        <div class="tab-bar" id="tab-bar"></div>
+        <textarea id="editor" rows="8" oninput="handleUpdate()" placeholder="FUE=10&#10;Espada: 1d20+FUE"></textarea>
+        <div id="preview-area"></div>
+        <div id="dice-output"></div>
     </div>
 
     <script>
-        const OBR = window.OBR;
         let state = { dashes: {}, currentId: null, currentPage: 0, stats: {} };
+        const STORAGE_KEY = "dash_plus_data";
 
-        // DETECCIÓN DE ENTORNO: Owlbear o Navegador solo
+        // 1. INICIALIZACIÓN DUAL
         async function init() {
-            if (window.location.hostname.includes("owlbear.rodeo") || window.parent !== window) {
-                // Estamos en Owlbear
+            if (typeof OBR !== "undefined" && window.location.hostname.includes("owlbear")) {
                 OBR.onReady(async () => {
-                    await refreshData();
-                    OBR.scene.onMetadataChange(async () => await refreshData());
+                    const meta = await OBR.scene.getMetadata();
+                    state.dashes = meta["com.dash.data"] || {};
+                    renderList();
+                    OBR.scene.onMetadataChange(m => { state.dashes = m["com.dash.data"] || {}; renderList(); });
                 });
             } else {
-                // Estamos en navegador solo (Local Storage)
-                console.log("Modo Test Navegador");
-                const saved = localStorage.getItem("dash_test_data");
+                const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) state.dashes = JSON.parse(saved);
                 renderList();
             }
         }
 
-        async function refreshData() {
-            try {
-                const meta = await OBR.scene.getMetadata();
-                state.dashes = meta["com.dashisboard.data"] || {};
-                renderList();
-                if(state.currentId) renderDash();
-            } catch(e) { console.error("Error al refrescar", e); }
-        }
-
+        // 2. GUARDADO
         async function save() {
-            if (OBR.isReady) {
-                await OBR.scene.setMetadata({ "com.dashisboard.data": state.dashes });
+            if (typeof OBR !== "undefined" && OBR.isReady) {
+                await OBR.scene.setMetadata({ "com.dash.data": state.dashes });
             } else {
-                localStorage.setItem("dash_test_data", JSON.stringify(state.dashes));
-                renderList(); 
-                if(state.currentId) renderDash();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state.dashes));
+                renderList();
             }
         }
 
         function createDash() {
             const name = document.getElementById('dashName').value;
             if(!name) return;
-            const id = "d-" + Date.now();
-            state.dashes[id] = { name, pages: [{title: 'Principal', content: 'FUE=10\n1d20+FUE', type: 'stats'}] };
+            const id = "d" + Date.now();
+            state.dashes[id] = { name, pages: [{title: 'Stats', content: 'FUE=10\n1d20+FUE'}] };
             document.getElementById('dashName').value = '';
             save();
         }
 
         function renderList() {
             const container = document.getElementById('list-container');
-            container.innerHTML = '<h4>Tus Dashes:</h4>';
+            container.innerHTML = '';
             Object.keys(state.dashes).forEach(id => {
-                const item = document.createElement('div');
-                item.className = 'dash-item';
-                item.innerHTML = `<span>📂 ${state.dashes[id].name}</span>`;
-                item.onclick = () => openDash(id);
-                container.appendChild(item);
+                const btn = document.createElement('button');
+                btn.className = 'dash-button';
+                btn.innerText = "📂 " + state.dashes[id].name;
+                btn.onclick = () => openDash(id);
+                container.appendChild(btn);
             });
         }
 
         function openDash(id) {
             state.currentId = id;
-            state.currentPage = 0;
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
-            renderDash();
+            document.getElementById('current-title').innerText = state.dashes[id].name;
+            renderEditor();
         }
 
-        function renderDash() {
-            const dash = state.dashes[state.currentId];
-            if(!dash) return showList();
-            document.getElementById('current-dash-title').innerText = dash.name;
-            const tabBar = document.getElementById('tab-bar');
-            tabBar.innerHTML = '';
-            dash.pages.forEach((p, i) => {
-                const t = document.createElement('div');
-                t.className = `tab ${state.currentPage === i ? 'active' : ''}`;
-                t.innerText = (p.type === 'stats' ? '📊 ' : '📄 ') + p.title;
-                t.onclick = () => { state.currentPage = i; renderDash(); };
-                tabBar.appendChild(t);
-            });
-            const content = dash.pages[state.currentPage].content;
-            document.getElementById('main-editor').value = content;
-            parseContent(content);
+        function renderEditor() {
+            const page = state.dashes[state.currentId].pages[0];
+            document.getElementById('editor').value = page.content;
+            processContent(page.content);
         }
 
-        function handleInput() {
-            const val = document.getElementById('main-editor').value;
-            state.dashes[state.currentId].pages[state.currentPage].content = val;
-            parseContent(val);
+        function handleUpdate() {
+            const content = document.getElementById('editor').value;
+            state.dashes[state.currentId].pages[0].content = content;
+            processContent(content);
             save();
         }
 
-        function parseContent(text) {
+        function processContent(text) {
             state.stats = {};
-            const statRegex = /([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi;
-            let match;
-            while ((match = statRegex.exec(text)) !== null) {
-                state.stats[match[1].toUpperCase()] = parseInt(match[2]);
-            }
-            let html = text.replace(/([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>');
-            html = html.replace(/([0-9]*d[0-9]+(?:[\+\-\*\/][0-9A-ZÁÉÍÓÚ\(\)]+)*)/gi, (f) => {
+            // Captura variables FUE=10
+            text.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, name, val) => {
+                state.stats[name.toUpperCase()] = parseInt(val);
+            });
+
+            // Renderiza preview con dados clicables
+            let html = text.replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>');
+            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, (f) => {
                 return `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`;
             });
             document.getElementById('preview-area').innerHTML = html.replace(/\n/g, '<br>');
         }
 
         function roll(formula) {
-            let evalF = formula.toUpperCase();
+            let f = formula.toUpperCase();
+            // Reemplaza variables
             Object.keys(state.stats).forEach(s => {
-                evalF = evalF.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]);
+                f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]);
             });
-            const diceM = evalF.match(/(\d*)D(\d+)/i);
-            if (!diceM) return;
-            const n = parseInt(diceM[1]) || 1;
-            const s = parseInt(diceM[2]);
-            let rolls = [], sum = 0;
-            for (let i = 0; i < n; i++) {
-                const r = Math.floor(Math.random() * s) + 1;
-                sum += r;
-                rolls.push(`<span class="${r===s?'crit-success':(r===1?'crit-fail':'')}">${r}</span>`);
-            }
-            let total = sum;
-            const math = evalF.replace(diceM[0], "");
-            try { if (math.trim()) total = eval(sum + math.replace(/[^0-9\+\-\*\/\(\)\.]/g, '')); } catch(e) {}
-            document.getElementById('dice-output').innerHTML = `<div class="result-box" onclick="this.innerHTML=''"><b>TOTAL: ${total}</b><br><small>[${rolls.join(', ')}] ${math}</small></div>`;
+
+            const diceMatch = f.match(/(\d*)D(\d+)/i);
+            if (!diceMatch) return;
+
+            const n = parseInt(diceMatch[1]) || 1;
+            const s = parseInt(diceMatch[2]);
+            let totalDice = 0;
+            for(let i=0; i<n; i++) totalDice += Math.floor(Math.random()*s)+1;
+
+            let final;
+            try {
+                const math = f.replace(diceMatch[0], "");
+                final = eval(totalDice + math.replace(/[^0-9\+\-\*\/\(\)]/g, ''));
+            } catch { final = totalDice; }
+
+            document.getElementById('dice-output').innerHTML = `
+                <div class="result-box" onclick="this.innerHTML=''">
+                    <b>${formula}</b><br>
+                    <span style="font-size:20px;">TOTAL: ${final}</span>
+                </div>`;
         }
 
         function showList() {
             state.currentId = null;
             document.getElementById('view-list').style.display = 'block';
             document.getElementById('view-details').style.display = 'none';
-            renderList();
         }
 
-        function addPage(type) {
-            const title = prompt("Nombre pág:");
-            if(!title) return;
-            state.dashes[state.currentId].pages.push({ title, content: '', type });
-            state.currentPage = state.dashes[state.currentId].pages.length - 1;
-            save();
+        function deleteCurrent() {
+            if(confirm("¿Borrar dash?")) { delete state.dashes[state.currentId]; save(); showList(); }
         }
 
-        function showDashMenu() {
-            const act = prompt("Escribe 'BORRAR' para eliminar o 'EDITAR' para renombrar:");
-            if(act === 'BORRAR') { delete state.dashes[state.currentId]; save(); showList(); }
-            if(act === 'EDITAR') { const n = prompt("Nuevo nombre:"); if(n) { state.dashes[state.currentId].name = n; save(); } }
-        }
-
-        init(); // Arrancar el sistema
+        init();
     </script>
 </body>
 </html>
