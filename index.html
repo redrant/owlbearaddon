@@ -2,55 +2,59 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; --bg: #0d0d0f; --c: #1a1a1d; --t: #f0f0f0; 
+            --p: #bb86fc; --bg: #0d0d0f; --surf: #1a1a1d; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .version { font-size: 10px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
-        .signature { font-size: 15px; font-weight: bold; color: var(--p); text-shadow: 0 0 8px var(--p); }
+        /* HEADER & SIGNATURE */
+        .header-main { text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
+        .version { font-size: 9px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
+        .signature { font-size: 16px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
-        /* INPUTS */
-        .input-group { display: flex; gap: 5px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; padding: 10px; background: #1a1a1d; color: white; border: 1px solid #333; border-radius: 8px; outline: none; }
-        .tool { background: #2d2d30; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        .tool:hover { background: var(--p); color: #000; }
+        /* CONTROLS */
+        .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 8px; outline: none; }
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; color: #000; transition: 0.2s; }
+        .btn-p { background: var(--p); } .btn-f { background: var(--folder); }
+        .btn-ghost { background: transparent; color: var(--t); border: 1px solid #444; }
 
-        /* LISTA Y CARPETAS */
-        #list-container { display: flex; flex-direction: column; gap: 5px; }
+        /* LIST & FOLDERS */
+        #list-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px; }
         .item-card { padding: 10px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
-        .folder-card { background: #1d170e; border-left: 4px solid var(--folder); color: var(--folder); }
+        .folder-card { border-left: 4px solid var(--folder); color: var(--folder); font-weight: bold; }
         .dash-card { border-left: 4px solid var(--p); }
-        .child { margin-left: 20px; display: none; } /* Escondido por defecto */
-        .show-child { display: flex !important; }
+        .child { margin-left: 20px; display: none; } /* Colapsado por defecto */
+        .is-open { display: flex !important; }
 
-        /* VISUALIZADOR */
-        #editor-ui { display: none; }
-        textarea { width: 100%; height: 250px; background: #0f0f11; color: #ccc; padding: 15px; border: 1px solid #333; border-radius: 0 0 8px 8px; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
+        /* EDITOR & PREVIEW */
+        #view-details { display: none; flex-direction: column; height: 100%; position: relative; }
+        .editor-wrap { flex: 1; display: flex; flex-direction: column; }
+        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #333; border-radius: 0 0 8px 8px; font-family: 'Consolas', monospace; resize: none; outline: none; line-height: 1.4; }
         .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; flex-wrap: wrap; }
+        
+        #preview { flex: 1; padding: 20px; overflow-y: auto; background: #0d0d0f; border: 1px solid #333; border-radius: 8px; line-height: 1.6; display: none; }
 
-        #preview { padding: 15px; display: none; background: #0d0d0f; border: 1px solid #333; border-radius: 8px; line-height: 1.6; min-height: 200px; }
-
-        /* ELEMENTOS PRO */
-        .cb-container { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 8px; border-radius: 8px; margin: 5px 0; border-left: 3px solid var(--accent); }
-        .cb-check { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; accent-color: var(--accent); }
-        .note-btn { background: rgba(187,134,252,0.1); color: var(--p); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 2px; }
+        /* VISUAL ELEMENTS */
         .glow { font-weight: bold; }
+        .note-btn { background: rgba(187,134,252,0.1); color: var(--p); border: 1px solid var(--p); padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin: 2px; font-weight: bold; }
+        .cb-box { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 8px; border-radius: 6px; margin: 5px 0; border-left: 3px solid var(--accent); }
+        .cb-check { width: 17px; height: 17px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; }
+        .roll-trigger { color: var(--accent); font-weight: bold; cursor: pointer; text-decoration: underline dotted; }
 
-        /* LOG */
-        .log-panel { background: #000; border: 1px solid #222; border-radius: 8px; margin-top: 15px; }
-        #log-content { height: 100px; overflow-y: auto; padding: 8px; font-size: 11px; font-family: monospace; }
-        .log-entry { border-bottom: 1px solid #111; padding: 3px 0; }
+        /* LOG PANEL */
+        .log-area { height: 110px; background: #000; border: 1px solid #222; border-radius: 8px; margin-top: 10px; display: flex; flex-direction: column; }
+        #log-content { flex: 1; overflow-y: auto; padding: 8px; font-size: 11px; font-family: monospace; }
+        .log-row { border-bottom: 1px solid #111; padding: 2px 0; }
 
-        /* MODALES */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .modal { background: #1a1a1d; border: 1px solid #333; padding: 20px; border-radius: 12px; width: 80%; max-width: 400px; }
+        /* MODAL */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 999; }
+        .modal { background: #1a1a1d; border: 1px solid #444; padding: 20px; border-radius: 12px; width: 85%; max-width: 400px; box-shadow: 0 10px 30px #000; }
     </style>
 </head>
 <body>
@@ -58,49 +62,51 @@
     <div id="view-list">
         <div class="header-main">
             <div class="version">V 1.0.0v</div>
-            <div class="signature">By Redrant :v</div>
+            <div class="signature">My Dashesh - By Redrant :v</div>
         </div>
         <div class="input-group">
-            <input type="text" id="itemName" placeholder="Nombre...">
-            <button onclick="create('dash')" class="tool" style="background:var(--p); color:#000;">+DASH</button>
-            <button onclick="create('folder')" class="tool" style="background:var(--folder); color:#000;">+CARPETA</button>
+            <input type="text" id="itemName" placeholder="Nuevo elemento...">
+            <button onclick="addItem('dash')" class="btn btn-p">+DASH</button>
+            <button onclick="addItem('folder')" class="btn btn-f">+CARPETA</button>
         </div>
         <div id="list-container"></div>
-        <div class="log-panel">
-            <div style="font-size:9px; padding:4px; color:#555;">LOG DE DADOS</div>
+        <div class="log-area">
+            <div style="font-size:9px; padding:3px 8px; background:#111; color:#666;">HISTORIAL DE DADOS</div>
             <div id="log-content"></div>
         </div>
     </div>
 
-    <div id="view-details" style="display:none;">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
-            <button onclick="showList()" class="tool">⬅ ATRÁS</button>
-            <div id="current-title" class="signature"></div>
-            <button onclick="openOwnerMenu()" class="tool">👤</button>
+    <div id="view-details">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:8px;">
+            <button onclick="closeDetails()" class="btn btn-ghost">⬅ VOLVER</button>
+            <div id="detail-title" class="signature"></div>
+            <button onclick="setOwnerMenu()" class="btn btn-ghost">👤</button>
         </div>
+        
+        <button onclick="toggleVisual()" id="mode-btn" style="width:100%; padding:10px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">VISUALIZAR</button>
 
-        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:10px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">VISUALIZAR</button>
-
-        <div id="editor-ui">
+        <div id="editor-ui" class="editor-wrap">
             <div class="toolbar">
-                <button class="tool" onclick="ins('[cb] ','')">🔘 CasillaPro+</button>
-                <button class="tool" onclick="ins('[note=TÍTULO]CONTENIDO[/note]','')">📝 NotaPro+</button>
-                <button class="tool" onclick="wrap('<g=gold>','</g>')">✨ Glow</button>
-                <button class="tool" onclick="wrap('**','**')"><b>B</b></button>
-                <button class="tool" onclick="wrap('*','*')"><i>I</i></button>
-                <button class="tool" onclick="deleteItem()" style="background:var(--fail)">🗑️</button>
+                <button class="btn btn-ghost" onclick="ins('[cb] ','')">🔘 CasillaPro+</button>
+                <button class="btn btn-ghost" onclick="ins('[note=TITULO]','[/note]')">📝 NotaPro+</button>
+                <button class="btn btn-ghost" onclick="wrap('<g=gold>','</g>')">✨ Glow</button>
+                <button class="btn btn-ghost" onclick="wrap('**','**')"><b>B</b></button>
+                <button class="btn btn-ghost" onclick="wrap('*','*')"><i>I</i></button>
+                <button class="btn btn-p" onclick="deleteItem()" style="background:var(--fail);margin-left:auto;">🗑️</button>
             </div>
-            <textarea id="editor" oninput="handleInput()"></textarea>
+            <textarea id="editor" oninput="updateLocal()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
-    <div id="global-overlay" class="overlay" onclick="this.style.display='none'"><div id="modal-content" class="modal" onclick="event.stopPropagation()"></div></div>
+    <div id="global-modal" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()" id="modal-body"></div>
+    </div>
 
     <script>
-        let state = { items: {}, id: null, editing: true, uid: 'local', uname: 'User', dragId: null, collapsed: {} };
-        const DB = "MYDASHES_100V";
-        const LOG = "MYDASHES_LOG";
+        const KEY = "MYDASHES_100V_PRO";
+        const LOG = "MYDASHES_LOG_PRO";
+        let state = { items: {}, id: null, editMode: true, uid: 'local', uname: 'Player', dragId: null, openFolders: {} };
 
         async function init() {
             try {
@@ -108,175 +114,181 @@
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
                     OBR.scene.onMetadataChange(m => {
-                        state.items = m[DB] || {};
-                        renderList();
-                        renderLog(m[LOG] || []);
-                        if(state.id) syncView();
+                        state.items = m[KEY] || {};
+                        drawList();
+                        drawLog(m[LOG] || []);
+                        if(state.id) syncDetails();
                     });
                 });
-            } catch(e) { /* Web Mode */ }
+            } catch(e) { console.warn("Local Mode"); }
         }
 
-        async function save() { await OBR.scene.setMetadata({ [DB]: state.items }); }
+        async function save() { await OBR.scene.setMetadata({ [KEY]: state.items }); }
 
-        function create(type) {
-            const n = document.getElementById('itemName').value || "Nuevo";
-            const id = "i" + Date.now();
-            state.items[id] = { id, type, name: n, content: "# " + n, owner: null, parent: null };
+        function addItem(type) {
+            const name = document.getElementById('itemName').value || "Nuevo";
+            const id = "id_" + Date.now();
+            state.items[id] = { id, type, name, content: "# " + name + "\nFUE=10\n1d20+FUE", owner: null, parent: null };
             document.getElementById('itemName').value = '';
             save();
         }
 
-        function renderList() {
+        function drawList() {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
-            const items = Object.values(state.items);
+            const all = Object.values(state.items);
 
-            items.filter(i => i.type === 'folder').forEach(f => {
+            // Carpetas
+            all.filter(i => i.type === 'folder').forEach(f => {
                 const fDiv = document.createElement('div');
                 fDiv.className = 'item-card folder-card';
-                fDiv.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <small>${state.collapsed[f.id] ? '▲' : '▼'}</small>`;
-                fDiv.onclick = () => { state.collapsed[f.id] = !state.collapsed[f.id]; renderList(); };
+                fDiv.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <small>${state.openFolders[f.id] ? '▲' : '▼'}</small>`;
+                fDiv.onclick = () => { state.openFolders[f.id] = !state.openFolders[f.id]; drawList(); };
                 fDiv.ondragover = e => e.preventDefault();
                 fDiv.ondrop = e => { e.preventDefault(); move(state.dragId, f.id); };
                 container.appendChild(fDiv);
 
-                items.filter(c => c.parent === f.id).forEach(dash => {
-                    container.appendChild(createDashEl(dash, true, state.collapsed[f.id]));
+                all.filter(c => c.parent === f.id).forEach(dash => {
+                    container.appendChild(makeDash(dash, true, state.openFolders[f.id]));
                 });
             });
 
-            items.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
-                container.appendChild(createDashEl(dash, false));
+            // Dashes sueltos
+            all.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
+                container.appendChild(makeDash(dash, false));
             });
         }
 
-        function createDashEl(dash, isChild, isHidden) {
-            const d = document.createElement('div');
-            d.className = `item-card dash-card ${isChild ? 'child' : ''} ${isChild && !isHidden ? 'show-child' : ''}`;
-            d.draggable = true;
-            d.innerHTML = `<span>📄 ${dash.name}</span> ${dash.owner ? '👤' : ''}`;
-            d.onclick = (e) => { e.stopPropagation(); state.id = dash.id; openDash(); };
-            d.ondragstart = () => state.dragId = dash.id;
-            d.ondragover = e => e.preventDefault();
-            d.ondrop = e => { e.preventDefault(); move(state.dragId, null); };
-            return d;
+        function makeDash(item, isChild, isVisible) {
+            const div = document.createElement('div');
+            div.className = `item-card dash-card ${isChild ? 'child' : ''} ${isChild && isVisible ? 'is-open' : ''}`;
+            div.draggable = true;
+            div.innerHTML = `<span>📄 ${item.name}</span> ${item.owner ? '👤' : ''}`;
+            div.onclick = (e) => { e.stopPropagation(); state.id = item.id; openDetails(); };
+            div.ondragstart = () => state.dragId = item.id;
+            div.ondragover = e => e.preventDefault();
+            div.ondrop = e => { e.preventDefault(); move(state.dragId, null); };
+            return div;
         }
 
-        async function move(id, pid) { state.items[id].parent = pid; await save(); }
+        async function move(id, pid) { if(id !== pid) { state.items[id].parent = pid; await save(); } }
 
-        function openDash() {
+        function openDetails() {
             document.getElementById('view-list').style.display = 'none';
-            document.getElementById('view-details').style.display = 'block';
-            state.editing = true;
-            syncView();
+            document.getElementById('view-details').style.display = 'flex';
+            state.editMode = true;
+            syncDetails();
         }
 
-        function syncView() {
+        function syncDetails() {
             const item = state.items[state.id];
-            if(!item) return;
-            document.getElementById('current-title').innerText = item.name;
-            document.getElementById('editor-ui').style.display = state.editing ? 'block' : 'none';
-            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('btn-mode').innerText = state.editing ? "VISUALIZAR" : "EDITAR";
-            document.getElementById('editor').value = item.content;
-            if(!state.editing) renderPreview(item.content);
+            if(!item) return closeDetails();
+            document.getElementById('detail-title').innerText = item.name;
+            document.getElementById('editor-ui').style.display = state.editMode ? 'flex' : 'none';
+            document.getElementById('preview').style.display = state.editMode ? 'none' : 'block';
+            document.getElementById('mode-btn').innerText = state.editMode ? "VISUALIZAR" : "EDITAR";
+            
+            if (document.activeElement !== document.getElementById('editor')) {
+                document.getElementById('editor').value = item.content;
+            }
+            if(!state.editMode) renderPreview(item.content);
         }
 
-        function renderPreview(txt) {
+        function renderPreview(raw) {
             const vars = {};
-            // 1. Procesar variables (FUE=10)
-            txt.replace(/(\w+)=(\d+)/g, (m, k, v) => vars[k] = parseInt(v));
+            // 1. Detectar variables FUE=10
+            raw.replace(/(\w+)\s*=\s*([\-\d]+)/g, (m, k, v) => vars[k.toUpperCase()] = parseInt(v));
 
-            let html = txt
-                .replace(/  /g, '<br>') // Doble espacio = Renglón
+            let html = raw
+                .replace(/  /g, '<br>') // Doble espacio = renglón
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span class="glow" style="text-shadow: 0 0 10px $1, 0 0 5px $1; color:white;">$2</span>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span class="glow" style="text-shadow: 0 0 10px $1; color:white;">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    return `<button class="note-btn" onclick="showNote('${t}', '${c.replace(/\n/g, '<br>').replace(/'/g, "\\'")}')">${t}</button>`;
+                    const safe = c.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showNote('${t}', '${safe}')">${t}</button>`;
                 })
                 .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, c) => {
-                    return `<div class="cb-container"><input type="checkbox" class="cb-check" onclick="transfer('${c.replace(/'/g, "\\'")}', this)"><div>${c}</div></div>`;
+                    return `<div class="cb-box"><input type="checkbox" class="cb-check" onclick="transfer('${c.replace(/'/g, "\\'")}', this)"><span>${c}</span></div>`;
                 })
-                // 2. Lógica de dados avanzada (+5FUE, 2d4+FUE, etc)
-                .replace(/([\+\-\d]*d\d+[\+\-\*\/\d\w\(\)]*|[\+\-]\d+\w+)/gi, f => {
-                    return `<span style="color:var(--accent);cursor:pointer;font-weight:bold;" onclick="roll('${f}', ${JSON.stringify(vars)})">${f}</span>`;
+                // Dados con variables avanzadas (+5FUE, 1d20+FUE*2, etc)
+                .replace(/([\d]*d\d+[\+\-\*\/\d\w\(\)]*|[\+\-]\d+\w+)/gi, f => {
+                    return `<span class="roll-trigger" onclick="doRoll('${f}', ${JSON.stringify(vars)})">${f}</span>`;
                 });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        async function roll(formula, vars) {
-            let fClean = formula.toUpperCase();
-            // Reemplazar variables en la fórmula
-            for (let v in vars) {
-                fClean = fClean.replace(new RegExp(v, 'g'), vars[v]);
-            }
+        async function doRoll(formula, vars) {
+            let f = formula.toUpperCase();
+            // Reemplazar variables
+            for (let v in vars) { f = f.replace(new RegExp(v, 'g'), vars[v]); }
             
-            // Resolver XdY
-            let totalDice = 0;
-            let diceLog = [];
-            fClean = fClean.replace(/(\d*)D(\d+)/g, (m, n, d) => {
-                let num = parseInt(n) || 1;
+            // Procesar Dados
+            let logs = [];
+            f = f.replace(/(\d*)D(\d+)/g, (m, n, d) => {
+                let count = parseInt(n) || 1;
                 let sides = parseInt(d);
-                let sub = 0;
-                for(let i=0; i<num; i++) {
+                let sum = 0;
+                for(let i=0; i<count; i++){
                     let r = Math.floor(Math.random()*sides)+1;
-                    sub += r;
-                    diceLog.push(r);
+                    sum += r; logs.push(r);
                 }
-                return sub;
+                return `(${sum})`;
             });
 
-            let final;
-            try { final = eval(fClean); } catch(e) { final = "Error"; }
+            let result;
+            try { result = eval(f); } catch(e) { result = "Error"; }
 
-            const entry = { u: state.uname, f: formula, r: final, d: diceLog.join(', ') };
-            const m = await OBR.scene.getMetadata();
-            const logs = [entry, ...(m[LOG] || [])].slice(0, 20);
-            await OBR.scene.setMetadata({ [LOG]: logs });
+            const entry = { u: state.uname, f: formula, r: result, d: logs.join(', ') };
+            const currentLogs = (await OBR.scene.getMetadata())[LOG] || [];
+            await OBR.scene.setMetadata({ [LOG]: [entry, ...currentLogs].slice(0, 20) });
         }
 
-        async function transfer(text, cb) {
+        async function transfer(txt, cb) {
             if(!cb.checked) return;
             const target = Object.values(state.items).find(i => i.owner === state.uid);
             if(target) {
-                target.content += "\n" + text;
+                target.content += "\n" + txt;
                 await save();
                 cb.disabled = true;
                 cb.parentElement.style.opacity = "0.5";
             } else {
-                alert("Asignate un Dash con el icono 👤");
+                alert("Primero asígnate un Dash con el icono 👤");
                 cb.checked = false;
             }
         }
 
-        function renderLog(logs) {
-            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <b>${l.r}</b> <small style="color:#555">(${l.d})</small></div>`).join('');
+        function drawLog(logs) {
+            document.getElementById('log-content').innerHTML = logs.map(l => `
+                <div class="log-row"><b>${l.u}:</b> ${l.f} ➔ <b>${l.r}</b> <small style="color:#555">(${l.d})</small></div>
+            `).join('');
         }
 
         function showNote(t, c) {
-            document.getElementById('modal-content').innerHTML = `<h3 style="color:var(--p);margin-top:0;">${t}</h3><div style="text-align:left;color:#ccc;">${c}</div>`;
-            document.getElementById('global-overlay').style.display = 'flex';
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `<h3 style="color:var(--p);margin-top:0;">${t}</h3><div style="line-height:1.5">${c}</div>`;
+            document.getElementById('global-modal').style.display = 'flex';
         }
 
-        function toggleMode() { state.editing = !state.editing; syncView(); }
-        function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
-        
-        async function openOwnerMenu() {
+        async function setOwnerMenu() {
             const players = await OBR.party.getPlayers();
-            let h = `<h3 style="color:var(--p)">Dueño</h3>`;
-            players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:var(--p); border:none; border-radius:8px; font-weight:bold;">${p.name}</button>`);
-            document.getElementById('modal-content').innerHTML = h;
-            document.getElementById('global-overlay').style.display = 'flex';
+            const body = document.getElementById('modal-body');
+            let h = `<h3 style="color:var(--p)">Asignar Dueño</h3>`;
+            players.forEach(p => {
+                h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:var(--p); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">${p.name}</button>`;
+            });
+            body.innerHTML = h;
+            document.getElementById('global-modal').style.display = 'flex';
         }
 
-        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-overlay').style.display='none'; }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
-        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
-        async function deleteItem() { if(confirm("¿Eliminar?")) { delete state.items[state.id]; await save(); showList(); } }
+        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-modal').style.display = 'none'; }
+        function toggleVisual() { state.editMode = !state.editMode; syncDetails(); }
+        function updateLocal() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function closeDetails() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
+        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); updateLocal(); }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateLocal(); }
+        async function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; await save(); closeDetails(); } }
 
         init();
     </script>
