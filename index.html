@@ -16,59 +16,31 @@
         .version { font-size: 10px; color: var(--p); letter-spacing: 2px; font-weight: bold; }
         .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); }
 
-        /* Barra de Herramientas */
-        .toolbar { 
-            display: flex; gap: 4px; background: #222; padding: 8px; 
-            border-radius: 8px 8px 0 0; flex-wrap: wrap; border: 1px solid #444;
-        }
-        .tool { 
-            background: #333; color: white; border: none; padding: 6px 10px; 
-            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;
-        }
+        /* Herramientas */
+        .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; flex-wrap: wrap; border: 1px solid #444; }
+        .tool { background: #333; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .tool:hover { background: var(--p); color: #000; }
         .tool.accent { background: var(--accent); color: #000; }
 
-        /* Editor y Preview */
+        /* Editor */
         #editor { 
             width: 100%; height: 250px; background: #121214; color: #888; 
-            padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; 
+            padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; 
             resize: vertical; box-sizing: border-box; outline: none; border-radius: 0 0 8px 8px;
         }
 
-        #preview { 
-            padding: 20px; min-height: 100px; line-height: 1.8; display: none; 
-            background: rgba(0,0,0,0.3); border-radius: 8px;
-        }
+        #preview { padding: 20px; min-height: 100px; line-height: 1.6; display: none; background: rgba(0,0,0,0.3); border-radius: 8px; }
 
-        /* Estilos en Modo Juego */
-        .italic { font-style: italic; color: #bbb; }
-        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 5px; border-radius: 4px; }
-        .stat-tag { color: var(--accent); font-weight: bold; }
-        
-        /* Botón de ExtraNote */
-        .note-btn { 
-            background: #333; color: var(--accent); border: 1px solid var(--accent);
-            padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;
-            font-weight: bold; margin: 0 4px; display: inline-block;
-        }
+        /* Estilos de Texto */
+        .note-btn { background: #121214; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 4px; }
+        .note-btn:hover { background: var(--accent); color: black; }
+        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; }
 
         /* Modales */
-        .overlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.92); display: none; align-items: center; 
-            justify-content: center; z-index: 9999; backdrop-filter: blur(8px);
-        }
-        .modal { 
-            background: #1e1e1e; border: 2px solid var(--p); padding: 25px; 
-            border-radius: 15px; text-align: center; max-width: 85%; width: 300px;
-            box-shadow: 0 0 30px rgba(187,134,252,0.3);
-        }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
+        .modal { background: #1e1e1e; border: 2px solid var(--p); padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 0 30px var(--p); }
 
-        .mode-toggle { 
-            width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px;
-            font-weight: bold; cursor: pointer; background: var(--p); color: black;
-        }
-
+        .mode-toggle { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: var(--p); color: black; }
         .dash-card { background: #1a1a1d; padding: 15px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
     </style>
 </head>
@@ -76,7 +48,7 @@
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">1.1.1v</div>
+            <div class="version">1.1.2v</div>
             <div class="signature">By Redrant :v</div>
             <h2 style="margin:5px 0; color:var(--p)">My Dashes</h2>
         </div>
@@ -103,7 +75,7 @@
                 <button class="tool" onclick="ins('FUE=10','')">Var</button>
                 <button class="tool" onclick="ins('+5FUE','')">Bonus</button>
             </div>
-            <textarea id="editor" oninput="saveAndParse()"></textarea>
+            <textarea id="editor" oninput="saveAndParse()" placeholder="Escribe aquí... (Usa dos espacios al final de línea para un renglón)"></textarea>
         </div>
 
         <div id="preview"></div>
@@ -126,14 +98,14 @@
         async function save() { await OBR.scene.setMetadata({ [KEY]: state.dashes }); }
 
         function promptGlow() {
-            const color = prompt("Color del brillo (ej: purple, gold, #00ff00):", "violet");
-            if(color) wrap(`<g=${color}>`, `/g`);
+            const color = prompt("Color (red, gold, violet, #00ff00):", "violet");
+            if(color) wrap(`<g=${color}>`, `</g>`);
         }
 
         function promptExtraNote() {
             const title = prompt("Título del botón:");
             if(!title) return;
-            const content = prompt("Contenido de la nota (puedes usar varias líneas):");
+            const content = prompt("Contenido (puedes usar varias líneas):");
             if(!content) return;
             ins(`[note=${title}]${content}[/note]`, "");
         }
@@ -149,26 +121,30 @@
                 state.stats[name] = (state.stats[name] || 0) + (parseInt(v) * (op === '-' ? -1 : 1));
             });
 
+            // Motor de Renderizado Corregido
             let html = txt
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="text-shadow: 0 0 10px $1; color: $1; font-weight: bold;">$2</span>')
-                .replace(/<i(.*?)<\/i>/g, '<span class="italic"$1</span>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow: 0 0 12px $1; color: $1; font-weight: bold;">$2</span>')
+                .replace(/<i(.*?)<\/i>/gs, '<span style="font-style:italic; color:#bbb;">$1</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
-                    const safe = content.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    const safe = content.replace(/\s{2,}/g, '<br>').replace(/\n/g, '<br>').replace(/'/g, "\\'");
                     return `<button class="note-btn" onclick="showNote('${title}', '${safe}')">[${title}]</button>`;
                 })
-                .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
-                .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
+                .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span style="color:var(--accent);font-weight:bold;">$1=$2</span>')
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin:0;">$1</h2>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
+            // Lógica de renglones: doble espacio o salto de línea simple
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
             save();
         }
 
         function showNote(title, content) {
             const m = document.getElementById('modal-content');
-            m.innerHTML = `<h3 style="color:var(--p); margin-top:0;">${title}</h3><div style="text-align:left; color:#ccc;">${content}</div><button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="margin-top:20px; width:100%">CERRAR</button>`;
+            m.innerHTML = `
+                <h3 style="color:var(--p); margin:0 0 15px 0; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h3>
+                <div style="text-align:left; color:#ddd; font-size:14px; max-height:300px; overflow-y:auto;">${content}</div>
+                <button onclick="document.getElementById('global-overlay').style.display='none'" class="mode-toggle" style="margin-top:20px;">CERRAR</button>
+            `;
             document.getElementById('global-overlay').style.display = 'flex';
         }
 
