@@ -10,74 +10,100 @@
             --accent: #bb86fc; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
             --dice-bg: #2d2d3d; --dice-txt: #8cafff;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
+        /* HEADER */
+        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
 
+        /* VIEWS */
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
         #view-details { display: none; }
 
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .folder-header { border-left: 4px solid var(--var); background: #1e1e1a; font-weight: bold; }
-        .folder-content { display: none; flex-direction: column; gap: 5px; padding-left: 15px; }
-        .folder-content.open { display: flex; margin-bottom: 10px; }
-        .dash-card { border-left: 4px solid var(--p); }
+        /* LISTA Y CARPETAS */
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .card:hover { border-color: var(--p); }
+        
+        .folder-header { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
+        .folder-content { display: none; flex-direction: column; gap: 5px; padding-left: 20px; border-left: 1px dashed #444; }
+        .folder-content.open { display: flex; margin-bottom: 10px; margin-top: 5px; }
+        .dash-card { border-left: 5px solid var(--p); }
 
-        /* Estilos de Bloques (Inspirado en tus imágenes) */
-        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-weight: bold; display: inline-block; margin: 2px 2px; background: rgba(255,171,64,0.05); }
-        .block-roll { color: var(--dice-txt); background: var(--dice-bg); border-radius: 6px; padding: 3px 8px; cursor: pointer; border-bottom: 2px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
-        .block-roll:hover { filter: brightness(1.2); transform: translateY(-1px); }
-        .block-roll span { color: var(--var); }
+        /* COMPONENTES VISUALES FUSIONADOS */
+        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-weight: bold; display: inline-block; margin: 2px 0; background: rgba(255,171,64,0.1); }
+        
+        .block-roll { 
+            color: var(--dice-txt); background: var(--dice-bg); border-radius: 6px; 
+            padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; 
+            font-weight: bold; display: inline-flex; align-items: center; gap: 5px; 
+            transition: 0.2s; user-select: none;
+        }
+        .block-roll:hover { filter: brightness(1.3); transform: translateY(-1px); }
+        .block-roll span { color: var(--var); font-size: 0.9em; }
 
-        .plus-cb { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #555; color: #555; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; margin-right: 8px; }
+        /* CASILLAS [+] */
+        .check-row { display: flex; align-items: center; margin: 8px 0; width: 100%; }
+        .plus-cb { 
+            width: 24px; height: 24px; border-radius: 50%; border: 2px solid #555; 
+            color: #555; display: inline-flex; align-items: center; justify-content: center; 
+            cursor: pointer; font-weight: bold; margin-right: 12px; transition: 0.3s; flex-shrink: 0;
+        }
         .plus-cb.active { border-color: var(--crit); color: var(--crit); background: rgba(0,255,136,0.1); transform: rotate(45deg); }
 
-        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; border-radius: 0 0 8px 8px; outline: none; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 2.2; }
+        /* BOTONES Y EDITOR */
+        .tool-btn { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .tool-btn.primary { background: var(--p); color: black; }
+        
+        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.8; font-size: 16px; }
+        .note-link { color: var(--p); text-decoration: underline; cursor: pointer; font-weight: bold; background: rgba(187,134,252,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--p); }
 
-        /* Modal Dados */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
-        .die-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
-        .die { width: 50px; height: 50px; background: #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; border: 2px solid #333; }
-        .total-val { font-size: 70px; font-weight: 900; color: var(--p); text-shadow: 0 0 20px rgba(187, 134, 252, 0.4); margin: 10px 0; }
-        .log-v { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 8px; border: 1px solid #222; overflow-y: auto; text-align: left; }
+        /* MODAL DADOS ANIMADOS */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 99999; }
+        .modal { background: #111; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .die-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
+        .die { width: 55px; height: 55px; background: #1a1a1d; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; border: 2px solid #333; color: #fff; }
+        .total-val { font-size: 80px; font-weight: 900; color: var(--p); text-shadow: 0 0 20px var(--p); margin: 10px 0; }
+        
+        /* LOG */
+        .log-container { height: 120px; background: #000; padding: 12px; font-size: 12px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #aaa; }
+        .log-entry { padding: 4px 0; border-bottom: 1px solid #111; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v19.5 PRO</div></div>
+    <div class="header"><div class="sig">MY DASHES v20.0 • MASTER</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
-            <button onclick="addItem('dash')" style="background:var(--p); color:black; padding:0 15px; border-radius:8px; cursor:pointer; font-weight:bold; border:none;">+DASH</button>
-            <button onclick="addItem('folder')" style="background:var(--var); color:black; padding:0 15px; border-radius:8px; cursor:pointer; font-weight:bold; border:none;">+CARPETA</button>
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:12px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:10px; outline:none;">
+            <button onclick="addItem('dash')" class="tool-btn primary">+DASH</button>
+            <button onclick="addItem('folder')" class="tool-btn" style="background:var(--var); color:black;">+CARPETA</button>
         </div>
         <div id="items-container" class="items-area"></div>
-        <div class="log-v" id="log-content"></div>
+        <div class="log-container" id="log-content"></div>
     </div>
 
     <div id="view-details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="goBack()" style="background:#333; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">⬅ VOLVER</button>
-            <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" style="background:var(--p); color:black; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">OWNEAR</button>
+            <button onclick="goBack()" class="tool-btn">⬅ VOLVER</button>
+            <b id="det-title" style="color:var(--p); font-size:18px;"></b>
+            <button id="own-btn" onclick="toggleOwnership()" class="tool-btn primary">OWNEAR</button>
         </div>
 
-        <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:8px; border: 1px solid #222;">
-            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">VISUALIZAR</button>
+        <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px; border: 1px solid #222;">
+            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VISUALIZAR</button>
             <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
         </div>
 
         <div id="editor-ui" style="display:none; flex-direction:column; flex:1;">
-            <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:8px 8px 0 0; border:1px solid #444;">
-                <button onclick="wrap('**','**')" style="padding:5px 10px;">B</button>
-                <button onclick="ins('[+] ','')" style="padding:5px 10px;">Check+</button>
-                <button onclick="deleteItem()" style="background:var(--fail); margin-left:auto; border:none; color:white; border-radius:4px; padding:5px 10px;">BORRAR</button>
+            <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0; border:1px solid #444;">
+                <button class="tool-btn" onclick="wrap('**','**')">B</button>
+                <button class="tool-btn" onclick="ins('[+] ','')">Check+</button>
+                <button class="tool-btn" onclick="askNote()">Nota+</button>
+                <button class="tool-btn" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
             </div>
             <textarea id="editor" oninput="saveContent()"></textarea>
         </div>
@@ -86,16 +112,24 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-formula" style="color:#666; font-size:12px; font-family:monospace; margin-bottom:10px;"></div>
+            <div id="d-formula" style="color:#666; font-size:14px; font-family:monospace;"></div>
             <div id="dice-grid" class="die-grid"></div>
             <div id="total-val" class="total-val">0</div>
-            <div id="d-breakdown" style="font-size:11px; color:#555; border-top:1px solid #222; padding-top:10px; margin-top:10px;"></div>
+            <div id="d-breakdown" style="font-size:12px; color:#555; border-top:1px solid #222; padding-top:10px;"></div>
+        </div>
+    </div>
+
+    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="note-title" style="color:var(--var); margin-top:0;"></h3>
+            <div id="note-body" style="text-align:left; font-size:15px; color:#ddd; white-space: pre-wrap;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" style="width:100%; margin-top:20px; padding:15px; background:var(--p); color:black; border:none; border-radius:10px; font-weight:bold;">CERRAR</button>
         </div>
     </div>
 
     <script>
         let state = { items: {}, logs: [], id: null, edit: false, uid: 'local', uname: 'Player', isDM: false, checks: {}, openFolders: {} };
-        const DB = "V195_ITEMS", LG = "V195_LOGS", CH = "V195_CHECKS";
+        const DB = "V20_ITEMS", LG = "V20_LOGS", CH = "V20_CHECKS";
 
         async function init() {
             try {
@@ -115,7 +149,7 @@
         function addItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n1d20+FUE', owner: null, parent: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n[+] Atacar\n[+] Defender\n\n1d20+FUE', owner: null, parent: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -124,6 +158,7 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
+            // Render Carpetas
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const head = document.createElement('div');
                 head.className = "card folder-header";
@@ -139,8 +174,12 @@
                 cont.appendChild(sub);
             });
 
+            // Render Dash sueltos
             vals.filter(d => d.type === 'dash' && !d.parent).forEach(d => cont.appendChild(createCard(d)));
-            document.getElementById('log-content').innerHTML = (state.logs || []).map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--p)">${l.r}</b></div>`).join('');
+            
+            // Log
+            document.getElementById('log-content').innerHTML = state.logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--p)">${l.r}</b></div>`).join('');
+            
             if(state.id) syncDetails();
         }
 
@@ -157,7 +196,7 @@
 
         function switchTab(isEdit) {
             const it = state.items[state.id];
-            if(isEdit && it.owner && it.owner !== state.uid && !state.isDM) { alert("Bloqueado."); return; }
+            if(isEdit && it.owner && it.owner !== state.uid && !state.isDM) { alert("Este Dash pertenece a otro usuario."); return; }
             state.edit = isEdit;
             document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
             document.getElementById('t-edit').style.color = isEdit ? "black" : "white";
@@ -175,36 +214,43 @@
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
+        // --- MOTOR LOGICO CORE v20 ---
         function renderPreview(txt) {
             const memory = {};
             const cleanText = txt.replace(/<\/?[^>]+(>|$)/g, "");
             
-            // 1. Extraer Variables
+            // 1. Calcular Variables
             cleanText.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
             cleanText.replace(/([\+\-])(\d+)\b([A-Z]+)\b/gi, (m, s, n, k) => {
                 const key = k.toUpperCase();
                 if(memory[key]!==undefined) memory[key] = (s==='+') ? memory[key]+parseInt(n) : memory[key]-parseInt(n);
             });
 
-            // 2. Renderizado Visual
+            // 2. Procesar Visuales
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\[\+\] (.*)/g, (m, l) => {
-                    const cid = state.id + l.trim();
-                    return `<div style="display:flex; align-items:center;"><div class="plus-cb ${state.checks[cid]?'active':''}" onclick="toggleCheck('${cid}')">+</div> ${l}</div>`;
+                .replace(/\[\+\] (.*)/g, (m, label) => {
+                    const cid = state.id + label.trim();
+                    const active = state.checks[cid] ? 'active' : '';
+                    return `<div class="check-row"><div class="plus-cb ${active}" onclick="toggleCheck('${cid}')">+</div><span>${label}</span></div>`;
+                })
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
+                    // Convertir dobles espacios en saltos de línea para la nota
+                    const parsedContent = content.replace(/  /g, '\n').replace(/'/g, "\\'");
+                    return `<span class="note-link" onclick="showNote('${title}','${parsedContent}')">${title}</span>`;
                 });
 
-            // Naranja (Variables)
+            // Bloques Naranja (Variables)
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
             html = html.replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>');
 
-            // Violeta (Dados) - Buscamos patrones tipo 1d20+FUE
-            html = html.replace(/(\d*d\d+([\+\-\*\/]\(?\b[A-Z0-9]+\b\)?)*)/gi, f => {
-                if(!/d/i.test(f)) return f;
-                let display = f;
-                for(let k in memory) display = display.replace(new RegExp(`\\b${k}\\b`, 'g'), `<span>${k}</span>`);
-                // Usamos un onclick que pasa la formula limpia
-                return `<div class="block-roll" onclick="runRoll('${f}', ${JSON.stringify(memory)})">${display}</div>`;
+            // Bloques Violeta (Dados)
+            // Se usa un div con onclick independiente de los estilos internos
+            html = html.replace(/(\d*d\d+([\+\-\*\/]\(?\b[A-Z0-9]+\b\)?)*)/gi, (formula) => {
+                if(!/d/i.test(formula)) return formula;
+                let visualFormula = formula;
+                for(let k in memory) visualFormula = visualFormula.replace(new RegExp(`\\b${k}\\b`,'g'), `<span>${k}</span>`);
+                return `<div class="block-roll" onclick="runRoll('${formula}', ${JSON.stringify(memory)})">${visualFormula}</div>`;
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
@@ -214,67 +260,86 @@
             let logic = formula.toUpperCase();
             let breakdown = "";
             
-            // Sustituir variables por valores reales antes de calcular
+            // Sustituir variables por valores matemáticos
             for(let k in memory) {
-                if(new RegExp(`\\b${k}\\b`).test(logic)) {
+                const regex = new RegExp(`\\b${k}\\b`, 'g');
+                if(regex.test(logic)) {
                     breakdown += `${k}(${memory[k]}) `;
-                    logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), memory[k]);
+                    logic = logic.replace(regex, memory[k]);
                 }
             }
             
             const match = logic.match(/(\d*)D(\d+)/i);
-            const numDice = parseInt(match[1]) || 1;
-            const sides = parseInt(match[2]);
-            const finalResults = [];
-            for(let i=0; i<numDice; i++) finalResults.push(Math.floor(Math.random()*sides)+1);
+            if(!match) return;
 
-            // UI Animación
+            const n = parseInt(match[1]) || 1;
+            const s = parseInt(match[2]);
+            const results = [];
+            for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+
+            // Mostrar Modal
             document.getElementById('dice-overlay').style.display = 'flex';
-            const grid = document.getElementById('dice-grid');
-            grid.innerHTML = "";
+            document.getElementById('dice-grid').innerHTML = "";
             document.getElementById('total-val').innerText = "...";
             document.getElementById('d-formula').innerText = formula;
 
-            let currentDiceSum = 0;
-            for(let res of finalResults) {
+            let dieSum = 0;
+            for(let res of results) {
                 const d = document.createElement('div'); d.className = "die";
-                grid.appendChild(d);
-                await new Promise(r => {
-                    let ticks = 0;
+                document.getElementById('dice-grid').appendChild(d);
+                await new Promise(resolve => {
+                    let t = 0;
                     const iv = setInterval(() => {
-                        d.innerText = Math.floor(Math.random()*sides)+1;
-                        if(ticks++ > 10) { 
-                            clearInterval(iv); d.innerText = res; 
-                            if(res === sides) d.style.color = "var(--crit)";
+                        d.innerText = Math.floor(Math.random()*s)+1;
+                        if(t++ > 12) {
+                            clearInterval(iv);
+                            d.innerText = res;
+                            if(res === s) d.style.color = "var(--crit)";
                             if(res === 1) d.style.color = "var(--fail)";
-                            currentDiceSum += res; r(); 
+                            dieSum += res;
+                            resolve();
                         }
-                    }, 50);
+                    }, 40);
                 });
             }
 
-            // Cálculo final
-            let total;
+            // Cálculo final evaluando el resto de la fórmula
+            let finalTotal;
             try {
-                // Reemplazamos la parte "1d20" por el resultado real de los dados
-                const finalMath = logic.replace(match[0], currentDiceSum);
-                total = Math.floor(eval(finalMath.replace(/[^0-9\+\-\*\/\(\)]/g, '')));
-            } catch(e) { total = currentDiceSum; }
+                const mathPart = logic.replace(match[0], dieSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                finalTotal = Math.floor(eval(mathPart));
+            } catch(e) { finalTotal = dieSum; }
 
-            document.getElementById('total-val').innerText = total;
-            document.getElementById('d-breakdown').innerText = `Dados: [${finalResults.join('+')}] | Var: ${breakdown}`;
+            document.getElementById('total-val').innerText = finalTotal;
+            document.getElementById('d-breakdown').innerText = `Dados: [${results.join(' + ')}] | Modificadores: ${breakdown}`;
             
-            state.logs.unshift({ u: state.uname, f: formula, r: total });
-            if(state.logs.length > 15) state.logs.pop();
+            state.logs.unshift({ u: state.uname, f: formula, r: finalTotal });
+            if(state.logs.length > 20) state.logs.pop();
             save();
         }
 
+        // --- AUXILIARES ---
         function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
-        function toggleOwnership() { const it = state.items[state.id]; if(!it.owner) it.owner = state.uid; else if(it.owner === state.uid || state.isDM) it.owner = null; save(); }
+        function toggleOwnership() { 
+            const it = state.items[state.id];
+            if(!it.owner) it.owner = state.uid;
+            else if(it.owner === state.uid || state.isDM) it.owner = null;
+            save();
+        }
         function saveContent() { state.items[state.id].content = document.getElementById('editor').value; }
+        function showNote(t, b) { 
+            document.getElementById('note-title').innerText = t; 
+            document.getElementById('note-body').innerText = b; 
+            document.getElementById('note-overlay').style.display='flex'; 
+        }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); saveContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; saveContent(); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function askNote() { 
+            const t = prompt("Título de la nota:"); 
+            const c = prompt("Contenido (Usa doble espacio para saltos de línea):"); 
+            if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); 
+        }
+        function deleteItem() { if(confirm("¿Eliminar para siempre?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
