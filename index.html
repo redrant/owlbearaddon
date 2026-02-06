@@ -24,10 +24,10 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        /* CASILLA CLONADORA */
-        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.08); border: 1px solid var(--p); border-radius: 8px; cursor: pointer; color: #fff; font-size: 14px; }
-        .check-btn:hover { background: rgba(187, 134, 252, 0.15); }
-        .check-btn::before { content: '[+]'; margin-right: 10px; color: var(--p); font-weight: bold; }
+        /* CASILLA CLONADORA BLINDADA */
+        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; font-size: 14px; }
+        .check-btn:hover { background: rgba(187, 134, 252, 0.15); border-color: var(--p); }
+        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; font-family: monospace; }
 
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
@@ -36,7 +36,6 @@
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        /* MODALES */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
@@ -45,13 +44,11 @@
         .total-box.show { opacity: 1; }
         
         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-        .log-crit { color: var(--crit); font-weight: bold; }
-        .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v4.1</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM v4.5</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -101,7 +98,7 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; font-size:16px;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>
         </div>
     </div>
@@ -129,7 +126,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción Poderosa\n1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE\n[note=Info]Nota de prueba[/note]', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -138,46 +135,31 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            // Render Carpetas
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
-                fd.className = "card folder";
-                fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
+                fd.className = "card folder"; fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
                 fd.onclick = (e) => { e.stopPropagation(); state.openFolders[f.id] = !isOpen; save(); };
-                
                 fd.ondragover = e => { e.preventDefault(); fd.style.borderColor = "var(--var)"; };
-                fd.ondragleave = () => { fd.style.borderColor = "#252529"; };
                 fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
-                
                 cont.appendChild(fd);
-                if(isOpen) {
-                    vals.filter(d => d.parent === f.id).forEach(d => {
-                        const child = createCard(d);
-                        child.style.marginLeft = "20px";
-                        child.style.width = "calc(100% - 20px)";
-                        cont.appendChild(child);
-                    });
-                }
+                if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
+                    const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
+                });
             });
 
-            // Render Dashboards sueltos
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
                 const card = createCard(d);
                 card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
                 cont.appendChild(card);
             });
             
-            document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.details})</small></div>`
-            ).join('');
+            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span></div>`).join('');
             if(state.id) syncView();
         }
 
         function createCard(it) {
-            const d = document.createElement('div');
-            d.className = "card dash";
-            d.draggable = true;
+            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
             d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
@@ -190,9 +172,7 @@
         function switchTab(isEdit) {
             state.edit = isEdit;
             document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-edit').style.color = isEdit ? "black" : "white";
             document.getElementById('t-view').style.background = !isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-view').style.color = !isEdit ? "black" : "white";
             syncView();
         }
 
@@ -201,48 +181,61 @@
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            
-            const btn = document.getElementById('own-btn');
-            btn.style.background = "var(--p)"; btn.style.color = "black";
-            btn.innerText = (it.owner === state.uid) ? "LIBERAR" : "OWNEAR";
-
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
             const memory = {};
-            // Captura variables
+            // 1. Cargar Variables Base (FUE=10)
             txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            // 2. Cargar Variables Incrementales (+5FUE)
+            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, sign, val, k) => {
+                const key = k.toUpperCase();
+                if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
+            });
 
-            let html = txt
+            // 3. Procesar Contenido Linea por Linea para Casillas [+]
+            const lines = txt.split('\n');
+            const processedLines = lines.map(line => {
+                let l = line;
+                // Si la linea empieza con [+], la convertimos en botón pero guardamos el contenido original para clonar
+                if (l.trim().startsWith('[+]')) {
+                    const contentToClone = l.replace('[+]', '').trim();
+                    const escapedContent = contentToClone.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    // Renderizamos el interior de la casilla (para que funcionen dados/notas dentro)
+                    const innerRender = renderElements(contentToClone, memory);
+                    return `<div class="check-btn" onclick="cloneToMyDash('${escapedContent}')">${innerRender}</div>`;
+                }
+                return renderElements(l, memory);
+            });
+
+            document.getElementById('preview').innerHTML = processedLines.join('<br>');
+        }
+
+        // Función auxiliar para renderizar dados, notas y colores sin romper la estructura
+        function renderElements(txt, memory) {
+            return txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const cleanC = c.replace(/  /g, '\n').replace(/'/g, "&apos;");
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
+                    const cleanC = c.replace(/  /g, '\n').replace(/'/g, "\\'");
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="event.stopPropagation(); showNote('${t}', '${cleanC}')">[${t}]</span>`;
                 })
-                .replace(/^\[\+\]\s*(.*)/gm, (m, label) => {
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${label.trim()}\`)">${label}</div>`;
+                .replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
+                .replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>')
+                .replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
+                    if(!/d/i.test(f)) return f;
+                    return `<div class="block-roll" onclick='event.stopPropagation(); runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
                 });
-
-            html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
-            html = html.replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
-                if(!/d/i.test(f)) return f;
-                return `<div class="block-roll" onclick='runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
-            });
-
-            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
         function cloneToMyDash(text) {
             const myDash = Object.values(state.items).find(it => it.owner === state.uid);
             if(!myDash) return alert("Primero debes OWNEAR un Dash para recibir la acción.");
-            
-            // Añadir en nueva linea real
             myDash.content += "\n" + text;
             save();
-            alert("Acción clonada a tu Dash!");
+            alert("Acción enviada a tu Dash personal.");
         }
 
         async function runRoll(formula, memory) {
@@ -271,8 +264,8 @@
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++ > 8) {
                             clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
+                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(res); }
+                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(res); }
                             else logDetails.push(res);
                             currentSum += res; r();
                         }
@@ -282,8 +275,8 @@
             let final; try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
             setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`; }, 200);
 
-            state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
-            if(state.log.length > 15) state.log.pop();
+            state.log.unshift({ u: state.uname, f: formula, r: final });
+            if(state.log.length > 10) state.log.pop();
             save();
         }
 
