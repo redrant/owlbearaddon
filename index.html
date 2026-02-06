@@ -2,27 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #03dac6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow-x: hidden; }
+        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 0; }
         
-        .menu-section { display: flex; flex-direction: column; gap: 10px; }
-        input, textarea { background: #2c2c2c; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; }
-        button { background: var(--primary); color: black; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .menu-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        input, textarea { background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 14px; }
+        button { background: var(--primary); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+
+        .dash-item { background: var(--card); padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
+        .dash-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+        .tab-bar { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; border-bottom: 1px solid #444; padding-bottom: 2px; }
+        .tab { padding: 8px 16px; background: #333; cursor: pointer; border-radius: 8px 8px 0 0; font-size: 0.85em; white-space: nowrap; }
+        .tab.active { background: var(--primary); color: black; font-weight: bold; }
+
+        .editor-container { display: flex; flex-direction: column; gap: 10px; }
+        #preview-area { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px dashed #555; min-height: 50px; }
         
-        .dash-item { background: var(--card); padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid transparent; }
-        .dash-item:hover { border-color: var(--primary); }
-
-        .tab-bar { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; border-bottom: 1px solid #444; }
-        .tab { padding: 5px 15px; background: #333; cursor: pointer; border-radius: 5px 5px 0 0; font-size: 0.9em; }
-        .tab.active { background: var(--primary); color: black; }
-
-        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; background: #2a1a3a; padding: 2px 4px; border-radius: 3px; }
-        .result-box { background: #000; padding: 10px; border: 1px solid var(--primary); margin-top: 10px; position: relative; }
-        .crit-success { color: #00ff00; font-weight: bold; }
-        .crit-fail { color: #ff4444; font-weight: bold; }
+        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187, 134, 252, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(187, 134, 252, 0.3); }
+        .result-box { background: #000; padding: 12px; border: 2px solid var(--accent); margin-top: 15px; border-radius: 8px; animation: slideIn 0.3s ease-out; }
+        .crit-success { color: #00ff00; text-shadow: 0 0 5px rgba(0,255,0,0.5); }
+        .crit-fail { color: #ff4444; text-shadow: 0 0 5px rgba(255,68,68,0.5); }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .stat-tag { color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -31,49 +39,69 @@
             <h2>Dashisboard+</h2>
             <div class="menu-section">
                 <input type="text" id="dashName" placeholder="Nombre del nuevo Dash...">
-                <button onclick="createDash()">Crear Dash</button>
+                <button onclick="createDash()">+ Crear Nuevo Dash</button>
             </div>
             <div id="list-container"></div>
         </div>
 
         <div id="view-details" style="display:none;">
-            <div style="display:flex; justify-content: space-between; align-items: center;">
-                <h3 id="current-dash-title" oncontextmenu="event.preventDefault(); editDashName()">Nombre</h3>
-                <button onclick="showList()" style="background:#444; color:white;">Volver</button>
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="current-dash-title" title="Clic derecho para editar/borrar" style="margin:0; cursor:context-menu;">Cargando...</h3>
+                <button onclick="showList()" style="background:#444; color:white; padding: 5px 10px; font-size: 12px;">⬅ Lista</button>
             </div>
-            <div class="tab-bar" id="tab-bar"></div>
-            <button onclick="addPage()" style="font-size: 0.7em; margin-bottom: 5px;">+ Página</button>
             
-            <textarea id="main-editor" rows="12" oninput="handleInput()"></textarea>
-            <div id="preview-area" style="margin-top:10px; line-height: 1.6;"></div>
-            <div id="dice-output"></div>
+            <div class="tab-bar" id="tab-bar"></div>
+            <div style="display:flex; gap: 5px; margin-bottom: 10px;">
+                <button onclick="addPage('normal')" style="font-size: 11px; background: #333; color: white;">+ Pág. Normal</button>
+                <button onclick="addPage('stats')" style="font-size: 11px; background: #333; color: var(--accent);">+ Pág. Estadísticas</button>
+            </div>
+            
+            <div class="editor-container">
+                <textarea id="main-editor" rows="10" placeholder="Escribe aquí... Ejemplo: FUE=10 o 2d20+FUE" oninput="handleInput()"></textarea>
+                <div id="preview-area"></div>
+                <div id="dice-output"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        const OBR = window.OBR;
         let state = { dashes: {}, currentId: null, currentPage: 0, stats: {} };
 
+        // Inicialización
         OBR.onReady(async () => {
+            await refreshData();
+            OBR.scene.onMetadataChange(async (meta) => {
+                await refreshData();
+            });
+            
+            // Configurar menú contextual para el título
+            document.getElementById('current-dash-title').addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showDashMenu();
+            });
+        });
+
+        async function refreshData() {
             const meta = await OBR.scene.getMetadata();
             state.dashes = meta["com.dashisboard.data"] || {};
             renderList();
-            
-            OBR.scene.onMetadataChange((meta) => {
-                state.dashes = meta["com.dashisboard.data"] || {};
-                renderList();
-                if(state.currentId) renderDash();
-            });
-        });
+            if(state.currentId) renderDash();
+        }
 
         async function save() {
             await OBR.scene.setMetadata({ "com.dashisboard.data": state.dashes });
         }
 
+        // Gestión de Dashes
         function createDash() {
             const name = document.getElementById('dashName').value;
             if(!name) return;
-            const id = Date.now().toString();
-            state.dashes[id] = { name, pages: [{title: 'Principal', content: '', type: 'normal'}] };
+            const id = "d-" + Date.now();
+            state.dashes[id] = { 
+                name, 
+                pages: [{title: 'Principal', content: 'FUE=0\nAGI=0\nDES=0\nINT=0\nCAR=0\nFOR=0', type: 'stats'}] 
+            };
             document.getElementById('dashName').value = '';
             save();
         }
@@ -84,7 +112,7 @@
             Object.keys(state.dashes).forEach(id => {
                 const item = document.createElement('div');
                 item.className = 'dash-item';
-                item.innerHTML = `<span>${state.dashes[id].name}</span>`;
+                item.innerHTML = `<span>📂 ${state.dashes[id].name}</span>`;
                 item.onclick = () => openDash(id);
                 container.appendChild(item);
             });
@@ -100,15 +128,16 @@
 
         function renderDash() {
             const dash = state.dashes[state.currentId];
+            if(!dash) { showList(); return; }
+            
             document.getElementById('current-dash-title').innerText = dash.name;
             
-            // Render Tabs
             const tabBar = document.getElementById('tab-bar');
             tabBar.innerHTML = '';
             dash.pages.forEach((p, i) => {
                 const t = document.createElement('div');
                 t.className = `tab ${state.currentPage === i ? 'active' : ''}`;
-                t.innerText = p.title;
+                t.innerText = (p.type === 'stats' ? '📊 ' : '📄 ') + p.title;
                 t.onclick = () => { state.currentPage = i; renderDash(); };
                 tabBar.appendChild(t);
             });
@@ -125,71 +154,106 @@
             save();
         }
 
+        // Lógica de Procesamiento (Variables y Dados)
         function parseContent(text) {
-            // Extraer Stats (FUE=10)
-            const statMatch = text.matchAll(/([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi);
+            // 1. Reset y Captura de Stats (FUE=10)
             state.stats = {};
-            for (const m of statMatch) { state.stats[m[1].toUpperCase()] = parseInt(m[2]); }
+            const statRegex = /([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi;
+            let match;
+            while ((match = statRegex.exec(text)) !== null) {
+                state.stats[match[1].toUpperCase()] = parseInt(match[2]);
+            }
 
-            // Detectar Dados
-            let html = text.replace(/([0-9]+d[0-9]+[\+\-\*\/0-9A-Z]*)/gi, (m) => {
-                return `<span class="dice-roll" onclick="roll('${m}')">${m}</span>`;
+            // 2. Renderizado de Preview con Dados Clicables
+            // Resalta variables y convierte fórmulas de dados
+            let html = text.replace(/([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>');
+            
+            html = html.replace(/([0-9]*d[0-9]+(?:[\+\-\*\/][0-9A-ZÁÉÍÓÚ\(\)]+)*)/gi, (formula) => {
+                return `<span class="dice-roll" onclick="roll('${formula}')">${formula}</span>`;
             });
+
             document.getElementById('preview-area').innerHTML = html.replace(/\n/g, '<br>');
         }
 
         function roll(formula) {
             let evalFormula = formula.toUpperCase();
-            // Reemplazar stats
+            
+            // Reemplazar nombres de variables por sus valores
             Object.keys(state.stats).forEach(s => {
-                evalFormula = evalFormula.replace(new RegExp(s, 'g'), state.stats[s]);
+                const regex = new RegExp(`\\b${s}\\b`, 'g');
+                evalFormula = evalFormula.replace(regex, state.stats[s]);
             });
 
-            const dicePart = evalFormula.match(/(\d+)d(\d+)/i);
-            if(!dicePart) return;
+            // Extraer la parte del dado (ej: 2D20)
+            const diceMatch = evalFormula.match(/(\d*)D(\d+)/i);
+            if (!diceMatch) return;
 
-            const num = parseInt(dicePart[1]);
-            const sides = parseInt(dicePart[2]);
+            const numDice = parseInt(diceMatch[1]) || 1;
+            const sides = parseInt(diceMatch[2]);
             let rolls = [];
-            let sum = 0;
+            let diceSum = 0;
 
-            for(let i=0; i<num; i++) {
-                let r = Math.floor(Math.random() * sides) + 1;
-                let style = r === sides ? 'crit-success' : (r === 1 ? 'crit-fail' : '');
+            for (let i = 0; i < numDice; i++) {
+                const r = Math.floor(Math.random() * sides) + 1;
+                const style = r === sides ? 'crit-success' : (r === 1 ? 'crit-fail' : '');
                 rolls.push(`<span class="${style}">${r}</span>`);
-                sum += r;
+                diceSum += r;
             }
 
-            // Calcular modificadores simples (+5, etc)
-            let mod = 0;
-            const modPart = evalFormula.replace(dicePart[0], "");
-            try { if(modPart) mod = eval(modPart); } catch(e) {}
+            // Calcular el resto de la fórmula matemática
+            let finalResult = diceSum;
+            const mathPart = evalFormula.replace(diceMatch[0], "");
+            try {
+                if (mathPart.trim() !== "") {
+                    // Limpieza básica de seguridad para eval
+                    const cleanMath = mathPart.replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                    finalResult = eval(diceSum + cleanMath);
+                }
+            } catch (e) { console.error("Error matemático", e); }
 
-            const total = sum + mod;
             document.getElementById('dice-output').innerHTML = `
                 <div class="result-box" onclick="this.innerHTML=''">
-                    <strong>Resultado: ${total}</strong><br>
-                    <small>Secuencia: [${rolls.join(', ')}] ${mod >= 0 ? '+'+mod : mod}</small>
+                    <div style="font-size: 0.8em; color: #888;">Tirada: ${formula}</div>
+                    <div style="font-size: 1.4em; font-weight: bold;">TOTAL: ${finalResult}</div>
+                    <div style="font-size: 0.9em;">Dados: [${rolls.join(', ')}] ${mathPart}</div>
+                    <div style="font-size: 0.7em; margin-top:5px; color: #555;">(Clic para cerrar)</div>
                 </div>
             `;
         }
 
+        // Utilidades
         function showList() {
             state.currentId = null;
             document.getElementById('view-list').style.display = 'block';
             document.getElementById('view-details').style.display = 'none';
+            renderList();
         }
 
-        function addPage() {
-            const title = prompt("Nombre de la página:");
+        function addPage(type) {
+            const title = prompt("Nombre de la nueva página:");
             if(!title) return;
-            state.dashes[state.currentId].pages.push({title, content: '', type: 'normal'});
+            state.dashes[state.currentId].pages.push({
+                title, 
+                content: type === 'stats' ? 'FUE=0\nAGI=0\nDES=0' : '', 
+                type: type
+            });
+            state.currentPage = state.dashes[state.currentId].pages.length - 1;
             save();
+            renderDash();
         }
 
-        function editDashName() {
-            const newName = prompt("Nuevo nombre del Dash:", state.dashes[state.currentId].name);
-            if(newName) { state.dashes[state.currentId].name = newName; save(); }
+        function showDashMenu() {
+            const action = prompt("Escribe 'EDITAR' para cambiar el nombre o 'BORRAR' para eliminar este Dash:");
+            if (action === 'EDITAR') {
+                const n = prompt("Nuevo nombre:", state.dashes[state.currentId].name);
+                if(n) { state.dashes[state.currentId].name = n; save(); renderDash(); }
+            } else if (action === 'BORRAR') {
+                if(confirm("¿Seguro que quieres borrar todo este Dash?")) {
+                    delete state.dashes[state.currentId];
+                    save();
+                    showList();
+                }
+            }
         }
     </script>
 </body>
