@@ -13,51 +13,67 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER & MENU */
         .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
         #view-details { display: none; }
 
+        /* LISTA */
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .card { padding: 14px; background: var(--surf); border-radius: 10px; border: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .card:hover { border-color: var(--p); background: #1e1e24; }
+        .card { padding: 14px; background: var(--surf); border-radius: 10px; border: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .card:hover { border-color: var(--p); }
         .folder { border-left: 4px solid var(--var); }
         .dash { border-left: 4px solid var(--p); }
 
-        /* TABS EDIT/VIEW */
+        /* TABS & BUTTONS */
         .nav-tabs { display: flex; background: #000; padding: 4px; border-radius: 8px; border: 1px solid #333; }
         .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: bold; border-radius: 6px; }
         .tab-btn.active { background: var(--p); color: #000; }
-
-        /* EDITOR */
-        .toolbar { display: flex; gap: 5px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
         .tool { background: #333; color: #eee; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
-        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; font-size: 14px; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 15px; }
 
-        /* DICE ANIMATION SYSTEM */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 1px solid var(--p); padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
-        .dice-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 80px; }
-        .die { width: 60px; height: 60px; background: #1a1a1d; border: 2px solid #333; border-radius: 12px; font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: 0.5s; opacity: 0; transform: scale(0.5); }
-        .die.show { opacity: 1; transform: scale(1); }
-        .total-display { font-size: 80px; font-weight: 900; color: var(--accent); margin-top: 10px; opacity: 0; transition: 0.8s; }
-        .total-display.reveal { opacity: 1; transform: translateY(-10px); }
+        /* EDITOR & PREVIEW */
+        textarea { flex: 1; background: #080808; color: #bbb; padding: 15px; border: 1px solid #444; border-radius: 0 0 8px 8px; font-family: monospace; resize: none; outline: none; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.8; }
 
-        /* ELEMENTS */
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); padding: 0 4px; border-radius: 4px; background: rgba(187,134,252,0.1); }
-        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; border: 1px solid rgba(255,171,64,0.3); padding: 1px 4px; border-radius: 4px; }
+        /* DECORATIVE ELEMENTS */
+        .roll-link { 
+            color: #8cafff; font-weight: bold; cursor: pointer; 
+            background: rgba(140, 175, 255, 0.15); border-radius: 6px; 
+            padding: 2px 6px; border-bottom: 2px solid #5c7cff;
+        }
+        .var-tag { 
+            color: var(--var); font-weight: bold; font-family: monospace; 
+            background: rgba(255, 171, 64, 0.1); border: 1px solid rgba(255, 171, 64, 0.4); 
+            padding: 1px 6px; border-radius: 5px; margin: 0 2px;
+        }
         .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        
+        .plus-cb { 
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; border: 2px solid #555;
+            color: #555; cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.3s; margin-right: 8px;
+        }
+        .plus-cb.active { border-color: var(--crit); color: var(--crit); background: rgba(0, 255, 136, 0.1); transform: rotate(45deg); }
+
+        /* MODAL DADOS */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #111; border: 1px solid var(--p); padding: 30px; border-radius: 25px; width: 90%; max-width: 420px; text-align: center; }
+        .dice-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 25px 0; min-height: 70px; }
+        .die { 
+            width: 55px; height: 55px; background: #1a1a1d; border: 2px solid #333; 
+            border-radius: 12px; font-size: 28px; font-weight: 900; 
+            display: flex; align-items: center; justify-content: center; transition: 0.4s;
+        }
+        .total-box { font-size: 70px; font-weight: 900; color: var(--accent); opacity: 0; transition: 0.6s; }
+        .total-box.reveal { opacity: 1; transform: scale(1.1); }
+
         .log { height: 120px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; }
-        .log-entry { border-bottom: 1px solid #111; padding: 5px 0; }
+        .log-line { border-bottom: 1px solid #111; padding: 4px 0; }
     </style>
 </head>
-<body ondragover="event.preventDefault()">
+<body>
 
-    <div class="header"><div class="sig">MY DASHES v16.0 • APEX</div></div>
+    <div class="header"><div class="sig">MY DASHES v17.0 • OMNI-PRO</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -71,9 +87,9 @@
 
     <div id="view-details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
-            <b id="det-title" style="color:var(--p); letter-spacing:1px;"></b>
-            <button onclick="openOwnerMenu()" class="tool">👤 DUEÑO</button>
+            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
+            <b id="det-title" style="color:var(--p)"></b>
+            <button id="owner-btn" onclick="claimOwnership()" class="tool" style="background:var(--accent); color:black;">OWNER</button>
         </div>
 
         <div class="nav-tabs">
@@ -82,10 +98,10 @@
         </div>
 
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
-            <div class="toolbar">
+            <div class="toolbar" style="background:#222; border:1px solid #444; padding:8px; border-radius:8px 8px 0 0; display:flex; gap:5px;">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[cb] ','')">Casilla</button>
+                <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
                 <button class="tool" onclick="askGlow()">Glow</button>
                 <button onclick="deleteItem()" class="tool" style="background:var(--fail); margin-left:auto;">🗑️</button>
@@ -97,24 +113,24 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-formula" style="font-size:12px; color:#555; margin-bottom:10px;"></div>
+            <div id="d-formula" style="font-size:12px; color:#555; font-family:monospace;"></div>
             <div id="dice-grid" class="dice-grid"></div>
-            <div id="total-val" class="total-display">0</div>
-            <div id="d-breakdown" style="font-size:11px; color:#444; border-top:1px solid #222; padding-top:10px;"></div>
+            <div id="total-val" class="total-box">0</div>
+            <div id="d-breakdown" style="font-size:11px; color:#444; margin-top:15px; border-top:1px solid #222; padding-top:10px;"></div>
         </div>
     </div>
 
-    <div id="msg-overlay" class="overlay" onclick="this.style.display='none'">
+    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <h3 id="msg-title" style="color:var(--accent); margin:0 0 15px 0;"></h3>
-            <div id="msg-body" style="text-align:left; font-size:14px; line-height:1.6;"></div>
-            <button onclick="document.getElementById('msg-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px;">CERRAR</button>
+            <h3 id="note-title" style="color:var(--accent); margin-top:0;"></h3>
+            <div id="note-body" style="text-align:left; font-size:14px; white-space: pre-wrap;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; padding:10px;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, logs: [], id: null, edit: false, uid: 'local', uname: 'Player', isDM: false };
-        const DB = "MD16_DATA", LG = "MD16_LOGS";
+        let state = { items: {}, logs: [], id: null, edit: false, uid: 'local', uname: 'Player', isDM: false, checks: {} };
+        const DB = "MD17_DB", LG = "MD17_LG", CH = "MD17_CH";
 
         async function init() {
             try {
@@ -123,26 +139,25 @@
                     state.uname = await OBR.player.getName();
                     state.isDM = (await OBR.player.getRole()) === "GM";
                     
-                    OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.logs = m[LG]||[]; render(); });
+                    OBR.scene.onMetadataChange(m => { 
+                        state.items = m[DB]||{}; state.logs = m[LG]||[]; state.checks = m[CH]||{}; render(); 
+                    });
                     const m = await OBR.scene.getMetadata();
-                    state.items = m[DB]||{}; state.logs = m[LG]||[]; 
+                    state.items = m[DB]||{}; state.logs = m[LG]||[]; state.checks = m[CH]||{};
                     render();
                 });
-            } catch(e) { 
-                const local = localStorage.getItem(DB); if(local) state.items = JSON.parse(local); render();
-            }
+            } catch(e) { render(); }
         }
 
         async function save() {
-            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.logs });
-            else localStorage.setItem(DB, JSON.stringify(state.items));
+            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.logs, [CH]: state.checks });
             render();
         }
 
         function addItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n1d20+FUE', owner: state.uid, parent: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n1d20+FUE', owner: null, parent: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -151,20 +166,19 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            // Render Carpeta y sus hijos
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const fd = document.createElement('div'); fd.className = "card folder";
                 fd.innerHTML = `<span>📁 ${f.name}</span>`;
                 fd.ondrop = (e) => { const tid = e.dataTransfer.getData("text"); state.items[tid].parent = f.id; save(); };
+                fd.ondragover = e => e.preventDefault();
                 cont.appendChild(fd);
                 vals.filter(d => d.parent === f.id).forEach(d => cont.appendChild(createCard(d, true)));
             });
 
-            // Render Sueltos
             vals.filter(d => d.type === 'dash' && !d.parent).forEach(d => cont.appendChild(createCard(d, false)));
             
             document.getElementById('log-content').innerHTML = state.logs.map(l => `
-                <div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b></div>`).join('');
+                <div class="log-line"><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b></div>`).join('');
             
             if(state.id) syncDetails();
         }
@@ -173,7 +187,7 @@
             const d = document.createElement('div');
             d.className = "card dash"; if(child) d.style.marginLeft = "20px";
             d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner !== state.uid ? '<span style="font-size:10px; opacity:0.5;">👤</span>' : ''}`;
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="font-size:10px; color:var(--p)">🔒</span>' : ''}`;
             d.onclick = () => { state.id = it.id; openDash(); };
             d.ondragstart = (e) => e.dataTransfer.setData("text", it.id);
             return d;
@@ -185,13 +199,18 @@
             switchTab(false);
         }
 
+        function claimOwnership() {
+            const it = state.items[state.id];
+            if(!it.owner) { it.owner = state.uid; save(); alert("Ahora eres el dueño."); }
+            else if(state.isDM || it.owner === state.uid) {
+                if(confirm("¿Liberar propiedad?")) { it.owner = null; save(); }
+            } else { alert("Este Dash ya tiene dueño."); }
+        }
+
         function switchTab(isEdit) {
             const it = state.items[state.id];
-            // Bloqueo de seguridad: Solo dueño o DM edita
-            if(isEdit && it.owner !== state.uid && !state.isDM) {
-                alert("No tienes permiso para editar este Dash.");
-                return;
-            }
+            const canEdit = !it.owner || it.owner === state.uid || state.isDM;
+            if(isEdit && !canEdit) { alert("No tienes permiso para editar."); return; }
             state.edit = isEdit;
             document.getElementById('tab-edit').className = isEdit ? "tab-btn active" : "tab-btn";
             document.getElementById('tab-view').className = !isEdit ? "tab-btn active" : "tab-btn";
@@ -203,40 +222,49 @@
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
+            
+            const obtn = document.getElementById('owner-btn');
+            obtn.innerText = it.owner ? (it.owner === state.uid ? "LIBERAR" : "BLOQUEADO") : "OWNER";
+            
             if(state.edit) document.getElementById('editor').value = it.content;
             else buildPreview(it.content);
         }
 
-        // --- MOTOR DE VARIABLES Y DADOS ---
+        // --- MOTOR PROCESADOR ---
         function buildPreview(txt) {
             const memory = {};
-            // 1. Limpiar HTML para calcular
-            const raw = txt.replace(/<\/?[^>]+(>|$)/g, "");
+            const clean = txt.replace(/<\/?[^>]+(>|$)/g, "");
 
-            // 2. Variable Base (FUE=10)
-            raw.replace(/\b([A-Z]+)\b\s*=\s*(\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            // 1. Base (FUE=10)
+            clean.replace(/\b([A-Z]+)\b\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
 
-            // 3. Variable Plus (+5FUE, -2FUE) - Afectan a la base
-            raw.replace(/([\+\-])(\d+)\b([A-Z]+)\b/gi, (m, sign, num, k) => {
+            // 2. Plus (+5FUE)
+            clean.replace(/([\+\-])(\d+)\b([A-Z]+)\b/gi, (m, sign, num, k) => {
                 const key = k.toUpperCase();
                 if(memory[key] !== undefined) {
-                    if(sign === '+') memory[key] += parseInt(num);
-                    else memory[key] -= parseInt(num);
+                    memory[key] = (sign === '+') ? memory[key] + parseInt(num) : memory[key] - parseInt(num);
                 }
             });
 
-            // 4. Transformar Texto a HTML
+            // 3. Renderizado Visual
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 5px $1">$2</span>')
-                .replace(/\[cb\] (.*)/g, '<div style="margin:5px 0;"><input type="checkbox"> $1</div>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    return `<button class="note-btn" onclick="showMsg('${t}','${c.replace(/\n/g,'<br>')}')">${t}</button>`;
+                .replace(/\[\+\] (.*)/g, (m, label) => {
+                    const cid = state.id + label.replace(/\s/g,'');
+                    const active = state.checks[cid] ? 'active' : '';
+                    return `<div style="margin:8px 0; display:flex; align-items:center;">
+                                <div class="plus-cb ${active}" onclick="toggleCheck('${cid}')">+</div> ${label}
+                            </div>`;
                 })
-                .replace(/\b([A-Z]+)\b/g, m => memory[m] !== undefined ? `<span class="var-tag" title="Valor calculado: ${memory[m]}">${m}</span>` : m);
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    const safe = c.replace(/  /g, '\n').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showNote('${t}','${safe}')">${t}</button>`;
+                })
+                .replace(/\b([A-Z]+)\b/g, m => memory[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
-            // 5. Inyectar Lógica de Dados
+            // 4. Inyección de Dados (Soporta fórmulas complejas)
             html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
                 return `<span class="roll-link" onclick="handleRoll('${f}',${JSON.stringify(memory)})">${f}</span>`;
@@ -255,61 +283,50 @@
             const results = [];
             for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
 
-            // UI Animación Progresiva
             const overlay = document.getElementById('dice-overlay');
             const grid = document.getElementById('dice-grid');
             const totalBox = document.getElementById('total-val');
-            
             overlay.style.display = 'flex';
-            grid.innerHTML = "";
-            totalBox.innerText = "0";
-            totalBox.classList.remove('reveal');
+            grid.innerHTML = ""; totalBox.innerText = "0"; totalBox.classList.remove('reveal');
             document.getElementById('d-formula').innerText = formula;
 
-            // Paso 1: Mostrar cada dado con animación slot individual
-            let currentSum = 0;
+            let sumDice = 0;
             for(let i=0; i<n; i++) {
-                const dieDiv = document.createElement('div');
-                dieDiv.className = "die";
-                grid.appendChild(dieDiv);
-                
+                const die = document.createElement('div'); die.className = "die";
+                grid.appendChild(die);
                 await new Promise(res => {
-                    setTimeout(() => {
-                        dieDiv.classList.add('show');
-                        let ticks = 0;
-                        const inv = setInterval(() => {
-                            dieDiv.innerText = Math.floor(Math.random()*s)+1;
-                            if(ticks++ > 15) {
-                                clearInterval(inv);
-                                dieDiv.innerText = results[i];
-                                if(results[i] === s) dieDiv.style.borderColor = "var(--crit)";
-                                if(results[i] === 1) dieDiv.style.borderColor = "var(--fail)";
-                                currentSum += results[i];
-                                res();
-                            }
-                        }, 50);
-                    }, 100); // Pequeño delay entre dados
+                    let t = 0;
+                    const inv = setInterval(() => {
+                        die.innerText = Math.floor(Math.random()*s)+1;
+                        if(t++ > 12) {
+                            clearInterval(inv);
+                            die.innerText = results[i];
+                            if(results[i] === s) die.style.color = "var(--crit)";
+                            if(results[i] === 1) die.style.color = "var(--fail)";
+                            sumDice += results[i];
+                            res();
+                        }
+                    }, 50);
                 });
-                await new Promise(r => setTimeout(r, 600)); // Pausa de 0.6s entre dados para "tensión"
+                await new Promise(r => setTimeout(r, 400)); // Pausa entre dados
             }
 
-            // Paso 2: Suma final con modificadores
             let final;
             try {
-                const mathStr = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                final = Math.floor(eval(mathStr));
-            } catch(e) { final = currentSum; }
+                const mathOnly = logic.replace(match[0], sumDice).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                final = Math.floor(eval(mathOnly));
+            } catch(e) { final = sumDice; }
 
             totalBox.innerText = final;
             totalBox.classList.add('reveal');
-            document.getElementById('d-breakdown').innerText = `Caras: [${results.join(' + ')}] | Modificadores Aplicados: ${logic.replace(match[0],'')}`;
+            document.getElementById('d-breakdown').innerText = `Caras: [${results.join(' + ')}] | Lógica: ${logic.replace(match[0], sumDice)}`;
 
             state.logs.unshift({ u: state.uname, f: formula, r: final });
             if(state.logs.length > 20) state.logs.pop();
             save();
         }
 
-        // --- UTILIDADES ---
+        function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
         function saveContent() { state.items[state.id].content = document.getElementById('editor').value; }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
         function wrap(a, b) { 
@@ -319,22 +336,10 @@
             saveContent();
         }
         function ins(a, b) { document.getElementById('editor').value += a+b; saveContent(); }
-        function showMsg(t, b) { document.getElementById('msg-title').innerText = t; document.getElementById('msg-body').innerHTML = b; document.getElementById('msg-overlay').style.display = 'flex'; }
-        function askNote() { const t = prompt("Título:"); const c = prompt("Nota:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function showNote(t, b) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = b; document.getElementById('note-overlay').style.display = 'flex'; }
+        function askNote() { const t = prompt("Título:"); const c = prompt("Contenido (2 espacios = salto):"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c = prompt("Color:", "cyan"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar definitivamente?")) { delete state.items[state.id]; save(); goBack(); } }
-
-        async function openOwnerMenu() {
-            if(!state.isDM && state.items[state.id].owner !== state.uid) return;
-            let players = [{id: state.uid, name: state.uname}];
-            try { players = await OBR.party.getPlayers(); } catch(e){}
-            
-            let h = `<div style="display:flex; flex-direction:column; gap:5px;">`;
-            players.forEach(p => h += `<button class="tool" onclick="setOwner('${p.id}')" style="padding:10px;">${p.name}</button>`);
-            h += `</div>`;
-            showMsg("ASIGNAR DUEÑO", h);
-        }
-        function setOwner(id) { state.items[state.id].owner = id; save(); document.getElementById('msg-overlay').style.display='none'; }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
