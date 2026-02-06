@@ -10,101 +10,104 @@
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
         }
         
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* UI Geral */
-        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
+        /* HEADER */
+        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
         #view-details { display: none; }
 
+        /* LISTA Y CARPETAS */
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
         .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .folder { border-left: 4px solid var(--var); background: #1e1e1a; }
         .dash { border-left: 4px solid var(--p); }
 
-        /* Preview Elements */
-        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 1px dotted var(--p); }
-        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; }
+        /* PREVIEW ELEMENTS */
+        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 4px 2px; display: inline-block; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 1px dotted var(--p); padding: 0 2px; }
+        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; border: 1px solid rgba(255,171,64,0.2); padding: 0 4px; border-radius: 4px; }
         .cb-row { display: flex; align-items: start; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin: 8px 0; border-left: 3px solid var(--accent); }
 
-        /* Editor */
+        /* EDITOR */
         .toolbar { display: flex; gap: 4px; background: #222; padding: 6px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
-        .tool { background: #333; color: #eee; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
-        textarea { flex: 1; background: #080808; color: #bbb; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: none; outline: none; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg); display: none; line-height: 1.6; }
+        .tool { background: #333; color: #eee; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        textarea { flex: 1; background: #080808; color: #bbb; padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg); display: none; line-height: 1.8; }
 
-        /* Modales */
+        /* MODALES */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         
-        /* Animación Dado */
-        .slot { font-size: 50px; font-weight: bold; margin: 15px 0; height: 60px; color: white; }
-        .crit { color: var(--crit) !important; text-shadow: 0 0 15px var(--crit); }
-        .fail { color: var(--fail) !important; text-shadow: 0 0 15px var(--fail); }
+        /* SLOT MACHINE */
+        .slot { font-size: 60px; font-weight: bold; margin: 15px 0; height: 70px; color: white; display: flex; justify-content: center; align-items: center; }
+        .crit { color: var(--crit) !important; text-shadow: 0 0 20px var(--crit); animation: shake 0.2s infinite; }
+        .fail { color: var(--fail) !important; text-shadow: 0 0 20px var(--fail); }
+        @keyframes shake { 0%{transform:translateX(2px)} 50%{transform:translateX(-2px)} 100%{transform:translateX(2px)} }
 
-        .log { height: 100px; background: #000; padding: 8px; font-size: 10px; border-radius: 8px; overflow-y: auto; margin-top: 10px; border: 1px solid #222; }
+        .log { height: 120px; background: #000; padding: 10px; font-size: 11px; border-radius: 8px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        .log-entry { margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #111; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v5.1 PRO</div></div>
+    <div class="header"><div class="sig">MY DASHES v5.2 - LOGIC RESTORED</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:5px;">
-            <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
-            <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
+        <div style="display:flex; gap:6px;">
+            <input type="text" id="newName" placeholder="Nombre del Dash/Carpeta..." style="flex:1; padding:10px; background:#222; border:1px solid #444; color:white; border-radius:6px;">
+            <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">DASH</button>
+            <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">FOLDER</button>
         </div>
         <div id="items-container" class="items-area"></div>
         <div class="log" id="log-content"></div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
-            <b id="det-title" style="color:var(--p)"></b>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items: center;">
+            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
+            <b id="det-title" style="color:var(--p); letter-spacing: 1px;"></b>
             <button onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
-        <button id="toggle-btn" onclick="toggleVisual()" style="width:100%; padding:10px; background:var(--p); border:none; border-radius:5px; font-weight:bold; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
+        <button id="toggle-btn" onclick="toggleVisual()" style="width:100%; padding:12px; background:var(--p); border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:10px;">CAMBIAR MODO</button>
         
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[cb] ','')">Casilla</button>
-                <button class="tool" onclick="askNote()">Nota+</button>
-                <button class="tool" onclick="askGlow()">Glow</button>
+                <button class="tool" onclick="promptGlow()">GLOW</button>
+                <button class="tool" onclick="ins('[cb] ','')">CB</button>
+                <button class="tool" onclick="promptNote()">NOTE</button>
                 <button onclick="deleteItem()" class="tool" style="background:var(--fail); margin-left:auto;">🗑️</button>
             </div>
-            <textarea id="editor" oninput="updateContent()"></textarea>
+            <textarea id="editor" oninput="updateContent()" placeholder="FUE=10&#10;1d20+FUE"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
     <div id="dice-overlay" class="overlay" onclick="closeDice()">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-user" style="font-size:10px; color:var(--p); letter-spacing:2px;"></div>
-            <div id="d-form" style="opacity:0.5; font-size:12px; margin-top:5px;"></div>
+            <div id="d-user" style="font-size:10px; color:var(--p); letter-spacing:2px; font-weight:bold;"></div>
+            <div id="d-form" style="opacity:0.5; font-size:13px; margin:8px 0;"></div>
             <div id="d-slot" class="slot">0</div>
-            <div id="d-faces" style="font-size:14px; opacity:0.6;"></div>
+            <div id="d-faces" style="font-size:14px; color:#666; font-family: monospace;"></div>
         </div>
     </div>
 
     <div id="msg-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <h3 id="msg-title" style="color:var(--accent); margin:0 0 10px 0;"></h3>
-            <div id="msg-body" style="text-align:left; font-size:14px; line-height:1.5;"></div>
-            <button onclick="document.getElementById('msg-overlay').style.display='none'" class="tool" style="width:100%; margin-top:15px; padding:8px;">CERRAR</button>
+            <h3 id="msg-title" style="color:var(--accent); margin-top:0;"></h3>
+            <div id="msg-body" style="text-align:left; font-size:15px; line-height:1.6; max-height: 300px; overflow-y: auto;"></div>
+            <button onclick="document.getElementById('msg-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; padding:10px;">ENTENDIDO</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: true, uid: 'local', uname: 'DM', drag: null };
-        const DB = "MD_51_DB"; const LG = "MD_51_LG";
+        let state = { items: {}, log: [], id: null, edit: true, uid: 'local', uname: 'Player', drag: null };
+        const DB = "MD_52_DATA"; const LG = "MD_52_LOGS";
 
         async function init() {
             try {
@@ -129,8 +132,8 @@
         }
 
         function newItem(type) {
-            const n = document.getElementById('newName').value || "Nuevo";
-            const id = "id" + Date.now();
+            const n = document.getElementById('newName').value || "Nuevo " + type;
+            const id = "id_" + Date.now();
             state.items[id] = { id, type, name: n, content: type==='dash'?'FUE=10\n1d20+FUE':'', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
@@ -144,14 +147,19 @@
                 const div = document.createElement('div');
                 div.className = "card folder"; div.innerHTML = `<span>📁 ${f.name}</span>`;
                 div.ondragover = e => e.preventDefault();
-                div.ondrop = () => { state.items[state.drag].parent = f.id; save(); };
+                div.ondrop = () => { if(state.drag) { state.items[state.drag].parent = f.id; save(); } };
                 cont.appendChild(div);
                 vals.filter(d => d.parent === f.id).forEach(d => cont.appendChild(createCard(d, true)));
             });
 
             vals.filter(d => d.type === 'dash' && !d.parent).forEach(d => cont.appendChild(createCard(d, false)));
             
-            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} -> <span style="color:var(--accent)">${l.r}</span></div>`).join('');
+            document.getElementById('log-content').innerHTML = state.log.map(l => `
+                <div class="log-entry">
+                    <div style="display:flex; justify-content:space-between"><b>${l.u}</b> <span style="opacity:0.6">${l.f}</span></div>
+                    <div style="color:var(--accent); font-weight:bold;">RESULTADO: ${l.r} <small style="color:#555; font-weight:normal;">${l.det||''}</small></div>
+                </div>
+            `).join('');
             if(state.id) syncView();
         }
 
@@ -161,7 +169,8 @@
             d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner?'👤':''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.drag = it.id;
-            d.ondrop = () => { state.items[state.drag].parent = null; save(); };
+            d.ondragover = e => e.preventDefault();
+            d.ondrop = (e) => { e.stopPropagation(); state.items[state.drag].parent = null; save(); };
             return d;
         }
 
@@ -173,17 +182,18 @@
 
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name;
+            document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            document.getElementById('toggle-btn').innerText = state.edit ? "GUARDAR" : "EDITAR DASH";
-            if(state.edit) document.getElementById('editor').value = it.content;
-            else renderPreview(it.content);
+            if(state.edit) {
+                if(document.activeElement !== document.getElementById('editor')) 
+                    document.getElementById('editor').value = it.content;
+            } else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
             const stats = {};
-            // Captura variables FUE=10 o MOD=+2
+            // RECOLECTOR DE VARIABLES: FUE=10 o MOD=+2
             txt.replace(/([A-Z]+)\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
             
             let html = txt
@@ -191,56 +201,69 @@
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const safe = c.replace(/\n/g, '<br>').replace(/  /g, '<br>').replace(/'/g, "\\'");
-                    return `<button class="note-btn" onclick="showMsg('${t}','${safe}')">${t}</button>`;
+                    const clean = c.replace(/\n/g, '<br>').replace(/  /g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showMsg('${t}','${clean}')">${t}</button>`;
                 })
-                .replace(/\b([A-Z]+)\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
+                .replace(/\b([A-Z]{2,})\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
-            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
-                if(!/d/i.test(f)) return f;
-                return `<span class="roll-link" onclick="runRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
+            // MOTOR DE DADOS
+            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, formula => {
+                if(!/d/i.test(formula)) return formula;
+                return `<span class="roll-link" onclick="executeRoll('${formula}',${JSON.stringify(stats)})">${formula}</span>`;
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        function runRoll(formula, stats) {
+        function executeRoll(formula, stats) {
             let f = formula.toUpperCase();
-            for(let s in stats) f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
+            let debug = "";
+            // Inyectar variables en la fórmula matemática
+            for(let s in stats) {
+                if(f.includes(s)) {
+                    debug += `${s}:${stats[s]} `;
+                    f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
+                }
+            }
             
             const match = f.match(/(\d*)D(\d+)/i);
-            const n = parseInt(match[1]) || 1;
+            const num = parseInt(match[1]) || 1;
             const sides = parseInt(match[2]);
             let rolls = [], sum = 0;
 
-            for(let i=0; i<n; i++) {
+            for(let i=0; i<num; i++) {
                 const r = Math.floor(Math.random()*sides)+1;
                 sum += r; rolls.push(r);
             }
 
             let total;
-            try { total = eval(sum + f.replace(match[0], '').replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { total = sum; }
+            try { 
+                // Limpiar fórmula para eval seguro
+                const mathPart = f.replace(match[0], '').replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                total = Math.floor(eval(sum + mathPart)); 
+            } catch(e) { total = sum; }
 
-            // Animación Slot
+            // UI SLOT MACHINE
             const ov = document.getElementById('dice-overlay');
             const slot = document.getElementById('d-slot');
             ov.style.display = 'flex';
             document.getElementById('d-user').innerText = state.uname.toUpperCase();
             document.getElementById('d-form').innerText = formula;
             
-            let c = 0;
+            let count = 0;
             const anim = setInterval(() => {
-                slot.innerText = Math.floor(Math.random()*sides*n);
-                if(c++ > 12) {
+                slot.innerText = Math.floor(Math.random() * (sides * num));
+                if(count++ > 15) {
                     clearInterval(anim);
                     slot.innerText = total;
-                    slot.className = "slot " + (sum === sides*n ? 'crit' : (sum === n ? 'fail' : ''));
-                    document.getElementById('d-faces').innerText = `Caras: [${rolls.join(', ')}]`;
+                    slot.className = "slot " + (sum === (sides*num) ? 'crit' : (sum === num ? 'fail' : ''));
+                    document.getElementById('d-faces').innerText = `[${rolls.join(', ')}]` + (debug ? " " + debug : "");
                 }
             }, 60);
 
-            state.log.unshift({ u: state.uname, f: formula, r: total });
-            if(state.log.length > 15) state.log.pop();
+            // LOG
+            state.log.unshift({ u: state.uname, f: formula, r: total, det: `(${rolls.join('+')}) ${debug}` });
+            if(state.log.length > 20) state.log.pop();
             save();
         }
 
@@ -256,15 +279,15 @@
         function closeDice() { document.getElementById('dice-overlay').style.display='none'; document.getElementById('d-slot').className="slot"; }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { const e = document.getElementById('editor'); e.value += a + b; updateContent(); }
-        function askNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c = prompt("Color:", "gold"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function promptNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function deleteItem() { if(confirm("¿Eliminar para siempre?")) { delete state.items[state.id]; save(); goBack(); } }
         
         async function openOwnerMenu() {
-            let p = [{id:'local', name:'DM'}];
+            let p = [{id:'local', name:'Modo Web'}];
             try { p = await OBR.party.getPlayers(); } catch(e){}
-            let h = `<h3>Dueño</h3>`;
-            p.forEach(x => h += `<button onclick="setOwner('${x.id}')" class="tool" style="width:100%; margin-bottom:5px; padding:10px;">${x.name}</button>`);
+            let h = `<h3>Dueño del Dash</h3>`;
+            p.forEach(x => h += `<button onclick="setOwner('${x.id}')" class="tool" style="width:100%; margin-bottom:6px; padding:12px; background:var(--p); color:black;">${x.name}</button>`);
             document.getElementById('msg-body').innerHTML = h;
             document.getElementById('msg-title').innerText = "ASIGNAR";
             document.getElementById('msg-overlay').style.display = 'flex';
