@@ -1,6 +1,6 @@
 {
   "name": "Dashisboard+",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "manifest_version": 1,
   "action": {
     "title": "Dashisboard+",
@@ -9,5 +9,14 @@
     "width": 400,
     "height": 600
   },
-  "permissions": ["SCENE"]
+  "permissions": [
+    {
+      "trigger": "onSceneReady",
+      "action": "read"
+    },
+    {
+      "trigger": "onMetadataChange",
+      "action": "read"
+    }
+  ]
 }
