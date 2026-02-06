@@ -5,278 +5,366 @@
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; --bg: #0a0a0c; --surf: #16161a; --t: #f0f0f0; 
+            --p: #bb86fc; --bg: #050507; --surf: #121214; --t: #e0e0e0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
+            --panel: #1a1a1d;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
-        .sig { font-size: 12px; font-weight: bold; color: var(--p); letter-spacing: 2px; }
+        /* HEADER */
+        .header { padding: 12px; text-align: center; border-bottom: 1px solid #222; background: var(--surf); flex-shrink: 0; }
+        .sig { font-size: 11px; font-weight: bold; color: var(--p); letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 10px var(--p); }
 
-        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
+        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 12px; }
         #view-details { display: none; }
 
-        /* LISTA & CARPETAS (Drag suave) */
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .folder { border-left: 5px solid #444; }
+        /* LISTA & CARPETAS */
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
+        .card { padding: 14px; background: var(--panel); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .card:hover { background: #222226; border-color: #333; }
+        .folder { border-left: 5px solid #555; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
-        .f-content { display: none; flex-direction: column; gap: 4px; padding-left: 15px; }
+        .f-content { display: none; flex-direction: column; gap: 6px; padding-left: 18px; border-left: 1px solid #222; margin-left: 10px; margin-top: 4px; }
         .f-content.open { display: flex; }
 
-        /* PREVIEW */
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); background: rgba(187,134,252,0.1); padding: 0 4px; border-radius: 3px; }
-        .var-tag { color: var(--var); font-weight: bold; font-family: monospace; }
-        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 10px; border-radius: 8px; margin: 5px 0; border: 1px solid rgba(3,218,198,0.1); }
-        .cb-input { width: 18px; height: 18px; margin-right: 12px; accent-color: var(--accent); }
+        /* PREVIEW / MODO JUEGO */
+        #preview { flex: 1; overflow-y: auto; padding: 10px; display: none; line-height: 1.8; font-size: 15px; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); background: rgba(187,134,252,0.08); padding: 2px 6px; border-radius: 4px; transition: 0.2s; }
+        .roll-link:hover { background: var(--p); color: black; }
+        .var-tag { color: var(--var); font-weight: bold; font-family: 'Consolas', monospace; background: rgba(255,171,64,0.1); padding: 2px 5px; border-radius: 4px; }
+        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.03); padding: 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(3,218,198,0.1); }
+        .cb-input { width: 20px; height: 20px; margin-right: 15px; accent-color: var(--accent); cursor: pointer; }
 
         /* EDITOR */
-        .toolbar { display: flex; gap: 5px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; }
-        .tool { background: #333; color: white; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        textarea { flex: 1; background: #050505; color: #ccc; padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 8px 8px; }
-        #preview { flex: 1; overflow-y: auto; padding: 10px; display: none; line-height: 1.7; }
+        .toolbar { display: flex; gap: 6px; background: #1a1a1d; padding: 10px; border-radius: 10px 10px 0 0; border: 1px solid #333; overflow-x: auto; }
+        .tool { background: #2a2a2e; color: white; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
+        .tool:hover { background: #3a3a3e; border-color: var(--p); }
+        textarea { flex: 1; background: #08080a; color: #bbb; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; font-size: 14px; }
 
-        /* SLOT MACHINE MODAL */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 1px solid #333; padding: 40px; border-radius: 30px; width: 90%; max-width: 500px; text-align: center; }
+        /* SLOT MACHINE MODAL (TRAGAPERRAS) */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(5px); }
+        .modal { background: #000; border: 1px solid #333; padding: 40px; border-radius: 35px; width: 95%; max-width: 550px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
-        .dice-container { display: flex; justify-content: center; gap: 15px; margin: 20px 0; min-height: 80px; flex-wrap: wrap; }
-        .die-slot { font-size: 50px; font-weight: 900; width: 70px; height: 70px; display: flex; justify-content: center; align-items: center; background: #1a1a1d; border-radius: 12px; border: 2px solid #333; transition: all 0.3s; }
-        .die-slot.done { border-color: var(--p); color: white; transform: scale(1.1); }
+        .dice-window { display: flex; justify-content: center; gap: 12px; margin: 25px 0; flex-wrap: wrap; perspective: 1000px; }
+        .slot-machine-box { 
+            width: 75px; height: 90px; background: #111; border-radius: 15px; 
+            border: 2px solid #222; overflow: hidden; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .slot-machine-box.active { border-color: var(--p); box-shadow: 0 0 15px rgba(187,134,252,0.3); }
+        .slot-machine-box.stopped { border-color: var(--accent); }
         
-        .total-box { font-size: 80px; font-weight: 900; color: var(--accent); margin-top: 20px; opacity: 0; transform: translateY(20px); transition: all 0.5s; }
-        .total-box.show { opacity: 1; transform: translateY(0); }
-        .crit { color: var(--crit) !important; text-shadow: 0 0 20px var(--crit); }
-        .fail { color: var(--fail) !important; text-shadow: 0 0 20px var(--fail); }
+        .slot-strip { position: absolute; top: 0; transition: top 0.1s cubic-bezier(0.1, 0, 0.1, 1); display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .slot-number { font-size: 45px; font-weight: 900; height: 90px; display: flex; align-items: center; justify-content: center; color: #444; }
+        .slot-number.winner { color: #fff; text-shadow: 0 0 15px var(--p); }
 
-        /* LOG */
-        .log { height: 140px; background: #000; padding: 10px; font-size: 11px; border-radius: 12px; overflow-y: auto; margin-top: 15px; border: 1px solid #222; }
-        .log-line { border-bottom: 1px solid #1a1a1a; padding: 5px 0; line-height: 1.4; }
+        .total-display { font-size: 85px; font-weight: 900; color: var(--accent); height: 100px; opacity: 0; transform: scale(0.5); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .total-display.show { opacity: 1; transform: scale(1); }
+        .crit-glow { color: var(--crit) !important; text-shadow: 0 0 30px var(--crit); }
+        .fail-glow { color: var(--fail) !important; text-shadow: 0 0 30px var(--fail); }
+
+        /* LOG INTEGRADO */
+        .log-container { height: 150px; background: #0a0a0c; padding: 12px; font-size: 12px; border-radius: 12px; overflow-y: auto; margin-top: 10px; border: 1px solid #1a1a1c; }
+        .log-item { border-bottom: 1px solid #151517; padding: 8px 0; animation: fadeIn 0.4s ease; }
+        .log-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .log-formula { color: #777; font-family: monospace; }
+        .log-detail { font-size: 10px; color: #555; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body ondragover="event.preventDefault()" ondrop="dropOnRoot(event)">
 
-    <div class="header"><div class="sig">MY DASHES v11.0 • OMNI-PROCESSOR</div></div>
+    <div class="header"><div class="sig">MY DASHES v12.0 • QUANTUM ENGINE</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
-            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black;">DASH</button>
-            <button onclick="addItem('folder')" class="tool" style="background:#444;">FOLDER</button>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="newName" placeholder="Nombre del nuevo dash..." style="flex:1; padding:12px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:10px; outline:none;">
+            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black; padding:0 20px;">+DASH</button>
+            <button onclick="addItem('folder')" class="tool" style="background:#444; color:white;">+FOLDER</button>
         </div>
         <div id="items-container" class="items-area"></div>
-        <div class="log" id="log-content"></div>
+        <div class="log-container" id="log-content"></div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content:space-between; align-items: center;">
-            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
-            <b id="det-title" style="color:var(--p)"></b>
-            <button onclick="deleteItem()" class="tool" style="background:var(--fail);">BORRAR</button>
+        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:5px;">
+            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
+            <b id="det-title" style="color:var(--p); letter-spacing:1px; font-size:16px;"></b>
+            <button onclick="deleteItem()" class="tool" style="background:var(--fail); border:none;">ELIMINAR</button>
         </div>
-        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:15px; background:var(--p); border:none; border-radius:10px; font-weight:bold; cursor:pointer;">MODO JUEGO</button>
+        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:16px; background:var(--p); color:black; border:none; border-radius:12px; font-weight:900; cursor:pointer; font-size:15px; box-shadow: 0 4px 15px rgba(187,134,252,0.2);">ENTRAR EN MODO JUEGO</button>
         
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
-                <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="promptGlow()">GLOW</button>
-                <button class="tool" onclick="ins('[cb] ','')">CB</button>
+                <button class="tool" onclick="wrap('**','**')">NEGRILLA</button>
+                <button class="tool" onclick="promptGlow()">BRILLO</button>
+                <button class="tool" onclick="ins('[cb] ','')">CASILLA</button>
                 <button class="tool" onclick="promptNote()">NOTA</button>
+                <button class="tool" onclick="ins('KAS=10\n','')">VAR</button>
             </div>
-            <textarea id="editor" oninput="saveContent()" placeholder="Ejemplo:&#10;ASD=10&#10;Tirada: 2d10+ASD-2ASD"></textarea>
+            <textarea id="editor" oninput="saveContent()" placeholder="Ejemplo:&#10;ASD=12&#10;Tirada: 2d10+ASD-5ASD"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
     <div id="dice-overlay" class="overlay" onclick="closeDice()">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-formula" style="opacity:0.4; font-size:16px; font-family:monospace; margin-bottom:10px;"></div>
-            <div id="dice-slots" class="dice-container"></div>
-            <div id="total-val" class="total-box">0</div>
-            <div id="d-breakdown" style="font-size:12px; color:#555; margin-top:10px;"></div>
+            <div id="d-user" style="font-size:11px; color:var(--p); font-weight:bold; letter-spacing:4px; margin-bottom:10px;">TIRADA DE DADOS</div>
+            <div id="d-formula" style="color:#555; font-size:15px; font-family:monospace; margin-bottom:5px;"></div>
+            <div id="dice-slots" class="dice-window"></div>
+            <div id="total-val" class="total-display">0</div>
+            <div id="d-breakdown" style="font-size:11px; color:#444; margin-top:15px; border-top: 1px solid #111; padding-top:10px;"></div>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, logs: [], id: null, edit: true, folders: {}, dragId: null, uname: 'User' };
-        const DB = "MD_V11_DATA", LG = "MD_V11_LOGS";
+        // --- MOTOR DE ESTADO ---
+        let state = { items: {}, logs: [], id: null, edit: true, folders: {}, dragId: null, uname: 'Player' };
+        const DB_KEY = "MD12_DATA", LG_KEY = "MD12_LOGS";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.logs = m[LG]||[]; render(); });
+                    OBR.scene.onMetadataChange(m => { 
+                        state.items = m[DB_KEY]||{}; state.logs = m[LG_KEY]||[]; render(); 
+                    });
                     const m = await OBR.scene.getMetadata();
-                    state.items = m[DB]||{}; state.logs = m[LG]||[]; render();
+                    state.items = m[DB_KEY]||{}; state.logs = m[LG_KEY]||[]; 
+                    render();
                 });
             } catch(e) { render(); }
         }
 
         async function save() {
-            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.logs });
+            if(window.OBR) await OBR.scene.setMetadata({ [DB_KEY]: state.items, [LG_KEY]: state.logs });
             render();
         }
 
+        // --- GESTIÓN DE ITEMS ---
         function addItem(type) {
-            const n = document.getElementById('newName').value || "Nuevo";
-            const id = "i" + Date.now();
-            state.items[id] = { id, type, name: n, content: type==='dash'?'ASD=10\n1d20+ASD':'', parent: null };
-            document.getElementById('newName').value = "";
+            const nameInput = document.getElementById('newName');
+            const n = nameInput.value.trim() || (type==='dash'?'Nuevo Dash':'Carpeta');
+            const id = "ID" + Date.now();
+            state.items[id] = { id, type, name: n, content: type==='dash'?'ASD=12\n1d20+ASD':'', parent: null };
+            nameInput.value = "";
             save();
         }
 
         function render() {
-            const cont = document.getElementById('items-container'); cont.innerHTML = "";
-            const vals = Object.values(state.items);
-            vals.filter(f => f.type === 'folder').forEach(f => {
-                const d = document.createElement('div'); d.className = "card folder"; d.draggable = true;
-                d.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
-                d.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
-                d.ondragstart = () => state.dragId = f.id;
-                d.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = f.id; save(); };
-                cont.appendChild(d);
-                const sub = document.createElement('div'); sub.className = "f-content" + (state.folders[f.id] ? " open" : "");
-                vals.filter(i => i.parent === f.id).forEach(i => sub.appendChild(createCard(i)));
+            const cont = document.getElementById('items-container'); 
+            cont.innerHTML = "";
+            const items = Object.values(state.items);
+            
+            // Render Carpetas
+            items.filter(f => f.type === 'folder').forEach(f => {
+                const div = document.createElement('div');
+                div.className = "card folder"; div.draggable = true;
+                div.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
+                div.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
+                div.ondragstart = () => state.dragId = f.id;
+                div.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = f.id; save(); };
+                cont.appendChild(div);
+
+                const sub = document.createElement('div');
+                sub.className = "f-content" + (state.folders[f.id] ? " open" : "");
+                items.filter(i => i.parent === f.id).forEach(dash => sub.appendChild(createDashCard(dash)));
                 cont.appendChild(sub);
             });
-            vals.filter(i => i.type === 'dash' && !i.parent).forEach(i => cont.appendChild(createCard(i)));
-            document.getElementById('log-content').innerHTML = state.logs.map(l => `<div class="log-line"><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--accent)">${l.r}</span><br><small style="opacity:0.5">${l.d}</small></div>`).join('');
-            if(state.id) sync();
+
+            // Dashboards en raíz
+            items.filter(i => i.type === 'dash' && !i.parent).forEach(dash => {
+                cont.appendChild(createDashCard(dash));
+            });
+
+            // Log
+            const logEl = document.getElementById('log-content');
+            logEl.innerHTML = state.logs.map(l => `
+                <div class="log-item">
+                    <div class="log-header">
+                        <b style="color:var(--p)">${l.u}</b>
+                        <span style="color:var(--accent); font-weight:bold; font-size:16px;">${l.r}</span>
+                    </div>
+                    <div class="log-formula">${l.f}</div>
+                    <div class="log-detail">${l.d}</div>
+                </div>
+            `).join('');
+            if(state.id) syncView();
         }
 
-        function createCard(it) {
-            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span>`;
-            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; open(); };
+        function createDashCard(it) {
+            const d = document.createElement('div'); d.className = "card dash";
+            d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span>`;
+            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; openDash(); };
             d.ondragstart = () => state.dragId = it.id;
             return d;
         }
 
-        function dropOnRoot() { if(state.dragId) { state.items[state.dragId].parent = null; save(); } }
-        function open() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; state.edit = false; sync(); }
+        function dropOnRoot(e) { if(state.dragId) { state.items[state.dragId].parent = null; save(); } }
+        function openDash() { 
+            document.getElementById('view-list').style.display='none'; 
+            document.getElementById('view-details').style.display='flex'; 
+            state.edit = false; 
+            syncView(); 
+        }
 
-        function sync() {
+        // --- COMPILADOR DE VARIABLES Y PREVIEW ---
+        function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content;
-            else renderPreview(it.content);
+            else renderGameUI(it.content);
         }
 
-        function renderPreview(txt) {
+        function renderGameUI(rawText) {
             const stats = {};
-            // RECOLECTOR DE VARIABLES: ASD=10
-            txt.replace(/\b([A-Z]{3,})\b\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            // Limpiamos el texto para evitar que etiquetas HTML rompan el ASD=12
+            const cleanText = rawText.replace(/<\/?[^>]+(>|$)/g, "");
             
-            let html = txt
+            // Scanner de Variables (Cualquier palabra MAYÚSCULA de 3+ letras seguido de =)
+            cleanText.replace(/\b([A-Z]{3,})\b\s*=\s*([\+\-]?\d+)/gi, (m, key, val) => {
+                stats[key.toUpperCase()] = parseInt(val);
+            });
+
+            let html = rawText
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1">$2</span>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow: 0 0 8px $1">$2</span>')
                 .replace(/\[cb\] (.*)/g, '<div class="cb-row"><input type="checkbox" class="cb-input"><span>$1</span></div>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="tool" onclick="alert('${c.replace(/\n/g,' ')}')">${t}</button>`)
                 .replace(/\b([A-Z]{3,})\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
-            // MOTOR DE DADOS
+            // Reconocedor de Tiradas
             html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
-                return `<span class="roll-link" onclick="runRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
+                return `<span class="roll-link" onclick="startQuantumRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
             });
+
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        async function runRoll(formula, stats) {
-            let workingF = formula.toUpperCase();
-            let logDetail = "";
+        // --- MOTOR QUANTUM: TIRADAS Y SLOTS ---
+        async function startQuantumRoll(formula, stats) {
+            let procFormula = formula.toUpperCase();
+            let breakdown = "";
 
-            // 1. Limpieza y Reemplazo de Variables (soporta antivariables)
+            // 1. Reemplazo de Modificadores (Ej: -5ASD)
             for(let key in stats) {
                 const val = stats[key];
-                const hasMod = new RegExp(`([\\+\\-])(\\d+)${key}`, 'g');
-                if(hasMod.test(workingF)) {
-                    workingF = workingF.replace(hasMod, (m, sign, num) => {
-                        logDetail += `${sign}${num}*${key}(${val}) `;
-                        return `${sign}(${num}*${val})`;
-                    });
-                }
-                const hasSimple = new RegExp(`\\b${key}\\b`, 'g');
-                if(hasSimple.test(workingF)) {
-                    workingF = workingF.replace(hasSimple, val);
-                    logDetail += `+${key}(${val}) `;
+                // Caso Modificador: Signo + Numero + Variable (Ej: -5ASD)
+                const modReg = new RegExp(`([\\+\\-])(\\d+)${key}`, 'g');
+                procFormula = procFormula.replace(modReg, (m, sign, num) => {
+                    const res = parseInt(num) * val;
+                    breakdown += ` ${sign}${num}*${key}(${val})`;
+                    return `${sign}${res}`;
+                });
+                // Caso Variable simple: ASD
+                const simpleReg = new RegExp(`\\b${key}\\b`, 'g');
+                if(simpleReg.test(procFormula)) {
+                    procFormula = procFormula.replace(simpleReg, val);
+                    breakdown += ` +${key}(${val})`;
                 }
             }
 
-            const match = workingF.match(/(\d*)D(\d+)/i);
-            const num = parseInt(match[1]) || 1;
+            // 2. Extraer Dados
+            const match = procFormula.match(/(\d*)D(\d+)/i);
+            const numDice = parseInt(match[1]) || 1;
             const sides = parseInt(match[2]);
-            const rolls = [];
-            for(let i=0; i<num; i++) rolls.push(Math.floor(Math.random()*sides)+1);
+            const finalRolls = [];
+            for(let i=0; i<numDice; i++) finalRolls.push(Math.floor(Math.random()*sides)+1);
 
-            // UI Animación
-            const ov = document.getElementById('dice-overlay');
-            const container = document.getElementById('dice-slots');
-            const totalBox = document.getElementById('total-val');
-            ov.style.display = 'flex';
-            container.innerHTML = "";
-            totalBox.className = "total-box";
-            totalBox.innerText = "0";
+            // 3. UI Modal Tragaperras
+            const overlay = document.getElementById('dice-overlay');
+            const slotContainer = document.getElementById('dice-slots');
+            const totalDisplay = document.getElementById('total-val');
+            
+            overlay.style.display = 'flex';
+            slotContainer.innerHTML = "";
+            totalDisplay.innerText = "0";
+            totalDisplay.className = "total-display";
             document.getElementById('d-formula').innerText = formula;
+            document.getElementById('d-user').innerText = state.uname.toUpperCase();
 
-            // Crear Slots
+            // Generar los cilindros de la tragaperras
             const slots = [];
-            for(let i=0; i<num; i++) {
-                const s = document.createElement('div'); s.className = "die-slot"; s.innerText = "?";
-                container.appendChild(s); slots.push(s);
+            for(let i=0; i<numDice; i++) {
+                const box = document.createElement('div');
+                box.className = "slot-machine-box active";
+                const strip = document.createElement('div');
+                strip.className = "slot-strip";
+                // Crear 20 números falsos para el efecto de giro
+                for(let j=0; j<20; j++) {
+                    const n = document.createElement('div');
+                    n.className = "slot-number";
+                    n.innerText = Math.floor(Math.random()*sides)+1;
+                    strip.appendChild(n);
+                }
+                const winner = document.createElement('div');
+                winner.className = "slot-number winner";
+                winner.innerText = finalRolls[i];
+                strip.appendChild(winner);
+                
+                box.appendChild(strip);
+                slotContainer.appendChild(box);
+                slots.push({ box, strip });
             }
 
-            // Animación Progresiva (Slot Machine)
-            let currentTotalDice = 0;
-            for(let i=0; i<num; i++) {
-                await animateSlot(slots[i], sides, rolls[i]);
-                currentTotalDice += rolls[i];
+            // Animación en cascada (Izquierda a Derecha)
+            let currentDiceSum = 0;
+            for(let i=0; i<numDice; i++) {
+                await new Promise(res => {
+                    const strip = slots[i].strip;
+                    const box = slots[i].box;
+                    // El 1890 es aproximado para que el último número sea el ganador (90px * 20)
+                    strip.style.top = `-${20 * 90}px`;
+                    setTimeout(() => {
+                        box.classList.remove('active');
+                        box.classList.add('stopped');
+                        currentDiceSum += finalRolls[i];
+                        res();
+                    }, 500 + (i * 150)); // Cada dado tarda un poco más
+                });
             }
 
-            // Cálculo Final
+            // 4. Calcular Resultado Final
             let total;
             try {
-                const mathPart = workingF.replace(match[0], currentTotalDice).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                total = Math.floor(eval(mathPart));
-            } catch(e) { total = currentTotalDice; }
+                // Reemplazamos la parte XdY por la suma de los dados
+                const mathStr = procFormula.replace(match[0], currentDiceSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                total = Math.floor(eval(mathStr));
+            } catch(e) { total = currentDiceSum; }
 
-            // Mostrar Resultado
-            totalBox.innerText = total;
-            totalBox.classList.add('show');
-            if(currentTotalDice === (num*sides)) totalBox.classList.add('crit');
-            if(currentTotalDice === num) totalBox.classList.add('fail');
+            // 5. Finalizar UI
+            totalDisplay.innerText = total;
+            totalDisplay.classList.add('show');
+            if(currentDiceSum === (numDice * sides)) totalDisplay.classList.add('crit-glow');
+            if(currentDiceSum === numDice) totalDisplay.classList.add('fail-glow');
             
-            document.getElementById('d-breakdown').innerText = `Procesado: ${logDetail}`;
-            state.logs.unshift({ u: state.uname, f: formula, r: total, d: `Dados: [${rolls.join(',')}] ${logDetail}` });
-            if(state.logs.length > 15) state.logs.pop();
+            const detailMsg = `Dados: [${finalRolls.join(', ')}]` + (breakdown ? " | Modificadores:" + breakdown : "");
+            document.getElementById('d-breakdown').innerText = detailMsg;
+
+            // Log
+            state.logs.unshift({ u: state.uname, f: formula, r: total, d: detailMsg });
+            if(state.logs.length > 20) state.logs.pop();
             save();
         }
 
-        function animateSlot(el, sides, final) {
-            return new Promise(resolve => {
-                let c = 0;
-                const int = setInterval(() => {
-                    el.innerText = Math.floor(Math.random()*sides)+1;
-                    if(c++ > 10) {
-                        clearInterval(int);
-                        el.innerText = final;
-                        el.classList.add('done');
-                        resolve();
-                    }
-                }, 60);
-            });
-        }
-
-        function toggleMode() { state.edit = !state.edit; sync(); }
+        // --- UTILIDADES ---
+        function toggleMode() { state.edit = !state.edit; syncView(); }
         function saveContent() { state.items[state.id].content = document.getElementById('editor').value; }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s)+a+e.value.substring(s, end)+b+e.value.substring(end); saveContent(); }
-        function ins(a, b) { const e = document.getElementById('editor'); e.value += a+b; saveContent(); }
-        function promptNote() { const t = prompt("Tít:"); const c = prompt("Cont:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function wrap(a, b) { 
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            saveContent();
+        }
+        function ins(a, b) { document.getElementById('editor').value += a+b; saveContent(); }
         function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function promptNote() { const t = prompt("Tít:"); const c = prompt("Cont:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function deleteItem() { if(confirm("¿Eliminar?")) { delete state.items[state.id]; save(); goBack(); } }
         function closeDice() { document.getElementById('dice-overlay').style.display = 'none'; }
 
         init();
