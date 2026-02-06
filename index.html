@@ -24,8 +24,7 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.2s; }
-        .block-roll:hover { background: #3d3d4d; transform: scale(1.03); }
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
@@ -50,14 +49,11 @@
         .total-box.show { opacity: 1; }
         
         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-        .log b { color: #eee; }
-        .log-crit { color: var(--crit); font-weight: bold; }
-        .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES V2</div></div>
+    <div class="header"><div class="sig">My Dashesh v2.0</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -133,7 +129,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=20\n-10FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -181,34 +177,36 @@
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
-            
             const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) {
-                obtn.innerText = "LIBERAR";
-                obtn.className = "btn-dice btn-owner-true";
-            } else {
-                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR";
-                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
-            }
-
+            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
+            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
-        function renderPreview(txt) {
+        // CEREBRO LÓGICO DE VARIABLES
+        function getMemory(txt) {
             const memory = {};
-            // 1. PRIMERO: Capturar variables base (FUE=10)
-            txt.replace(/\b([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => {
-                memory[k.toUpperCase()] = parseInt(v);
-            });
-            // 2. SEGUNDO: Aplicar modificadores acumulativos (+5FUE o -2FUE)
-            txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)\b/gi, (m, sign, val, k) => {
-                const key = k.toUpperCase();
-                if(memory[key] === undefined) memory[key] = 0; // Si no existe, inicia en 0
-                memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
-            });
+            // 1. Bases (FUE=20)
+            const baseRegex = /([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi;
+            let m;
+            while ((m = baseRegex.exec(txt)) !== null) {
+                memory[m[1].toUpperCase()] = parseInt(m[2]);
+            }
+            // 2. Plus/Minus (+10FUE o -5FUE)
+            const plusRegex = /([\+\-])(\d+)([A-Z0-9_]+)/gi;
+            while ((m = plusRegex.exec(txt)) !== null) {
+                const sign = m[1], val = parseInt(m[2]), key = m[3].toUpperCase();
+                if(memory[key] !== undefined) {
+                    memory[key] += (sign === '+' ? 1 : -1) * val;
+                }
+            }
+            return memory;
+        }
 
+        function renderPreview(txt) {
+            const memory = getMemory(txt);
             const lines = txt.split('\n');
             const processedLines = lines.map(line => {
                 if (line.trim().startsWith('[+]')) {
@@ -233,27 +231,24 @@
                 .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
-                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`, ${JSON.stringify(memory)})">${f}</div>`;
                 });
         }
 
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
-
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
-            let breakdown = [];
+            let mods = [];
             
-            // Sustituir variables por valores de forma segura (del nombre más largo al más corto para evitar conflictos)
-            const sortedKeys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            for(let k of sortedKeys) {
-                const regex = new RegExp(`\\b${k}\\b`, 'g');
+            // Reemplazar variables por valores reales consolidando Plus
+            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
+            keys.forEach(k => {
+                const regex = new RegExp(k, 'g');
                 if(regex.test(logic)) {
-                    breakdown.push(`${k}:${memory[k]}`);
+                    mods.push(`${k}:${memory[k]}`);
                     logic = logic.replace(regex, memory[k]);
                 }
-            }
+            });
 
-            // Identificar el dado (NdS)
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
@@ -272,10 +267,10 @@
                     let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 7) {
+                        if(t++ > 8) {
                             clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
+                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span style="color:var(--crit)">${res}</span>`); }
+                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span style="color:var(--fail)">${res}</span>`); }
                             else logDetails.push(res);
                             currentSum += res; r();
                         }
@@ -283,21 +278,16 @@
                 });
             }
 
-            // EVAL FINAL: Limpieza absoluta para evitar SyntaxError
             let final;
             try {
-                // Reemplazamos el NdS por el total de los dados y borramos CUALQUIER texto residual
-                let cleanEval = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(cleanEval));
-            } catch(e) { 
-                console.error("Fallo en formula:", e);
-                final = currentSum; 
-            }
+                // Sustituir el dado por el total y limpiar CUALQUIER texto sobrante
+                let mathString = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                final = Math.floor(eval(mathString));
+            } catch(e) { final = currentSum; }
 
             setTimeout(() => { 
-                totalVal.innerText = final; 
-                totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = breakdown.length > 0 ? `Variables: ${breakdown.join(' | ')}` : "Sin modificadores"; 
+                totalVal.innerText = final; totalVal.classList.add('show'); 
+                document.getElementById('d-res').innerText = `[${results.join('+')}] mods: ${mods.join(', ') || '0'}`; 
             }, 200);
 
             state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
@@ -315,24 +305,24 @@
 
         function cloneToMyDash(text) {
             const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero OWNEA un Dash para recibir clones.");
+            if(!myDash) return alert("Primero OWNEA un Dash.");
             myDash.content += "\n" + text; save(); alert("¡Clonado!");
         }
 
         function toggleOwnership() { 
             const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return alert("Este Dash ya tiene dueño.");
-            it.owner = it.owner ? null : state.uid; 
-            save(); 
+            if(it.owner && it.owner !== state.uid) return alert("Dash ocupado.");
+            it.owner = it.owner ? null : state.uid; save(); 
         }
 
+        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Espacio doble = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar Carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
 
         init();
     </script>
