@@ -4,118 +4,192 @@
     <meta charset="UTF-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #212529; color: white; padding: 15px; }
-        .card { background: #2c3035; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #444; }
-        .die-roll { color: #bb86fc; font-weight: bold; cursor: pointer; text-decoration: underline; }
-        .res-crit { color: #00ff00; } .res-fail { color: #ff4444; }
-        input, textarea { width: 100%; background: #1a1d20; color: white; border: 1px solid #555; padding: 5px; margin: 5px 0; }
-        .tab-bar { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 10px; }
-        .tab { background: #444; padding: 5px 10px; cursor: pointer; border-radius: 4px 4px 0 0; }
-        .active-tab { background: #bb86fc; color: black; }
+        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        
+        .menu-section { display: flex; flex-direction: column; gap: 10px; }
+        input, textarea { background: #2c2c2c; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; }
+        button { background: var(--primary); color: black; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .dash-item { background: var(--card); padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid transparent; }
+        .dash-item:hover { border-color: var(--primary); }
+
+        .tab-bar { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; border-bottom: 1px solid #444; }
+        .tab { padding: 5px 15px; background: #333; cursor: pointer; border-radius: 5px 5px 0 0; font-size: 0.9em; }
+        .tab.active { background: var(--primary); color: black; }
+
+        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; background: #2a1a3a; padding: 2px 4px; border-radius: 3px; }
+        .result-box { background: #000; padding: 10px; border: 1px solid var(--primary); margin-top: 10px; position: relative; }
+        .crit-success { color: #00ff00; font-weight: bold; }
+        .crit-fail { color: #ff4444; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="app">
-        <h2>Dashisboard+</h2>
-        <div id="main-menu">
-            <input type="text" id="newDashName" placeholder="Nombre del Dash...">
-            <button onclick="createDash()">Crear Dash</button>
-            <div id="dashList"></div>
+        <div id="view-list">
+            <h2>Dashisboard+</h2>
+            <div class="menu-section">
+                <input type="text" id="dashName" placeholder="Nombre del nuevo Dash...">
+                <button onclick="createDash()">Crear Dash</button>
+            </div>
+            <div id="list-container"></div>
         </div>
 
-        <div id="dashView" style="display:none;">
-            <div class="tab-bar" id="tabs"></div>
-            <button onclick="showMenu()">⬅ Volver</button>
-            <button onclick="addPage()">+ Nueva Página</button>
-            <div id="contentArea">
-                <textarea id="editor" rows="10" oninput="updateContent()"></textarea>
-                <div id="preview"></div>
+        <div id="view-details" style="display:none;">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <h3 id="current-dash-title" oncontextmenu="event.preventDefault(); editDashName()">Nombre</h3>
+                <button onclick="showList()" style="background:#444; color:white;">Volver</button>
             </div>
+            <div class="tab-bar" id="tab-bar"></div>
+            <button onclick="addPage()" style="font-size: 0.7em; margin-bottom: 5px;">+ Página</button>
+            
+            <textarea id="main-editor" rows="12" oninput="handleInput()"></textarea>
+            <div id="preview-area" style="margin-top:10px; line-height: 1.6;"></div>
+            <div id="dice-output"></div>
         </div>
     </div>
 
     <script>
-        let currentDashId = null;
-        let stats = {};
+        let state = { dashes: {}, currentId: null, currentPage: 0, stats: {} };
 
         OBR.onReady(async () => {
+            const meta = await OBR.scene.getMetadata();
+            state.dashes = meta["com.dashisboard.data"] || {};
             renderList();
-            // Escuchar cambios de otros jugadores
-            OBR.scene.onMetadataChange((metadata) => {
+            
+            OBR.scene.onMetadataChange((meta) => {
+                state.dashes = meta["com.dashisboard.data"] || {};
                 renderList();
-                if(currentDashId) loadDash(currentDashId);
+                if(state.currentId) renderDash();
             });
         });
 
-        async function createDash() {
-            const name = document.getElementById('newDashName').value;
-            if(!name) return;
-            const id = Date.now().toString();
-            const metadata = await OBR.scene.getMetadata();
-            const dashes = metadata.dashes || {};
-            dashes[id] = { name, pages: [{title: 'Principal', content: '', type: 'normal'}] };
-            await OBR.scene.setMetadata({ dashes });
-            document.getElementById('newDashName').value = '';
-            renderList();
+        async function save() {
+            await OBR.scene.setMetadata({ "com.dashisboard.data": state.dashes });
         }
 
-        async function renderList() {
-            const metadata = await OBR.scene.getMetadata();
-            const list = document.getElementById('dashList');
-            list.innerHTML = '<h3>Lista de dashes:</h3>';
-            for (const [id, dash] of Object.entries(metadata.dashes || {})) {
-                const btn = document.createElement('button');
-                btn.innerText = dash.name;
-                btn.onclick = () => openDash(id);
-                list.appendChild(btn);
-            }
+        function createDash() {
+            const name = document.getElementById('dashName').value;
+            if(!name) return;
+            const id = Date.now().toString();
+            state.dashes[id] = { name, pages: [{title: 'Principal', content: '', type: 'normal'}] };
+            document.getElementById('dashName').value = '';
+            save();
+        }
+
+        function renderList() {
+            const container = document.getElementById('list-container');
+            container.innerHTML = '<h4>Tus Dashes:</h4>';
+            Object.keys(state.dashes).forEach(id => {
+                const item = document.createElement('div');
+                item.className = 'dash-item';
+                item.innerHTML = `<span>${state.dashes[id].name}</span>`;
+                item.onclick = () => openDash(id);
+                container.appendChild(item);
+            });
         }
 
         function openDash(id) {
-            currentDashId = id;
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('dashView').style.display = 'block';
-            loadDash(id);
+            state.currentId = id;
+            state.currentPage = 0;
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'block';
+            renderDash();
         }
 
-        async function loadDash(id) {
-            const metadata = await OBR.scene.getMetadata();
-            const dash = metadata.dashes[id];
-            // Aquí iría la lógica de renderizar pestañas y procesar el texto (FUE, 2d6, etc)
-            parseContent(dash.pages[0].content);
+        function renderDash() {
+            const dash = state.dashes[state.currentId];
+            document.getElementById('current-dash-title').innerText = dash.name;
+            
+            // Render Tabs
+            const tabBar = document.getElementById('tab-bar');
+            tabBar.innerHTML = '';
+            dash.pages.forEach((p, i) => {
+                const t = document.createElement('div');
+                t.className = `tab ${state.currentPage === i ? 'active' : ''}`;
+                t.innerText = p.title;
+                t.onclick = () => { state.currentPage = i; renderDash(); };
+                tabBar.appendChild(t);
+            });
+
+            const content = dash.pages[state.currentPage].content;
+            document.getElementById('main-editor').value = content;
+            parseContent(content);
+        }
+
+        function handleInput() {
+            const val = document.getElementById('main-editor').value;
+            state.dashes[state.currentId].pages[state.currentPage].content = val;
+            parseContent(val);
+            save();
         }
 
         function parseContent(text) {
-            // 1. Extraer Variables (FUE=10)
-            const varRegex = /([A-Z]+)\s*=\s*(\d+)/g;
-            let match;
-            while ((match = varRegex.exec(text)) !== null) {
-                stats[match[1]] = parseInt(match[2]);
-            }
+            // Extraer Stats (FUE=10)
+            const statMatch = text.matchAll(/([A-ZÁÉÍÓÚ]+)\s*=\s*(\d+)/gi);
+            state.stats = {};
+            for (const m of statMatch) { state.stats[m[1].toUpperCase()] = parseInt(m[2]); }
 
-            // 2. Procesar Dados (2d20+FUE)
-            let processed = text.replace(/(\d+d\d+[\+\-\*\/A-Z]*)/g, (m) => {
-                return `<span class="die-roll" onclick="rollDice('${m}')">${m}</span>`;
+            // Detectar Dados
+            let html = text.replace(/([0-9]+d[0-9]+[\+\-\*\/0-9A-Z]*)/gi, (m) => {
+                return `<span class="dice-roll" onclick="roll('${m}')">${m}</span>`;
             });
-            
-            document.getElementById('preview').innerHTML = processed.replace(/\n/g, '<br>');
+            document.getElementById('preview-area').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        function rollDice(formula) {
-            // Sustituir variables en la fórmula
-            let finalFormula = formula;
-            for (const [stat, val] of Object.entries(stats)) {
-                finalFormula = finalFormula.replace(stat, val);
+        function roll(formula) {
+            let evalFormula = formula.toUpperCase();
+            // Reemplazar stats
+            Object.keys(state.stats).forEach(s => {
+                evalFormula = evalFormula.replace(new RegExp(s, 'g'), state.stats[s]);
+            });
+
+            const dicePart = evalFormula.match(/(\d+)d(\d+)/i);
+            if(!dicePart) return;
+
+            const num = parseInt(dicePart[1]);
+            const sides = parseInt(dicePart[2]);
+            let rolls = [];
+            let sum = 0;
+
+            for(let i=0; i<num; i++) {
+                let r = Math.floor(Math.random() * sides) + 1;
+                let style = r === sides ? 'crit-success' : (r === 1 ? 'crit-fail' : '');
+                rolls.push(`<span class="${style}">${r}</span>`);
+                sum += r;
             }
-            
-            // Lógica simple de dados (esto se puede expandir)
-            alert("Tirando: " + finalFormula + "...");
-            // Aquí conectarías con un evaluador matemático
+
+            // Calcular modificadores simples (+5, etc)
+            let mod = 0;
+            const modPart = evalFormula.replace(dicePart[0], "");
+            try { if(modPart) mod = eval(modPart); } catch(e) {}
+
+            const total = sum + mod;
+            document.getElementById('dice-output').innerHTML = `
+                <div class="result-box" onclick="this.innerHTML=''">
+                    <strong>Resultado: ${total}</strong><br>
+                    <small>Secuencia: [${rolls.join(', ')}] ${mod >= 0 ? '+'+mod : mod}</small>
+                </div>
+            `;
         }
 
-        function showMenu() {
-            document.getElementById('main-menu').style.display = 'block';
-            document.getElementById('dashView').style.display = 'none';
+        function showList() {
+            state.currentId = null;
+            document.getElementById('view-list').style.display = 'block';
+            document.getElementById('view-details').style.display = 'none';
+        }
+
+        function addPage() {
+            const title = prompt("Nombre de la página:");
+            if(!title) return;
+            state.dashes[state.currentId].pages.push({title, content: '', type: 'normal'});
+            save();
+        }
+
+        function editDashName() {
+            const newName = prompt("Nuevo nombre del Dash:", state.dashes[state.currentId].name);
+            if(newName) { state.dashes[state.currentId].name = newName; save(); }
         }
     </script>
 </body>
