@@ -24,7 +24,8 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.2s; }
+        .block-roll:hover { background: #3d3d4d; transform: scale(1.05); }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
@@ -49,13 +50,14 @@
         .total-box.show { opacity: 1; }
         
         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        .log b { color: #eee; }
         .log-crit { color: var(--crit); font-weight: bold; }
         .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">PLATINUM DASHBOARD V3</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM V.FINAL</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -102,9 +104,17 @@
         </div>
     </div>
 
+    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
+            <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
+        </div>
+    </div>
+
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
-        const DB = "VPLAT_ITEMS", LG = "VPLAT_LOGS", OF = "VPLAT_FOLDERS";
+        const DB = "VFINAL_ITEMS", LG = "VFINAL_LOGS", OF = "VFINAL_FOLDERS";
 
         async function init() {
             try {
@@ -123,16 +133,18 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'ADK=10\n-5ADK\n[+] Atq 1d20+ADK', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
+            
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
-                const fd = document.createElement('div'); fd.className = "card folder";
+                const fd = document.createElement('div');
+                fd.className = "card folder"; 
                 fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
                 fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
                 fd.ondragover = e => e.preventDefault();
@@ -142,10 +154,13 @@
                     const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
                 });
             });
+
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
-                const card = createCard(d); card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
+                const card = createCard(d);
+                card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
                 cont.appendChild(card);
             });
+            
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
@@ -175,21 +190,35 @@
         }
 
         function renderPreview(txt) {
-            const memory = {};
-            txt.replace(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)/gi, (m, sign, val, k) => {
-                const key = k.toUpperCase();
-                if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
-            });
+            const memory = calculateMemory(txt);
             const lines = txt.split('\n');
             const processedLines = lines.map(line => {
                 if (line.trim().startsWith('[+]')) {
                     const contentToClone = line.replace('[+]', '').trim();
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${contentToClone.replace(/`/g, "\\`")}\`)">${renderElements(contentToClone, memory)}</div>`;
+                    const innerRender = renderElements(contentToClone, memory);
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${contentToClone.replace(/`/g, "\\`")}\`)">${innerRender}</div>`;
                 }
                 return renderElements(line, memory);
             });
             document.getElementById('preview').innerHTML = processedLines.join('<br>');
+        }
+
+        // NUEVA FUNCIÓN DE CÁLCULO DE MEMORIA (FIX VARIABLES)
+        function calculateMemory(txt) {
+            const mem = {};
+            // 1. Capturar bases FUE=10
+            const bases = txt.matchAll(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi);
+            for (const m of bases) mem[m[1].toUpperCase()] = parseInt(m[2]);
+            
+            // 2. Capturar Plus +5FUE o -2FUE
+            const plus = txt.matchAll(/([\+\-])(\d+)([A-Z0-9_]+)/gi);
+            for (const m of plus) {
+                const key = m[3].toUpperCase();
+                const val = (m[1] === '+' ? 1 : -1) * parseInt(m[2]);
+                if (mem[key] !== undefined) mem[key] += val;
+                else mem[key] = val; // Si no existe base, se crea con el valor plus
+            }
+            return mem;
         }
 
         function renderElements(txt, memory) {
@@ -197,31 +226,38 @@
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
-                .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
-                // REGEX DADOS CORREGIDA: Captura solo hasta el siguiente espacio o fin de línea
-                .replace(/(\d*d\d+([^\s]*))/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`);
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    const safe = encodeURIComponent(c.replace(/  /g, '\n'));
+                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${safe}')">${t}</div>`;
+                })
+                .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
+                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
+                .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
+                });
         }
+
+        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
 
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
             let breakdown = [];
             
-            // 1. Reemplazar variables (de más largas a más cortas)
+            // Reemplazar variables por valores (Orden de longitud para evitar pisar FUE con FUE_MAX)
             const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
             for(let k of keys) {
-                const regex = new RegExp(k, 'g');
-                if(regex.test(logic)) { breakdown.push(`${k}:${memory[k]}`); logic = logic.replace(regex, memory[k]); }
+                const regex = new RegExp(`\\b${k}\\b`, 'g');
+                if(regex.test(logic)) {
+                    breakdown.push(`${k}:${memory[k]}`);
+                    logic = logic.replace(regex, memory[k]);
+                }
             }
 
-            // 2. Extraer dado
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
 
-            // UI
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formula;
             const container = document.getElementById('dice-container');
@@ -246,19 +282,21 @@
                 });
             }
 
-            // 3. CALCULO FINAL LIMPIO
-            let final = 0;
+            let final;
             try {
-                // Sustituimos el NdS por el valor real y eliminamos CUALQUIER letra residual
-                let cleanLogic = logic.replace(match[0], currentSum).replace(/[A-Z_]/g, '');
-                // Solo permitimos números y operadores matemáticos
-                let safeEval = cleanLogic.replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(safeEval));
-            } catch(e) { final = currentSum; }
+                // Sustituir el NdS por el resultado físico y limpiar de letras
+                let mathStr = logic.replace(match[0], currentSum).replace(/[A-Z_]/gi, '');
+                // Eliminar cualquier operador duplicado o basura al inicio/fin que cause SyntaxError
+                mathStr = mathStr.replace(/[^\d\+\-\*\/\(\)\.]/g, '');
+                final = Math.floor(eval(mathStr));
+            } catch(e) { 
+                console.error("Math Error:", e);
+                final = currentSum; 
+            }
 
             setTimeout(() => { 
                 totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `[${results.join('+')}] Mods: ${breakdown.join(', ') || '0'}`;
+                document.getElementById('d-res').innerText = `[${results.join('+')}] mod: ${breakdown.join(', ') || '0'}`; 
             }, 200);
 
             state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
@@ -274,23 +312,25 @@
             syncView();
         }
 
+        function cloneToMyDash(text) {
+            const myDash = Object.values(state.items).find(it => it.owner === state.uid);
+            if(!myDash) return alert("Primero OWNEA un Dash para recibir clones.");
+            myDash.content += "\n" + text; save(); alert("¡Clonado!");
+        }
+
         function toggleOwnership() { 
             const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return alert("Ya tiene dueño.");
+            if(it.owner && it.owner !== state.uid) return alert("Este Dash ya tiene dueño.");
             it.owner = it.owner ? null : state.uid; save(); 
         }
 
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); e.value = e.value.substring(0, e.selectionStart) + a + e.value.substring(e.selectionStart, e.selectionEnd) + b + e.value.substring(e.selectionEnd); updateContent(); }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-        function openNote(t, c) { alert(t + ":\n" + decodeURIComponent(c)); }
-        function cloneToMyDash(text) {
-            const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero OWNEA un Dash.");
-            myDash.content += "\n" + text; save(); alert("¡Clonado!");
-        }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Espacio doble = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar Carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
 
         init();
     </script>
