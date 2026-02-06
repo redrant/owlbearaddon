@@ -4,7 +4,7 @@
   "manifest_version": 1,
   "action": {
     "title": "Dashisboard+",
-    "icon": "/icon.svg",
+    "icon": "https://www.owlbear.rodeo/favicon.ico",
     "main": "/index.html",
     "width": 400,
     "height": 600
