@@ -9,55 +9,60 @@
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; overflow-x: hidden; }
-        .header-main { text-align: center; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .version { font-size: 10px; color: var(--p); font-weight: bold; }
-        
-        /* Toolbar y UI */
-        .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; flex-wrap: wrap; border: 1px solid #444; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; }
+        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; }
+        .version { font-size: 10px; color: var(--p); letter-spacing: 2px; font-weight: bold; }
+        .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); color: var(--p); }
+
+        /* Herramientas */
+        .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
         .tool { background: #333; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .tool:hover { background: var(--p); color: #000; }
 
-        #editor { width: 100%; height: 200px; background: #121214; color: #888; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
-        #preview { padding: 15px; min-height: 100px; display: none; background: rgba(0,0,0,0.3); border-radius: 8px; line-height: 1.6; }
+        #editor { width: 100%; height: 250px; background: #121214; color: #888; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
+        #preview { padding: 20px; min-height: 100px; display: none; background: rgba(0,0,0,0.3); border-radius: 8px; line-height: 1.6; }
 
-        /* Items Lista */
-        .item-card { padding: 12px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        /* Listado */
+        .item-card { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .dash-item { background: #1a1a1d; border-left: 4px solid var(--p); }
         .folder-item { background: #2a1b0a; border-left: 4px solid var(--folder); color: var(--folder); }
+        .item-card:hover { transform: translateX(5px); }
 
         /* Log de Dados */
-        #dice-log { background: #000; border: 1px solid #333; margin-top: 20px; border-radius: 8px; font-size: 11px; height: 150px; display: flex; flex-direction: column; }
-        .log-header { background: #222; padding: 5px 10px; display: flex; justify-content: space-between; border-radius: 8px 8px 0 0; }
-        #log-content { flex: 1; overflow-y: auto; padding: 8px; }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        #dice-log { margin-top: 20px; background: #000; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        .log-header { background: #222; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
+        #log-content { height: 120px; overflow-y: auto; padding: 10px; font-size: 12px; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #1a1a1d; padding-bottom: 3px; }
 
         /* Casilla Plus */
-        .cb-plus { transform: scale(1.3); margin-right: 8px; cursor: pointer; accent-color: var(--accent); }
+        .cb-plus { transform: scale(1.3); margin-right: 10px; cursor: pointer; accent-color: var(--accent); }
 
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
-        .modal { background: #1e1e1e; border: 2px solid var(--p); padding: 20px; border-radius: 12px; width: 85%; max-width: 400px; }
-        .mode-toggle { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: var(--p); color: black; }
+        .modal { background: #1e1e1e; border: 2px solid var(--p); padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; }
+        .mode-toggle { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: var(--p); color: black; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">1.2.0v</div>
-            <h2 style="margin:5px 0; color:var(--p)">My Dashes</h2>
+            <div class="version">1.2.1v</div>
+            <div class="signature">By Redrant :v</div>
+            <h2 style="margin:5px 0;">My Dashes</h2>
         </div>
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <input type="text" id="itemName" placeholder="Nuevo..." style="flex:1; padding:8px; background:#1e1e1e; color:white; border:1px solid #444; border-radius:6px;">
-            <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:black">Dash</button>
-            <button onclick="createItem('folder')" class="tool" style="background:var(--folder); color:black">Carpeta</button>
+
+        <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+            <input type="text" id="itemName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1e1e1e; color:white; border:1px solid #333; border-radius:6px;">
+            <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:black;">+Dash</button>
+            <button onclick="createItem('folder')" class="tool" style="background:var(--folder); color:black;">+Carpeta</button>
         </div>
+
         <div id="list-container"></div>
-        
+
         <div id="dice-log">
             <div class="log-header">
-                <span>DICE LOG</span>
-                <button onclick="clearLog()" id="btn-clear-log" style="background:none; border:none; color:var(--fail); cursor:pointer; font-size:10px; display:none;">REINICIAR 🔄</button>
+                <span>LOG GLOBAL</span>
+                <button onclick="clearLog()" id="btn-clear" style="background:var(--fail); color:white; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; display:none;">REINICIAR 🔄</button>
             </div>
             <div id="log-content"></div>
         </div>
@@ -66,8 +71,8 @@
     <div id="view-details" style="display:none;">
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <button onclick="showList()" class="tool">⬅ ATRÁS</button>
-            <div id="current-title" style="font-weight:bold; color:var(--p)"></div>
-            <button id="btn-owner" onclick="openOwnerMenu()" class="tool" style="display:none">👤</button>
+            <div id="current-title" class="signature"></div>
+            <button id="btn-lock" onclick="openOwnerMenu()" class="tool" style="display:none;">👤</button>
         </div>
 
         <button onclick="toggleMode()" id="btn-mode" class="mode-toggle">👁️ VER MODO JUEGO</button>
@@ -90,36 +95,30 @@
 
     <script>
         let state = { items: {}, id: null, stats: {}, editing: true, role: 'PLAYER', userId: '', userName: '' };
-        const KEY = "com.redrant.dashes.v120";
+        const KEY = "com.redrant.dashes.final";
         const LOG_KEY = "com.redrant.dashes.log";
 
         OBR.onReady(async () => {
             state.role = await OBR.player.getRole();
             state.userId = await OBR.player.getId();
             state.userName = await OBR.player.getName();
-            
-            if(state.role === 'GM') document.getElementById('btn-clear-log').style.display = 'block';
+
+            if(state.role === 'GM') document.getElementById('btn-clear').style.display = 'block';
 
             OBR.scene.onMetadataChange((m) => {
                 state.items = m[KEY] || {};
                 renderList();
                 renderLog(m[LOG_KEY] || []);
-                if(state.id) syncDetailView();
+                if(state.id) syncView();
             });
         });
-
-        function handleInput() {
-            if(!state.id) return;
-            state.items[state.id].content = document.getElementById('editor').value;
-            save();
-        }
 
         async function save() { await OBR.scene.setMetadata({ [KEY]: state.items }); }
 
         function createItem(type) {
             const n = document.getElementById('itemName').value || "Nuevo";
             const id = "i" + Date.now();
-            state.items[id] = { id, type, name: n, content: type === 'dash' ? "# " + n : "", owner: null, parentId: null };
+            state.items[id] = { id, type, name: n, content: type==='dash' ? "# "+n : "", owner: null };
             document.getElementById('itemName').value = '';
             save();
         }
@@ -127,34 +126,31 @@
         function renderList() {
             const c = document.getElementById('list-container'); c.innerHTML = '';
             Object.values(state.items).forEach(item => {
-                const div = document.createElement('div');
-                div.className = `item-card ${item.type}-item`;
-                div.innerHTML = `<span>${item.type === 'folder' ? '📁' : '📄'} ${item.name}</span>`;
-                div.onclick = () => { if(item.type==='dash') { state.id = item.id; openDash(); } };
-                c.appendChild(div);
+                const d = document.createElement('div');
+                d.className = `item-card ${item.type}-item`;
+                d.innerHTML = `<span>${item.type==='folder'?'📁':'📄'} ${item.name}</span>`;
+                d.onclick = () => { if(item.type==='dash'){ state.id=item.id; openDash(); } };
+                c.appendChild(d);
             });
         }
 
         function openDash() {
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
-            syncDetailView();
+            state.editing = false; toggleMode(); // Empieza en modo juego
         }
 
-        function syncDetailView() {
+        function syncView() {
             const item = state.items[state.id];
             if(!item) return;
             document.getElementById('current-title').innerText = item.name;
             const editor = document.getElementById('editor');
-            
-            // Permisos
             const canEdit = (state.role === 'GM' || item.owner === state.userId);
+            
+            if(state.role === 'GM') document.getElementById('btn-lock').style.display = 'block';
             editor.readOnly = !canEdit;
-            editor.style.opacity = canEdit ? 1 : 0.6;
-            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
-            if(state.role === 'GM') document.getElementById('btn-owner').style.display = 'block';
-
             if(document.activeElement !== editor) editor.value = item.content;
+            
             renderPreview(item.content);
         }
 
@@ -163,10 +159,8 @@
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => state.stats[n.toUpperCase()] = parseInt(v));
 
             let html = txt
-                .replace(/\[cb\] (.*?)(\n|$)/g, (m, content) => {
-                    return `<div style="display:flex; align-items:center;"><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${content.replace(/'/g,"\\'")}', this)"><span>${content}</span></div>`;
-                })
-                .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow: 0 0 12px $1; color: $1; font-weight: bold;">$2</span>')
+                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => `<div><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${c.replace(/'/g,"\\'")}', this)"><span>${c}</span></div>`)
+                .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow: 0 0 10px $1; color: $1; font-weight: bold;">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="tool" onclick="showNote('${t}','${c.replace(/\n/g,'<br>')}')">[${t}]</button>`)
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span style="color:var(--p);cursor:pointer;font-weight:bold;" onclick="roll('${f}')">${f}</span>`);
 
@@ -175,12 +169,11 @@
 
         async function handleCBPlus(content, cb) {
             if(!cb.checked) return;
-            // Buscar MI dash propio
             const myDash = Object.values(state.items).find(i => i.owner === state.userId);
-            if(!myDash) { alert("No tienes un dash asignado como dueño"); cb.checked = false; return; }
-            
-            myDash.content += "\n" + content;
-            await save();
+            if(myDash) {
+                myDash.content += "\n" + content;
+                await save();
+            }
             setTimeout(() => cb.checked = false, 500);
         }
 
@@ -188,52 +181,47 @@
             let f = formula.toUpperCase();
             Object.keys(state.stats).forEach(s => f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]));
             const dm = f.match(/(\d*)D(\d+)/i); if(!dm) return;
-            const n = parseInt(dm[1])||1, sides = parseInt(dm[2]);
-            let total = 0; for(let i=0; i<n; i++) total += Math.floor(Math.random()*sides)+1;
+            const n = parseInt(dm[1])||1, s = parseInt(dm[2]);
+            let total = 0; for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1;
             let res; try { res = eval(total + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = total; }
             
-            // Publicar al Log
             const meta = await OBR.scene.getMetadata();
             const logs = meta[LOG_KEY] || [];
-            logs.unshift({ user: state.userName, formula, result: res, time: new Date().toLocaleTimeString() });
-            await OBR.scene.setMetadata({ [LOG_KEY]: logs.slice(0, 30) });
+            logs.unshift({ user: state.userName, formula, res, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+            await OBR.scene.setMetadata({ [LOG_KEY]: logs.slice(0, 20) });
         }
 
         function renderLog(logs) {
-            const cont = document.getElementById('log-content');
-            cont.innerHTML = logs.map(l => `<div class="log-entry"><b>${l.user}:</b> ${l.formula} ➔ <span style="color:var(--accent)">${l.result}</span> <small style="opacity:0.4">(${l.time})</small></div>`).join('');
+            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.user}:</b> ${l.formula} ➔ <span style="color:var(--accent)">${l.res}</span> <small style="opacity:0.3">${l.time}</small></div>`).join('');
         }
 
-        async function clearLog() { if(confirm("¿Reiniciar log global?")) await OBR.scene.setMetadata({ [LOG_KEY]: [] }); }
+        async function clearLog() { if(confirm("¿Borrar log global?")) await OBR.scene.setMetadata({ [LOG_KEY]: [] }); }
+
+        function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function toggleMode() {
+            state.editing = !state.editing;
+            const canEdit = (state.role === 'GM' || state.items[state.id].owner === state.userId);
+            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
+            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
+            document.getElementById('btn-mode').innerText = state.editing ? "✍️ GUARDAR Y VER" : "⚙️ EDITAR DASH";
+        }
 
         async function openOwnerMenu() {
             const players = await OBR.party.getPlayers();
-            let html = `<h3>Asignar Propiedad</h3>`;
-            players.forEach(p => {
-                html += `<button class="mode-toggle" onclick="setOwner('${p.id}')">${p.name}</button>`;
-            });
-            html += `<button class="mode-toggle" style="background:#444" onclick="setOwner(null)">Nadie (Solo GM)</button>`;
-            const mc = document.getElementById('modal-content'); mc.innerHTML = html;
+            let h = `<h3>Dueño del Dash</h3>`;
+            players.forEach(p => h += `<button class="mode-toggle" onclick="setOwner('${p.id}')">${p.name}</button>`);
+            h += `<button class="mode-toggle" style="background:#444" onclick="setOwner(null)">Nadie</button>`;
+            document.getElementById('modal-content').innerHTML = h;
             document.getElementById('global-overlay').style.display = 'flex';
         }
+        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-overlay').style.display = 'none'; }
 
-        function setOwner(uid) {
-            state.items[state.id].owner = uid;
-            save(); document.getElementById('global-overlay').style.display = 'none';
-        }
-
-        // Utils
-        function toggleMode() {
-            state.editing = !state.editing;
-            document.getElementById('btn-mode').innerText = state.editing ? "👁️ VER MODO JUEGO" : "✍️ VOLVER A EDITAR";
-            syncDetailView();
-        }
+        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
         function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
         function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function promptExtraNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
-        function showNote(t, c) { document.getElementById('modal-content').innerHTML = `<h3>${t}</h3><p>${c}</p>`; document.getElementById('global-overlay').style.display = 'flex'; }
-        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
+        function showNote(t, c) { document.getElementById('modal-content').innerHTML = `<h3>${t}</h3><p style="text-align:left">${c}</p>`; document.getElementById('global-overlay').style.display = 'flex'; }
     </script>
 </body>
 </html>
