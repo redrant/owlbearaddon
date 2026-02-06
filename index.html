@@ -24,10 +24,9 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        /* CASILLAS RECONSTRUIDAS */
-        .check-container { display: flex; align-items: center; margin: 8px 0; padding: 6px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
-        .check-box { width: 19px; height: 19px; cursor: pointer; accent-color: var(--p); margin-right: 12px; flex-shrink: 0; }
-        .check-text { font-size: 15px; color: #eee; cursor: pointer; }
+        /* Casillas Rediseñadas */
+        .check-row { display: flex; align-items: center; margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .check-box { width: 20px; height: 20px; cursor: pointer; accent-color: var(--p); margin-right: 12px; }
 
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
@@ -51,7 +50,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v3.1</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM v4.0</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -101,14 +100,14 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; font-size: 15px; line-height: 1.6;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>
         </div>
     </div>
 
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, openFolders: {}, dragId: null };
-        const DB = "PLAT_ITEMS_V3", LG = "PLAT_LOGS_V3", CH = "PLAT_CHECKS_V3", OF = "PLAT_FOLDERS_V3";
+        const DB = "V4_ITEMS", LG = "V4_LOGS", CH = "V4_CHECKS", OF = "V4_FOLDERS";
 
         async function init() {
             try {
@@ -129,7 +128,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción\n1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción Extra\n1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -145,8 +144,7 @@
                 fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
                 fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
                 
-                fd.ondragover = e => { e.preventDefault(); fd.style.borderColor = "var(--var)"; };
-                fd.ondragleave = () => { fd.style.borderColor = "#252529"; };
+                fd.ondragover = e => e.preventDefault();
                 fd.ondrop = () => { state.items[state.dragId].parent = f.id; save(); };
                 
                 cont.appendChild(fd);
@@ -172,10 +170,10 @@
             const d = document.createElement('div');
             d.className = "card dash";
             d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '🔒' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
-            d.ondragend = () => state.dragId = null;
+            d.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = null; save(); };
             return d;
         }
 
@@ -198,11 +196,9 @@
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             
             const btn = document.getElementById('own-btn');
-            if(it.owner === state.uid) {
-                btn.innerText = "LIBERAR"; btn.style.background = "var(--fail)"; btn.style.color = "white";
-            } else {
-                btn.innerText = "OWNEAR"; btn.style.background = "var(--p)"; btn.style.color = "black";
-            }
+            btn.innerText = it.owner === state.uid ? "LIBERAR" : "OWNEAR";
+            btn.style.background = it.owner === state.uid ? "var(--fail)" : "var(--accent)";
+            btn.style.color = it.owner === state.uid ? "white" : "black";
 
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
@@ -216,15 +212,13 @@
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[\+\]\s*(.*)/g, (m, label) => {
-                    const cleanLabel = label.trim();
-                    const cid = state.id + cleanLabel.replace(/\s/g, '');
+                    const cid = state.id + label.trim();
                     const checked = state.checks[cid] ? 'checked' : '';
-                    return `<div class="check-container" onclick="toggleCheck('${cid}')"><input type="checkbox" class="check-box" ${checked}><span class="check-text">${cleanLabel}</span></div>`;
+                    return `<div class="check-row"><input type="checkbox" class="check-box" ${checked} onclick="actionCheck('${cid}', '${label.trim()}')"><span>${label}</span></div>`;
                 })
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    // Doble espacio -> Salto de linea
-                    const cleanC = c.replace(/  /g, '\n').replace(/'/g, "&apos;");
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
+                    const cleanC = c.replace(/  /g, '\n'); // Doble espacio = Enter
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
                 });
 
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
@@ -234,6 +228,17 @@
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+        }
+
+        function actionCheck(cid, label) {
+            state.checks[cid] = !state.checks[cid];
+            if(state.checks[cid]) {
+                const myDash = Object.values(state.items).find(i => i.owner === state.uid);
+                if(myDash) {
+                    myDash.content += `\n${label}`;
+                    save();
+                }
+            } else { save(); }
         }
 
         async function runRoll(formula, memory) {
@@ -278,15 +283,14 @@
             save();
         }
 
-        function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
         function showNote(t, b) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = b; document.getElementById('note-overlay').style.display = 'flex'; }
         function toggleOwnership() { const it=state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (2 espacios para salto):"); if(t && c) ins(`\\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
