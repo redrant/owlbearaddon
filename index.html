@@ -24,15 +24,18 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        /* CASILLA CLONADORA BLINDADA */
         .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; font-size: 14px; }
         .check-btn:hover { background: rgba(187, 134, 252, 0.15); border-color: var(--p); }
-        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; font-family: monospace; }
+        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
 
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
+        /* BOTONES DECORADOS ESTILO DADO */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; transition: 0.2s; }
+        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
+
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
@@ -43,12 +46,15 @@
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        /* LOG MEJORADO */
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; line-height: 1.4; }
+        .log-crit { color: var(--crit); font-weight: bold; }
+        .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v4.5</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM v4.8</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -62,9 +68,9 @@
 
     <div id="view-details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
+            <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="tool" style="background:var(--p); color:black;">OWNEAR</button>
+            <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">OWNEAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
@@ -98,8 +104,8 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; font-size:16px;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px;">CERRAR</button>
         </div>
     </div>
 
@@ -126,7 +132,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE\n[note=Info]Nota de prueba[/note]', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -154,7 +160,11 @@
                 cont.appendChild(card);
             });
             
-            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span></div>`).join('');
+            // LOG RENDER CON COLORES
+            document.getElementById('log-content').innerHTML = state.log.map(l => 
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>${l.faces || ""}</small></div>`
+            ).join('');
+            
             if(state.id) syncView();
         }
 
@@ -181,44 +191,41 @@
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
+            
+            const btn = document.getElementById('own-btn');
+            btn.innerText = (it.owner === state.uid) ? "LIBERAR" : "OWNEAR";
+
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
             const memory = {};
-            // 1. Cargar Variables Base (FUE=10)
             txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            // 2. Cargar Variables Incrementales (+5FUE)
             txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, sign, val, k) => {
                 const key = k.toUpperCase();
                 if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
             });
 
-            // 3. Procesar Contenido Linea por Linea para Casillas [+]
             const lines = txt.split('\n');
             const processedLines = lines.map(line => {
-                let l = line;
-                // Si la linea empieza con [+], la convertimos en botón pero guardamos el contenido original para clonar
-                if (l.trim().startsWith('[+]')) {
-                    const contentToClone = l.replace('[+]', '').trim();
+                if (line.trim().startsWith('[+]')) {
+                    const contentToClone = line.replace('[+]', '').trim();
                     const escapedContent = contentToClone.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    // Renderizamos el interior de la casilla (para que funcionen dados/notas dentro)
                     const innerRender = renderElements(contentToClone, memory);
                     return `<div class="check-btn" onclick="cloneToMyDash('${escapedContent}')">${innerRender}</div>`;
                 }
-                return renderElements(l, memory);
+                return renderElements(line, memory);
             });
-
             document.getElementById('preview').innerHTML = processedLines.join('<br>');
         }
 
-        // Función auxiliar para renderizar dados, notas y colores sin romper la estructura
         function renderElements(txt, memory) {
             return txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    // FIX NOTA: doble espacio -> enter
                     const cleanC = c.replace(/  /g, '\n').replace(/'/g, "\\'");
                     return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="event.stopPropagation(); showNote('${t}', '${cleanC}')">[${t}]</span>`;
                 })
@@ -232,10 +239,10 @@
 
         function cloneToMyDash(text) {
             const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero debes OWNEAR un Dash para recibir la acción.");
+            if(!myDash) return alert("Primero debes OWNEAR un Dash personal.");
             myDash.content += "\n" + text;
             save();
-            alert("Acción enviada a tu Dash personal.");
+            alert("¡Acción clonada!");
         }
 
         async function runRoll(formula, memory) {
@@ -255,7 +262,9 @@
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
 
-            let currentSum = 0; let logDetails = [];
+            let currentSum = 0; 
+            let logFaces = []; // Para el historial
+
             for(let res of results) {
                 const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
                 await new Promise(r => {
@@ -264,19 +273,28 @@
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++ > 8) {
                             clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(res); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(res); }
-                            else logDetails.push(res);
+                            let colorClass = "";
+                            if(res === s) { die.style.color = "var(--crit)"; colorClass = "log-crit"; }
+                            else if(res === 1) { die.style.color = "var(--fail)"; colorClass = "log-fail"; }
+                            
+                            logFaces.push(`<span class="${colorClass}">${res}</span>`);
                             currentSum += res; r();
                         }
                     }, 60);
                 });
             }
+            
             let final; try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`; }, 200);
+            
+            setTimeout(() => { 
+                totalVal.innerText = final; 
+                totalVal.classList.add('show'); 
+                document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`; 
+            }, 200);
 
-            state.log.unshift({ u: state.uname, f: formula, r: final });
-            if(state.log.length > 10) state.log.pop();
+            // GUARDAR EN LOG CON CARAS
+            state.log.unshift({ u: state.uname, f: formula, r: final, faces: `(${logFaces.join(',')})` });
+            if(state.log.length > 15) state.log.pop();
             save();
         }
 
@@ -285,7 +303,7 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio para Salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
 
