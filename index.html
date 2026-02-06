@@ -13,28 +13,36 @@
         .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; }
         .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); color: var(--p); }
 
-        /* Toolbar */
+        /* Controles */
         .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; }
         .tool { background: #333; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .tool:hover { background: var(--p); color: #000; }
 
         #editor { width: 100%; height: 250px; background: #121214; color: #888; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
-        #preview { padding: 20px; min-height: 100px; display: none; background: rgba(0,0,0,0.3); border-radius: 8px; line-height: 1.6; }
+        #preview { padding: 20px; min-height: 100px; display: none; background: rgba(0,0,0,0.2); border-radius: 8px; line-height: 1.8; }
 
-        /* Lista y Drag & Drop */
-        .item-card { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: grab; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        /* Lista y Carpetas */
+        .item-card { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: grab; display: flex; justify-content: space-between; align-items: center; }
         .dash-item { background: #1a1a1d; border-left: 4px solid var(--p); }
-        .folder-item { background: #2a1b0a; border-left: 4px solid var(--folder); color: var(--folder); }
+        .folder-item { background: #2a1b0a; border-left: 4px solid var(--folder); color: var(--folder); font-weight: bold; }
         .drop-hover { background: var(--folder) !important; color: black !important; }
 
-        /* Log y Dados */
-        #dice-log { margin-top: 15px; background: #000; border: 1px solid #333; border-radius: 8px; font-size: 12px; }
-        #log-content { height: 100px; overflow-y: auto; padding: 8px; }
-        .dice-result-pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; border: 3px solid var(--p); padding: 20px; border-radius: 15px; text-align: center; z-index: 10000; box-shadow: 0 0 50px #000; min-width: 200px; }
+        /* Casilla Plus Estilizada */
+        .cb-container { display: flex; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px; margin: 5px 0; border-left: 2px solid var(--accent); }
+        .cb-plus { transform: scale(1.3); margin: 5px 12px 0 5px; cursor: pointer; accent-color: var(--accent); }
 
-        .cb-plus { transform: scale(1.4); margin-right: 12px; cursor: pointer; accent-color: var(--accent); }
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .modal { background: #1e1e1e; border: 2px solid var(--p); padding: 20px; border-radius: 12px; width: 80%; }
+        /* Notas+ */
+        .note-btn { background: #121214; color: var(--accent); border: 1px solid var(--accent); padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 2px; transition: 0.2s; }
+        .note-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent); }
+
+        /* Dados y Animaciones */
+        @keyframes popIn { from { transform: translate(-50%, -60%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .dice-result-pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1d; border: 2px solid var(--p); padding: 25px; border-radius: 15px; text-align: center; z-index: 10000; box-shadow: 0 0 40px rgba(0,0,0,0.8); animation: popIn 0.2s cubic-bezier(0.17, 0.89, 0.32, 1.28); min-width: 220px; }
+        .c-max { color: var(--crit); font-weight: bold; text-shadow: 0 0 8px var(--crit); }
+        .c-min { color: var(--fail); font-weight: bold; text-shadow: 0 0 8px var(--fail); }
+
+        #log-content { height: 120px; overflow-y: auto; padding: 10px; font-size: 11px; background: #000; border-radius: 8px; margin-top: 10px; }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body>
@@ -42,21 +50,18 @@
     <div id="view-list">
         <div class="header-main">
             <div class="signature">By Redrant :v</div>
-            <h2 style="margin:5px 0;">My Dashes</h2>
+            <h2 style="margin:5px 0; color:var(--p)">My Dashes</h2>
         </div>
-
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <input type="text" id="itemName" placeholder="Nombre..." style="flex:1; padding:8px; background:#1e1e1e; color:white; border:1px solid #444; border-radius:6px;">
+        <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+            <input type="text" id="itemName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1e1e1e; color:white; border:1px solid #333; border-radius:6px;">
             <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:black;">+Dash</button>
             <button onclick="createItem('folder')" class="tool" style="background:var(--folder); color:black;">+Carpeta</button>
         </div>
-
         <div id="list-container"></div>
-
-        <div id="dice-log">
-            <div style="background:#222; padding:5px 10px; font-size:10px; display:flex; justify-content:space-between;">
+        <div id="log-box">
+            <div style="font-size:10px; color:#555; display:flex; justify-content:space-between; padding:0 5px;">
                 <span>LOG GLOBAL</span>
-                <span onclick="clearLog()" style="cursor:pointer; color:var(--fail)">REINICIAR</span>
+                <span onclick="clearLog()" style="cursor:pointer; color:var(--fail)">REINICIAR 🔄</span>
             </div>
             <div id="log-content"></div>
         </div>
@@ -66,15 +71,16 @@
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <button onclick="showList()" class="tool">⬅ ATRÁS</button>
             <div id="current-title" class="signature"></div>
-            <button id="btn-lock" onclick="openOwnerMenu()" class="tool">👤</button>
+            <button onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
-        <button onclick="toggleMode()" id="btn-mode" class="mode-toggle" style="width:100%; padding:10px; margin-bottom:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:5px; cursor:pointer;">MODO JUEGO</button>
+        <button onclick="toggleMode()" id="btn-mode" class="mode-toggle" style="width:100%; padding:12px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
         <div id="editor-ui">
             <div class="toolbar">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="promptGlow()">Glow</button>
-                <button class="tool" onclick="ins('[cb] ','')">Casilla+</button>
+                <button class="tool" onclick="promptGlow()">✨ Glow</button>
+                <button class="tool" onclick="promptExtraNote()">📝 Note+</button>
+                <button class="tool" onclick="ins('[cb] ','')">🔘 Casilla+</button>
             </div>
             <textarea id="editor" oninput="handleInput()"></textarea>
         </div>
@@ -82,12 +88,12 @@
     </div>
 
     <div id="dice-overlay" class="dice-result-pop" style="display:none;" onclick="this.style.display='none'"></div>
-    <div id="global-overlay" class="overlay" onclick="this.style.display='none'"><div id="modal-content" class="modal" onclick="event.stopPropagation()"></div></div>
+    <div id="global-overlay" class="overlay" onclick="this.style.display='none'"><div id="modal-content" class="modal" onclick="event.stopPropagation()" style="background:#1e1e1e; border:2px solid var(--p); padding:20px; border-radius:15px; max-width:80%;"></div></div>
 
     <script>
         let state = { items: {}, id: null, stats: {}, editing: false, role: 'GM', userId: 'local', userName: 'User', draggedId: null };
-        const KEY = "com.redrant.dashes.v130";
-        const LOG_KEY = "com.redrant.dashes.log.v130";
+        const KEY = "com.redrant.dashes.v131";
+        const LOG_KEY = "com.redrant.dashes.log.v131";
 
         async function init() {
             try {
@@ -122,25 +128,16 @@
         function renderList() {
             const c = document.getElementById('list-container'); c.innerHTML = '';
             const items = Object.values(state.items);
-            
-            // Renderizar carpetas primero
             items.filter(i => i.type === 'folder').forEach(folder => {
                 const fDiv = document.createElement('div');
                 fDiv.className = 'item-card folder-item';
-                fDiv.innerHTML = `<span>📁 ${folder.name.toUpperCase()}</span> <button onclick="deleteItem('${folder.id}')" style="background:none;border:none;color:red;cursor:pointer">✕</button>`;
-                
-                // Drag & Drop events
+                fDiv.innerHTML = `<span>📁 ${folder.name.toUpperCase()}</span> <span onclick="deleteItem('${folder.id}')" style="color:red; cursor:pointer">✕</span>`;
                 fDiv.ondragover = e => { e.preventDefault(); fDiv.classList.add('drop-hover'); };
                 fDiv.ondragleave = () => fDiv.classList.remove('drop-hover');
                 fDiv.ondrop = e => { e.preventDefault(); moveItem(state.draggedId, folder.id); fDiv.classList.remove('drop-hover'); };
-                
                 c.appendChild(fDiv);
-
-                // Hijos de esta carpeta
                 items.filter(i => i.parentId === folder.id).forEach(dash => c.appendChild(createDashCard(dash, true)));
             });
-
-            // Dashboards sin carpeta
             items.filter(i => i.type === 'dash' && !i.parentId).forEach(dash => c.appendChild(createDashCard(dash, false)));
         }
 
@@ -149,44 +146,25 @@
             d.className = 'item-card dash-item';
             if(isChild) d.style.marginLeft = "20px";
             d.draggable = true;
-            d.innerHTML = `<span>📄 ${dash.name}</span> <small>${dash.owner?'👤':''}</small>`;
+            d.innerHTML = `<span>📄 ${dash.name}</span> <small style="opacity:0.4">${dash.owner?'👤':''}</small>`;
             d.ondragstart = () => state.draggedId = dash.id;
             d.onclick = () => { state.id = dash.id; openDash(); };
             return d;
         }
 
-        async function moveItem(id, parentId) {
-            if(id === parentId) return;
-            state.items[id].parentId = parentId;
-            await save();
-        }
+        async function moveItem(id, parentId) { state.items[id].parentId = parentId; await save(); }
+        function deleteItem(id) { if(confirm("¿Borrar?")) { delete state.items[id]; Object.values(state.items).forEach(i => { if(i.parentId === id) i.parentId = null; }); save(); } }
 
-        function deleteItem(id) {
-            if(!confirm("¿Borrar definitivamente?")) return;
-            delete state.items[id];
-            Object.values(state.items).forEach(i => { if(i.parentId === id) i.parentId = null; });
-            save();
-        }
-
-        function openDash() {
-            document.getElementById('view-list').style.display = 'none';
-            document.getElementById('view-details').style.display = 'block';
-            state.editing = false; syncView();
-        }
+        function openDash() { document.getElementById('view-list').style.display = 'none'; document.getElementById('view-details').style.display = 'block'; state.editing = false; syncView(); }
 
         function syncView() {
-            const item = state.items[state.id];
-            if(!item) return;
+            const item = state.items[state.id]; if(!item) return;
             document.getElementById('current-title').innerText = item.name;
             const canEdit = (state.role === 'GM' || item.owner === state.userId);
-            
             document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
             document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('btn-mode').innerText = state.editing ? "💾 GUARDAR Y CERRAR" : "✍️ EDITAR DASH";
-            
-            if(document.activeElement !== document.getElementById('editor')) {
-                document.getElementById('editor').value = item.content;
-            }
+            document.getElementById('btn-mode').innerText = state.editing ? "💾 GUARDAR CAMBIOS" : "✍️ EDITAR DASH";
+            if(document.activeElement !== document.getElementById('editor')) document.getElementById('editor').value = item.content;
             renderPreview(item.content);
         }
 
@@ -197,7 +175,14 @@
             let html = txt
                 .replace(/\*\*(.*?)\*\*/gs, '<b>$1</b>')
                 .replace(/\*(.*?)\*/gs, '<i>$1</i>')
-                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => `<div style="display:flex;align-items:center;"><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${c.replace(/'/g,"\\'")}', this)"><span>${c}</span></div>`)
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    const safe = c.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showNote('${t}', '${safe}')">[${t}]</button>`;
+                })
+                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => {
+                    const contentParsed = c.replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow:0 0 10px $1; color:$1; font-weight:bold;">$2</span>');
+                    return `<div class="cb-container"><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${c.replace(/'/g,"\\'")}', this)"><div>${contentParsed}</div></div>`;
+                })
                 .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow:0 0 10px $1; color:$1; font-weight:bold;">$2</span>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span style="color:var(--p);cursor:pointer;font-weight:bold;text-decoration:underline;" onclick="roll('${f}')">${f}</span>`);
 
@@ -210,12 +195,9 @@
             if(myDash) {
                 myDash.content += "\n" + content;
                 await save();
-                // Feedback visual
-                cb.parentElement.style.opacity = "0.3";
-            } else {
-                alert("Primero debes ser dueño de un Dash (Icono 👤)");
-                cb.checked = false;
-            }
+                cb.parentElement.style.borderLeftColor = "var(--p)";
+                cb.parentElement.style.opacity = "0.5";
+            } else { alert("Asasígnate un Dash con el icono 👤"); cb.checked = false; }
         }
 
         async function roll(formula) {
@@ -223,16 +205,18 @@
             Object.keys(state.stats).forEach(s => f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]));
             const dm = f.match(/(\d*)D(\d+)/i); if(!dm) return;
             const n = parseInt(dm[1])||1, sides = parseInt(dm[2]);
-            let rolls = []; let sum = 0;
-            for(let i=0; i<n; i++){ let r = Math.floor(Math.random()*sides)+1; rolls.push(r); sum += r; }
+            let rolls = [], sum = 0;
+            for(let i=0; i<n; i++){ 
+                let r = Math.floor(Math.random()*sides)+1; 
+                rolls.push(`<span class="${r===sides?'c-max':(r===1?'c-min':'')}">${r}</span>`); 
+                sum += r; 
+            }
             let res; try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = sum; }
             
-            // Pop up personal
             const ov = document.getElementById('dice-overlay');
-            ov.innerHTML = `<div style="font-size:12px;opacity:0.6">${formula}</div><div style="font-size:1.5em;margin:10px 0;">[ ${rolls.join(', ')} ]</div><div style="font-size:32px;color:var(--accent);font-weight:bold;">${res}</div><div style="font-size:10px;margin-top:10px;opacity:0.4">Toca para cerrar</div>`;
+            ov.innerHTML = `<div style="font-size:12px;opacity:0.6">${formula}</div><div style="font-size:1.4em;margin:10px 0;">[ ${rolls.join(', ')} ]</div><div style="font-size:36px;color:var(--accent);font-weight:bold;">${res}</div>`;
             ov.style.display = 'block';
 
-            // Log Global
             const logEntry = { u: state.userName, f: formula, r: res, t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
             try {
                 const m = await OBR.scene.getMetadata();
@@ -240,8 +224,7 @@
                 await OBR.scene.setMetadata({ [LOG_KEY]: logs });
             } catch(e) {
                 const logs = [logEntry, ...JSON.parse(localStorage.getItem(LOG_KEY)||"[]")].slice(0,20);
-                localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-                renderLog(logs);
+                localStorage.setItem(LOG_KEY, JSON.stringify(logs)); renderLog(logs);
             }
         }
 
@@ -252,13 +235,14 @@
         function toggleMode() { state.editing = !state.editing; syncView(); }
         function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
+        function showNote(t, c) { document.getElementById('modal-content').innerHTML = `<h3 style="color:var(--accent);margin-top:0">${t}</h3><div style="text-align:left;line-height:1.6">${c}</div><button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="width:100%;margin-top:15px;background:var(--p);color:black">CERRAR</button>`; document.getElementById('global-overlay').style.display = 'flex'; }
         
         async function openOwnerMenu() {
             let h = `<h3>Dueño del Dash</h3>`;
             try {
                 const players = await OBR.party.getPlayers();
-                players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%;padding:10px;margin:5px 0;background:var(--p);border:none;border-radius:5px;">${p.name}</button>`);
-            } catch(e) { h += `<button onclick="setOwner('local')" style="width:100%;padding:10px;background:var(--p);border:none;border-radius:5px;">Yo (Modo Web)</button>`; }
+                players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%;padding:10px;margin:5px 0;background:var(--p);border:none;border-radius:8px;font-weight:bold;">${p.name}</button>`);
+            } catch(e) { h += `<button onclick="setOwner('local')" style="width:100%;padding:10px;background:var(--p);border:none;border-radius:8px;">Modo Web</button>`; }
             document.getElementById('modal-content').innerHTML = h;
             document.getElementById('global-overlay').style.display = 'flex';
         }
@@ -267,6 +251,7 @@
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
         function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
         function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function promptExtraNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
         async function clearLog() { if(confirm("¿Limpiar log?")) { try { await OBR.scene.setMetadata({ [LOG_KEY]: [] }); } catch(e) { localStorage.setItem(LOG_KEY, "[]"); renderLog([]); } } }
 
         init();
