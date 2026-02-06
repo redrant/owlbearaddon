@@ -104,118 +104,179 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
         </div>
     </div>
 
     <script>
+        // Claves de metadatos compartidos
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
 
         async function init() {
             try {
+                // Iniciar SDK de Owlbear
                 await OBR.onReady(async () => {
+                    // Obtener datos del jugador actual
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
+
+                    // Escuchar cambios de otros jugadores en tiempo real
                     OBR.scene.onMetadataChange(m => { 
                         state.items = m[DB] || {}; 
                         state.log = m[LG] || []; 
                         state.openFolders = m[OF] || {}; 
                         render(); 
                     });
+
+                    // Carga inicial
                     const m = await OBR.scene.getMetadata();
                     state.items = m[DB] || {}; 
                     state.log = m[LG] || []; 
                     state.openFolders = m[OF] || {}; 
                     render();
                 });
-            } catch(e) { render(); }
+            } catch(e) { 
+                console.warn("Ejecutando fuera de Owlbear Rodeo");
+                render(); 
+            }
         }
 
+        // Función de guardado global que sincroniza con todos
         async function save() { 
             if(window.OBR && OBR.isReady) {
-                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); 
+                await OBR.scene.setMetadata({ 
+                    [DB]: state.items, 
+                    [LG]: state.log, 
+                    [OF]: state.openFolders 
+                }); 
             }
             render(); 
         }
 
-        // --- DRAG AND DROP RESTAURADO ---
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=20\n[+] Ataque 1d20+FUE', parent: null, owner: null };
-            document.getElementById('newName').value = ""; save();
+            state.items[id] = { id, type, name: n, content: 'FUE=20\n-5FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            document.getElementById('newName').value = ""; 
+            save();
         }
 
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            // Render de Carpetas
+            // Carpetas
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
                 fd.className = "card folder"; 
                 fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
-                
                 fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
                 fd.ondragover = e => e.preventDefault();
-                fd.ondrop = (e) => { 
-                    e.stopPropagation(); 
-                    if(state.dragId && state.dragId !== f.id) { 
-                        state.items[state.dragId].parent = f.id; 
-                        save(); 
-                    } 
-                };
+                fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
                 cont.appendChild(fd);
-
-                if(isOpen) {
-                    vals.filter(d => d.parent === f.id).forEach(d => {
-                        const child = createCard(d); 
-                        child.style.marginLeft = "20px"; 
-                        child.style.width = "calc(100% - 20px)"; 
-                        cont.appendChild(child);
-                    });
-                }
+                if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
+                    const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
+                });
             });
 
-            // Render de Dash sin carpeta (Raíz)
+            // Dash sueltos
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
                 const card = createCard(d);
-                card.ondrop = (e) => { 
-                    e.stopPropagation(); 
-                    if(state.dragId) { 
-                        state.items[state.dragId].parent = null; 
-                        save(); 
-                    } 
-                };
+                card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
                 cont.appendChild(card);
             });
             
+            // Log con nombres de Owlbear
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
+
             if(state.id) syncView();
         }
 
         function createCard(it) {
-            const d = document.createElement('div'); 
-            d.className = "card dash"; 
-            d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
+            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)" title="Siendo editado">👤</span>' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
-            d.ondragover = e => e.preventDefault();
             return d;
         }
 
-        // --- LÓGICA DE DADOS Y ANIMACIÓN ORIGINAL ---
+        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
+
+        function syncView() {
+            const it = state.items[state.id]; if(!it) return;
+            document.getElementById('det-title').innerText = it.name.toUpperCase();
+            const obtn = document.getElementById('own-btn');
+            
+            if(it.owner === state.uid) { 
+                obtn.innerText = "LIBERAR"; 
+                obtn.className = "btn-dice btn-owner-true"; 
+            } else { 
+                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; 
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); 
+            }
+            
+            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
+            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
+            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
+        }
+
+        function calculateMemory(txt) {
+            const memory = {};
+            const lines = txt.split('\n');
+            lines.forEach(line => {
+                const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
+                if(base) memory[base[1].toUpperCase()] = parseInt(base[2]);
+            });
+            lines.forEach(line => {
+                const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
+                if(plus) {
+                    const sign = plus[1], val = parseInt(plus[2]), key = plus[3].toUpperCase();
+                    if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * val;
+                }
+            });
+            return memory;
+        }
+
+        function renderPreview(txt) {
+            const memory = calculateMemory(txt);
+            const lines = txt.split('\n');
+            const processedLines = lines.map(line => {
+                if (line.trim().startsWith('[+]')) {
+                    const content = line.replace('[+]', '').trim();
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
+                }
+                return renderElements(line, memory);
+            });
+            document.getElementById('preview').innerHTML = processedLines.join('<br>');
+        }
+
+        function renderElements(txt, memory) {
+            return txt
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`;
+                })
+                .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
+                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
+                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (formula) => {
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${formula}\`)">${formula}</div>`;
+                });
+        }
+
         async function runRoll(formulaRaw) {
             const it = state.items[state.id];
             const memory = calculateMemory(it.content);
             let logic = formulaRaw.toUpperCase();
             let breakdown = [];
+            
             const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
             keys.forEach(k => {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
@@ -224,8 +285,10 @@
                     logic = logic.replace(regex, memory[k]);
                 }
             });
+
             const diceMatch = logic.match(/(\d*)D(\d+)/i);
             if(!diceMatch) return;
+            
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
             
@@ -252,6 +315,7 @@
                     }, 50);
                 });
             }
+            
             let final;
             try {
                 let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
@@ -263,77 +327,39 @@
                 document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; 
             }, 200);
 
+            // Guardar en el log con el nombre del usuario de Owlbear
             state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
-            if(state.log.length > 15) state.log.pop(); save();
+            if(state.log.length > 15) state.log.pop(); 
+            save();
         }
 
-        // --- OTRAS FUNCIONES (SINCRONIZADAS) ---
-        function calculateMemory(txt) {
-            const memory = {};
-            const lines = txt.split('\n');
-            lines.forEach(line => {
-                const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
-                if(base) memory[base[1].toUpperCase()] = parseInt(base[2]);
-            });
-            lines.forEach(line => {
-                const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
-                if(plus) {
-                    const sign = plus[1], val = parseInt(plus[2]), key = plus[3].toUpperCase();
-                    if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * val;
-                }
-            });
-            return memory;
+        function toggleOwnership() { 
+            const it = state.items[state.id];
+            if(it.owner && it.owner !== state.uid) return;
+            it.owner = it.owner ? null : state.uid; 
+            save(); 
         }
 
-        function renderPreview(txt) {
-            const memory = calculateMemory(txt);
-            const processedLines = txt.split('\n').map(line => {
-                if (line.trim().startsWith('[+]')) {
-                    const content = line.replace('[+]', '').trim();
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
-                }
-                return renderElements(line, memory);
-            });
-            document.getElementById('preview').innerHTML = processedLines.join('<br>');
+        function openNote(t, c) { 
+            document.getElementById('note-title').innerText = t; 
+            document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); 
+            document.getElementById('note-overlay').style.display='flex'; 
         }
 
-        function renderElements(txt, memory) {
-            return txt
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
-                .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
-        }
-
-        function syncView() {
-            const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
-            const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
-            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
-            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
-            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
-        }
-
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
         function switchTab(isEdit) { state.edit = isEdit; syncView(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); let c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); document.getElementById('note-overlay').style.display='flex'; }
+        
+        function askNote() { 
+            const t=prompt("Título:"); 
+            let c=prompt("Contenido (Doble espacio = Salto de línea):"); 
+            if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); 
+        }
+
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-        function toggleOwnership() { 
-            const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return;
-            it.owner = it.owner ? null : state.uid; save(); 
-        }
         function cloneToMyDash(t) { const my = Object.values(state.items).find(i => i.owner === state.uid); if(my) { my.content += "\n"+t; save(); alert("Clonado"); } }
 
         init();
