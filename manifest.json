@@ -1,6 +1,6 @@
 {
   "name": "Dashisboard Plus",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "manifest_version": 1,
   "action": {
     "title": "Dashisboard+",
@@ -8,5 +8,19 @@
     "popover": "/owlbearaddon/index.html",
     "width": 450,
     "height": 650
-  }
+  },
+  "permissions": [
+    {
+      "trigger": "onSceneReady",
+      "action": "read"
+    },
+    {
+      "trigger": "onMetadataChange",
+      "action": "read"
+    },
+    {
+      "target": "scene",
+      "action": "write"
+    }
+  ]
 }
