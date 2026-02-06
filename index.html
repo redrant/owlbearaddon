@@ -29,7 +29,7 @@
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
         .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
 
         .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; background: rgba(255,68,102,0.1) !important; }
@@ -54,7 +54,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASH PLATINUM</div></div>
+    <div class="header"><div class="sig">MY DASH PLATINUM HYBRID</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -104,53 +104,67 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 50vh; overflow-y: auto;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        const M_KEY = "com.platinum.dash.v4";
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Jugador', openFolders: {}, dragId: null };
+        const M_KEY = "PLATINUM_V5_HYBRID";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Navegador Web', openFolders: {}, dragId: null, isOBR: false };
 
-        // --- MOTOR SINCRONIZADO ---
+        // --- MOTOR DUAL (WEB + OWBEAR) ---
         async function init() {
-            OBR.onReady(async () => {
-                state.uid = await OBR.player.getId();
-                state.uname = await OBR.player.getName();
+            // Chequeo de entorno
+            try {
+                OBR.onReady(async () => {
+                    state.isOBR = true;
+                    state.uid = await OBR.player.getId();
+                    state.uname = await OBR.player.getName();
 
-                // 1. Escuchar cambios de otros en vivo
-                OBR.scene.onMetadataChange((metadata) => {
-                    const sync = metadata[M_KEY];
-                    if (sync) {
-                        state.items = sync.items || {};
-                        state.log = sync.log || [];
-                        state.openFolders = sync.openFolders || {};
-                        render();
-                        if (state.id) syncView();
-                    }
+                    // Sincronización en vivo
+                    OBR.scene.onMetadataChange((metadata) => {
+                        const sync = metadata[M_KEY];
+                        if (sync) {
+                            state.items = sync.items || {};
+                            state.log = sync.log || [];
+                            state.openFolders = sync.openFolders || {};
+                            render();
+                            if (state.id) syncView();
+                        }
+                    });
+
+                    const metadata = await OBR.scene.getMetadata();
+                    loadFromData(metadata[M_KEY]);
                 });
-
-                // 2. Carga inicial
-                const metadata = await OBR.scene.getMetadata();
-                if (metadata[M_KEY]) {
-                    const sync = metadata[M_KEY];
-                    state.items = sync.items || {};
-                    state.log = sync.log || [];
-                    state.openFolders = sync.openFolders || {};
-                }
-                render();
-            });
+            } catch (e) { 
+                console.log("Modo Web activado (Local)");
+                state.isOBR = false;
+                const local = localStorage.getItem(M_KEY);
+                loadFromData(local ? JSON.parse(local) : null);
+            }
         }
 
-        async function save() {
-            // Guardar en la escena de Owlbear (se sincroniza con todos)
-            await OBR.scene.setMetadata({
-                [M_KEY]: { items: state.items, log: state.log, openFolders: state.openFolders }
-            });
+        function loadFromData(data) {
+            if (data) {
+                state.items = data.items || {};
+                state.log = data.log || [];
+                state.openFolders = data.openFolders || {};
+            }
             render();
         }
 
+        async function save() {
+            const payload = { items: state.items, log: state.log, openFolders: state.openFolders };
+            if (state.isOBR) {
+                await OBR.scene.setMetadata({ [M_KEY]: payload });
+            } else {
+                localStorage.setItem(M_KEY, JSON.stringify(payload));
+                render();
+            }
+        }
+
+        // --- LÓGICA DE INTERFAZ ---
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
@@ -162,7 +176,6 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            // Carpetas
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
@@ -177,14 +190,12 @@
                 });
             });
 
-            // Dashes Sueltos
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
                 const card = createCard(d);
                 card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
                 cont.appendChild(card);
             });
             
-            // Log histórico
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span></div>`
             ).join('');
@@ -210,20 +221,17 @@
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
-            
             const obtn = document.getElementById('own-btn');
-            const tEdit = document.getElementById('t-edit');
+            const tBar = document.getElementById('tab-bar');
 
-            // Lógica de DUEÑO y BLOQUEO
             if(it.owner === state.uid) {
                 obtn.innerText = "LIBERAR";
                 obtn.className = "btn-dice btn-owner-true";
-                tEdit.style.display = "block"; // Yo puedo editar
+                tBar.style.display = "flex";
             } else {
                 obtn.innerText = it.owner ? it.ownerName : "OWNEAR";
                 obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
-                // Si alguien más es el dueño, NO veo el botón de editar
-                tEdit.style.display = it.owner ? "none" : "block";
+                tBar.style.display = it.owner ? "none" : "flex";
                 if(it.owner) state.edit = false; 
             }
 
@@ -232,7 +240,7 @@
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
-        // --- LÓGICA DE DADOS Y RENDER ---
+        // --- MOTOR DE DADOS ---
         function calculateMemory(txt) {
             const memory = {};
             txt.split('\n').forEach(line => {
@@ -308,7 +316,8 @@
 
         function openNote(t, c) { 
             document.getElementById('note-title').innerText = t; 
-            document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); 
+            // Interpretamos el doble espacio como salto de línea para que se vea bien en el modal
+            document.getElementById('note-body').innerText = decodeURIComponent(c).split('  ').join('\n'); 
             document.getElementById('note-overlay').style.display='flex'; 
         }
 
@@ -316,13 +325,14 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); let c=prompt("Contenido:"); if(t && c) ins(`\\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = Salto de línea):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
         function cloneToMyDash(t) { 
             const my = Object.values(state.items).find(i => i.owner === state.uid); 
             if(my) { my.content += "\n"+t; save(); alert("¡Clonado a tu Dash!"); }
+            else { alert("Primero OWNEA un Dash para recibir el clon."); }
         }
 
         init();
