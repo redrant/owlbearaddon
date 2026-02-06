@@ -30,30 +30,31 @@
 
         /* Editor y Preview */
         #editor { 
-            width: 100%; height: 280px; background: #121214; color: #ccc; 
-            padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: vertical;
-            display: block; box-sizing: border-box; outline: none; border-radius: 0 0 8px 8px;
+            width: 100%; height: 250px; background: #121214; color: #888; 
+            padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; 
+            resize: vertical; box-sizing: border-box; outline: none; border-radius: 0 0 8px 8px;
         }
 
         #preview { 
             padding: 20px; min-height: 100px; line-height: 1.8; display: none; 
-            background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid #333;
+            background: rgba(0,0,0,0.3); border-radius: 8px;
         }
 
-        /* Estilos de Texto */
+        /* Estilos en Modo Juego */
         .glow { text-shadow: 0 0 10px var(--p); color: var(--p); font-weight: bold; }
-        .italic-style { font-style: italic; color: #bbb; }
+        .italic { font-style: italic; color: #bbb; }
         .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 5px; border-radius: 4px; }
         .stat-tag { color: var(--accent); font-weight: bold; }
         
-        /* ExtraNote Style */
-        .info-btn { 
-            color: var(--accent); font-weight: bold; cursor: pointer; 
-            background: rgba(3,218,198,0.1); padding: 0 5px; border-radius: 4px; 
-            margin-left: 5px; font-size: 12px; border: 1px solid var(--accent);
+        /* Botón de ExtraNote en Modo Juego */
+        .note-btn { 
+            background: #333; color: var(--accent); border: 1px solid var(--accent);
+            padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;
+            font-weight: bold; margin: 0 4px; display: inline-block;
         }
+        .note-btn:hover { background: var(--accent); color: black; }
 
-        /* Modales / Overlays */
+        /* Modales (Dados y ExtraNote) */
         .overlay { 
             position: fixed; top:0; left:0; width:100%; height:100%; 
             background: rgba(0,0,0,0.9); display: none; align-items: center; 
@@ -69,6 +70,7 @@
             width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; background: var(--p); color: black;
         }
+
         .dash-card { background: #1a1a1d; padding: 15px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
     </style>
 </head>
@@ -80,7 +82,7 @@
             <div class="signature">By Redrant :v</div>
             <h2 style="margin:5px 0; color:var(--p)">My Dashes</h2>
         </div>
-        <input type="text" id="dashName" placeholder="Nombre del personaje..." style="width:100%; padding:10px; margin-bottom:10px; background:#1e1e1e; color:white; border:1px solid #333; border-radius:6px;">
+        <input type="text" id="dashName" placeholder="Nombre..." style="width:100%; padding:10px; margin-bottom:10px; background:#1e1e1e; color:white; border:1px solid #333; border-radius:6px;">
         <button onclick="createDash()" class="mode-toggle">CREAR NUEVO</button>
         <div id="list-container"></div>
     </div>
@@ -96,11 +98,11 @@
 
         <div id="editor-ui">
             <div class="toolbar">
-                <button class="tool" onclick="wrapSelection('**','**')">B</button>
-                <button class="tool" onclick="wrapSelection('<span class=\'italic-style\'>','</span>')">I</button>
-                <button class="tool" onclick="wrapSelection('<span class=\'glow\'>','</span>')">Brillo</button>
-                <button class="tool accent" onclick="addExtraNote()">+ ExtraNote</button>
-                <button class="tool" onclick="ins('FUE=10','')">Variable</button>
+                <button class="tool" onclick="wrap('**','**')" title="Negrita">B</button>
+                <button class="tool" onclick="wrap('<i','/i')" title="Itálica">I</button>
+                <button class="tool" onclick="wrap('<g','/g')" title="Brillo">Glow</button>
+                <button class="tool accent" onclick="promptExtraNote()">+ ExtraNote</button>
+                <button class="tool" onclick="ins('FUE=10','')">Var</button>
                 <button class="tool" onclick="ins('+5FUE','')">Bonus</button>
             </div>
             <textarea id="editor" oninput="saveAndParse()"></textarea>
@@ -110,7 +112,7 @@
     </div>
 
     <div id="global-overlay" class="overlay" onclick="this.style.display='none'">
-        <div id="modal-content" class="modal" onclick="event.stopPropagation()"></div>
+        <div id="modal-content" class="modal"></div>
     </div>
 
     <script>
@@ -129,40 +131,27 @@
             state.editing = !state.editing;
             document.getElementById('editor-ui').style.display = state.editing ? 'block' : 'none';
             document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('btn-mode').innerText = state.editing ? "👁️ VER MODO JUEGO" : "✍️ VOLVER A EDITAR";
-            document.getElementById('btn-mode').style.background = state.editing ? "var(--p)" : "#444";
+            const btn = document.getElementById('btn-mode');
+            btn.innerText = state.editing ? "👁️ VER MODO JUEGO" : "✍️ VOLVER A EDITAR";
+            btn.style.background = state.editing ? "var(--p)" : "#444";
             if(!state.editing) saveAndParse();
         }
 
-        // Función intuitiva para Brillo e Italics
-        function wrapSelection(pre, post) {
-            const el = document.getElementById('editor');
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-            const text = el.value;
-            const selected = text.substring(start, end);
-            
-            el.value = text.substring(0, start) + pre + selected + post + text.substring(end);
-            el.focus();
-            saveAndParse();
-        }
-
-        // Función de ExtraNote
-        function addExtraNote() {
-            const title = prompt("Título de la nota (lo que se verá):", "Info");
-            if (!title) return;
-            const content = prompt("Contenido de la nota (lo que está oculto):");
-            if (!content) return;
-            
-            ins(`${title} [NOTE:${content}]`, "");
+        function promptExtraNote() {
+            const title = prompt("Título del botón (ej: Info, Lore, Efecto):");
+            if(!title) return;
+            const content = prompt("Contenido de la nota (puedes usar espacios):");
+            if(!content) return;
+            // Guardamos la nota con un formato especial compacto
+            ins(`[note=${title}]${content}[/note]`, "");
         }
 
         function saveAndParse() {
             const txt = document.getElementById('editor').value;
             state.dashes[state.id].content = txt;
             
-            // Lógica de Stats
             state.stats = {};
+            // Variables y Bonus
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
             txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
                 const name = n.toUpperCase();
@@ -171,29 +160,36 @@
 
             // Renderizado
             let html = txt
+                .replace(/<g(.*?) \/g/g, '<span class="glow"$1</span>') // Brillo corto
+                .replace(/<i(.*?) \/i/g, '<span class="italic"$1</span>') // Italic corto
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
+                    // Reemplazamos saltos de línea en el contenido para que eval funcione en el onclick
+                    const safeContent = content.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showNote('${title}', '${safeContent}')">[${title}]</button>`;
+                })
                 .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
                 .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h2 class="glow">$1</h2>')
-                // Render ExtraNote
-                .replace(/(.*?) \[NOTE:(.*?)\]/g, '$1 <span class="info-btn" onclick="openNote(\'$2\')">[INFO]</span>')
-                // Render Dados
+                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin:0;">$1</h2>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
             save();
         }
 
-        function openNote(msg) {
+        function showNote(title, content) {
             const modal = document.getElementById('modal-content');
-            modal.innerHTML = `<h3 style="color:var(--p)">Nota Extra</h3><p style="text-align:left; line-height:1.6;">${msg}</p><button onclick="closeModal()" class="tool" style="margin-top:15px; width:100%">Cerrar</button>`;
+            modal.innerHTML = `
+                <h3 style="color:var(--p); margin-top:0;">${title}</h3>
+                <div style="text-align:left; line-height:1.5; color:#ccc;">${content}</div>
+                <div style="font-size:10px; opacity:0.4; margin-top:20px;">Toca fuera para cerrar</div>
+            `;
             document.getElementById('global-overlay').style.display = 'flex';
         }
 
         function roll(formula) {
             let f = formula.toUpperCase();
             Object.keys(state.stats).forEach(s => f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]));
-            
             const dm = f.match(/(\d*)D(\d+)/i);
             if (!dm) return;
             const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
@@ -203,25 +199,29 @@
                 sum += r;
                 rs.push(`<span style="color:${r===sides?'var(--crit)':(r===1?'var(--fail)':'inherit')}">${r}</span>`);
             }
-            
             let res; try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = sum; }
             
             const modal = document.getElementById('modal-content');
             modal.innerHTML = `
-                <div style="font-size:12px; color:var(--p); opacity:0.7;">${formula}</div>
-                <div style="font-size:28px; margin:15px 0;">[ ${rs.join(', ')} ]</div>
-                <div style="font-size:48px; font-weight:bold; color:var(--accent);">${res}</div>
-                <button onclick="closeModal()" class="tool" style="margin-top:15px; width:100%">Cerrar</button>
+                <div style="font-size:12px; color:var(--p); opacity:0.7;">${formula} (${f})</div>
+                <div style="font-size:24px; margin:15px 0;">[ ${rs.join(', ')} ]</div>
+                <div style="font-size:42px; font-weight:bold; color:var(--accent);">${res}</div>
             `;
             document.getElementById('global-overlay').style.display = 'flex';
         }
 
-        function closeModal() { document.getElementById('global-overlay').style.display = 'none'; }
-        
+        function wrap(a, b) {
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            const sel = e.value.substring(s, end);
+            e.value = e.value.substring(0, s) + a + sel + b + e.value.substring(end);
+            saveAndParse();
+        }
+
         function ins(a, b) {
             const e = document.getElementById('editor');
             const s = e.selectionStart, end = e.selectionEnd;
-            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            e.value = e.value.substring(0, s) + a + b + e.value.substring(end);
             saveAndParse();
         }
 
@@ -230,33 +230,32 @@
             if(!n) return;
             const id = "d"+Date.now();
             state.dashes[id] = { name: n, content: "# " + n + "\nFUE=10\n1d20+FUE" };
-            save(); renderList();
             document.getElementById('dashName').value = '';
+            save(); renderList();
         }
 
         function renderList() {
             const c = document.getElementById('list-container');
             c.innerHTML = '';
             Object.keys(state.dashes).forEach(id => {
-                const d = document.createElement('div');
-                d.className = 'dash-card';
-                d.innerText = state.dashes[id].name;
-                d.onclick = () => { state.id = id; openDash(); };
-                c.appendChild(d);
+                const card = document.createElement('div');
+                card.className = 'dash-card';
+                card.innerText = "📂 " + state.dashes[id].name;
+                card.onclick = () => { state.id = id; openDash(); };
+                c.appendChild(card);
             });
         }
 
         function openDash() {
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
-            const d = state.dashes[state.id];
-            document.getElementById('current-name').innerText = d.name;
-            document.getElementById('editor').value = d.content;
-            state.editing = true; toggleMode(); toggleMode();
+            document.getElementById('current-name').innerText = state.dashes[state.id].name;
+            document.getElementById('editor').value = state.dashes[state.id].content;
+            state.editing = true; toggleMode(); toggleMode(); // Reset visual
         }
 
         function showList() { document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
-        function deleteDash() { if(confirm("¿Borrar este personaje?")) { delete state.dashes[state.id]; save(); showList(); } }
+        function deleteDash() { if(confirm("¿Borrar?")) { delete state.dashes[state.id]; save(); showList(); } }
     </script>
 </body>
 </html>
