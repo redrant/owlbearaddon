@@ -1,7 +1,10 @@
 {
-  "name": "My Star Dash Platinum",
-  "version": "1.0.0",
+  "name": "My Dash Platinum",
+  "version": "2.0.0",
   "manifest_version": 1,
+  "permissions": [
+    "SCENE"
+  ],
   "action": {
     "title": "Dashisboard+",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
