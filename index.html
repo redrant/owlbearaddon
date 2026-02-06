@@ -9,87 +9,94 @@
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --bonus: #ffab40;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; }
         
-        /* Estilo de la Firma */
+        /* Cabecera con Versión y Firma */
         .header-main { text-align: center; margin-bottom: 20px; }
-        .signature { font-size: 11px; color: var(--p); opacity: 0.7; font-style: italic; margin-top: 4px; }
+        .version-tag { font-size: 10px; color: var(--p); opacity: 0.6; font-weight: bold; }
+        .signature { font-size: 12px; color: var(--t); opacity: 0.8; margin-top: 4px; font-weight: bold; }
 
-        /* Contenedor Unificado (Editor + Preview) */
-        .unified-box { position: relative; background: var(--c); border-radius: 12px; border: 1px solid #333; overflow: hidden; }
-        
+        /* EL EDITOR VIVO (Todo en uno) */
+        .live-editor-container {
+            position: relative;
+            background: var(--c);
+            border: 2px solid #333;
+            border-radius: 12px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
         #editor { 
-            width: 100%; height: 180px; background: #121214; color: var(--t); 
+            width: 100%; height: 150px; background: #121214; color: var(--t); 
             padding: 15px; border: none; font-family: 'Consolas', monospace; 
-            resize: vertical; outline: none; border-bottom: 2px solid #333; font-size: 14px;
+            resize: none; outline: none; border-bottom: 1px solid #333; font-size: 14px;
         }
 
         #preview { 
-            padding: 20px; min-height: 100px; line-height: 1.8; 
-            background: linear-gradient(180deg, #1a1a1d 0%, #161618 100%);
+            padding: 15px; flex-grow: 1; line-height: 1.6;
+            background: rgba(187, 134, 252, 0.02);
         }
 
-        /* Coloreado en el mismo lugar */
-        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.15); padding: 2px 6px; border-radius: 4px; transition: 0.2s; }
-        .dice-roll:hover { background: var(--p); color: #000; }
-        .stat-tag { color: var(--accent); font-weight: bold; border-bottom: 1px solid rgba(3,218,198,0.3); }
-        .bonus-tag { color: var(--bonus); font-style: italic; font-weight: bold; }
+        /* Coloreado Dinámico */
+        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 4px; border-radius: 4px; }
+        .stat-tag { color: var(--accent); font-weight: bold; }
+        .bonus-tag { color: var(--bonus); font-weight: bold; }
 
-        /* NOTIFICACIÓN FLOTANTE (Overlay de Dados) */
+        /* Notificación Flotante de Dados */
         #dice-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.8); display: none; align-items: center; 
-            justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.85); display: none; align-items: center; 
+            justify-content: center; z-index: 9999; backdrop-filter: blur(5px);
         }
         .dice-modal { 
-            background: #1e1e1e; border: 2px solid var(--p); padding: 25px; 
-            border-radius: 15px; text-align: center; width: 80%; max-width: 300px;
-            box-shadow: 0 0 30px rgba(187,134,252,0.4); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #1e1e1e; border: 2px solid var(--p); padding: 30px; 
+            border-radius: 20px; text-align: center; width: 250px;
+            box-shadow: 0 0 40px rgba(187,134,252,0.5); animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         /* Lista de Dashes */
-        .dash-card { 
-            background: var(--c); padding: 15px; margin-bottom: 10px; border-radius: 10px; 
-            cursor: pointer; border: 1px solid #333; transition: 0.3s;
-        }
+        .dash-card { background: var(--c); padding: 15px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; border: 1px solid #333; transition: 0.2s; font-weight: bold; }
         .dash-card:hover { border-color: var(--p); background: #25252a; }
 
-        .btn { background: var(--p); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-back { background: #333; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .btn { background: var(--p); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        input { width: 100%; padding: 12px; background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <h2 style="color:var(--p); margin:0;">My Dashes</h2>
+            <div class="version-tag">1.0.0v</div>
+            <h2 style="color:var(--p); margin:5px 0;">My Dashes</h2>
             <div class="signature">By Redrant :v</div>
         </div>
-        <input type="text" id="dashName" placeholder="Nombre (ej. Guerrero)" style="width:100%; padding:12px; background:#1e1e1e; border:1px solid #333; color:white; border-radius:8px; margin-bottom:10px;">
-        <button onclick="createDash()" class="btn" style="width:100%">+ CREAR NUEVO</button>
+        <input type="text" id="dashName" placeholder="Nombre del personaje...">
+        <button onclick="createDash()" class="btn">+ CREAR DASH</button>
         <div id="list-container" style="margin-top:20px;"></div>
     </div>
 
     <div id="view-details" style="display:none;">
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
-            <button onclick="showList()" class="btn-back">⬅ Volver</button>
+            <button onclick="showList()" style="background:#333; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">⬅ Volver</button>
             <h3 id="current-name" style="margin:0; color:var(--p)"></h3>
-            <button onclick="deleteDash()" style="background:transparent; color:var(--fail); border:none; cursor:pointer; font-size:12px;">Borrar</button>
+            <span style="font-size:10px; opacity:0.5;">Auto-guardado ON</span>
         </div>
 
-        <div class="unified-box">
-            <textarea id="editor" oninput="process()" placeholder="Escribe aquí... FUE=10 o +5FUE o 1d20+FUE"></textarea>
+        <div class="live-editor-container">
+            <textarea id="editor" oninput="liveUpdate()" placeholder="Escribre tus stats aquí..."></textarea>
             <div id="preview"></div>
         </div>
+        <button onclick="deleteDash()" style="background:transparent; color:var(--fail); border:none; margin-top:10px; cursor:pointer; width:100%; font-size:12px;">Borrar este personaje</button>
     </div>
 
     <div id="dice-overlay" onclick="this.style.display='none'">
         <div class="dice-modal">
-            <div id="dice-formula" style="font-size:12px; color:var(--p); opacity:0.7; margin-bottom:10px;"></div>
-            <div id="dice-faces" style="font-size:20px; margin-bottom:15px; letter-spacing:2px;"></div>
-            <div id="dice-total" style="font-size:32px; font-weight:bold; color:var(--accent);"></div>
-            <div style="font-size:10px; margin-top:20px; opacity:0.5;">Toca para cerrar</div>
+            <div id="dice-formula" style="font-size:11px; color:var(--p); margin-bottom:10px; opacity:0.8;"></div>
+            <div id="dice-faces" style="font-size:24px; margin-bottom:15px;"></div>
+            <div id="dice-total" style="font-size:36px; font-weight:bold; color:var(--accent);"></div>
+            <div style="font-size:10px; margin-top:20px; opacity:0.4;">Toca para cerrar</div>
         </div>
     </div>
 
@@ -132,14 +139,14 @@
             const d = state.dashes[state.id];
             document.getElementById('current-name').innerText = d.name;
             document.getElementById('editor').value = d.content;
-            process();
+            liveUpdate();
         }
 
-        function process() {
+        function liveUpdate() {
             const txt = document.getElementById('editor').value;
             state.dashes[state.id].content = txt;
             
-            // Lógica de Variables (Base + Bonus)
+            // Lógica de Variables Acumulativas
             state.stats = {};
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
             txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
@@ -148,12 +155,10 @@
                 state.stats[name] = (state.stats[name] || 0) + val;
             });
 
-            // Preview dinámico (Markdown + Dados)
+            // El "Render" sucede en la misma caja de abajo
             let html = txt
                 .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
                 .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin:0;">$1</h2>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
@@ -174,16 +179,16 @@
             for(let i=0; i<n; i++) {
                 const r = Math.floor(Math.random()*sides)+1;
                 sum += r;
-                let style = r === sides ? 'color:var(--crit)' : (r === 1 ? 'color:var(--fail)' : '');
-                rs.push(`<span style="${style}">${r}</span>`);
+                let color = r === sides ? 'var(--crit)' : (r === 1 ? 'var(--fail)' : 'inherit');
+                rs.push(`<span style="color:${color}">${r}</span>`);
             }
 
             let res;
             try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } 
             catch { res = sum; }
 
-            // Mostrar el Modal Flotante
-            document.getElementById('dice-formula').innerText = `${formula} (Cálculo: ${f})`;
+            // Lanzar la Notificación Overlay
+            document.getElementById('dice-formula').innerText = `${formula} (${f})`;
             document.getElementById('dice-faces').innerHTML = `[ ${rs.join(', ')} ]`;
             document.getElementById('dice-total').innerText = `TOTAL: ${res}`;
             document.getElementById('dice-overlay').style.display = 'flex';
