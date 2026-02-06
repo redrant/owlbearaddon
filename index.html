@@ -24,8 +24,7 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.2s; }
-        .block-roll:hover { background: #3d3d4d; transform: scale(1.05); }
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
@@ -50,7 +49,6 @@
         .total-box.show { opacity: 1; }
         
         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-        .log b { color: #eee; }
         .log-crit { color: var(--crit); font-weight: bold; }
         .log-fail { color: var(--fail); font-weight: bold; }
     </style>
@@ -114,7 +112,7 @@
 
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
-        const DB = "VFINAL_ITEMS", LG = "VFINAL_LOGS", OF = "VFINAL_FOLDERS";
+        const DB = "VPLAT_ITEMS", LG = "VPLAT_LOGS", OF = "VPLAT_FOLDERS";
 
         async function init() {
             try {
@@ -133,7 +131,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'ADK=10\n-5ADK\n[+] Ataque 1d20+ADK', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'ADK=10\n+5ADK\n[+] Ataque 1d20+ADK', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -181,16 +179,9 @@
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
-            
             const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) {
-                obtn.innerText = "LIBERAR";
-                obtn.className = "btn-dice btn-owner-true";
-            } else {
-                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR";
-                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
-            }
-
+            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
+            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
@@ -198,9 +189,9 @@
 
         function renderPreview(txt) {
             const memory = {};
-            // Captura variables ADK=10
+            // 1. Resolver definiciones A=10
             txt.replace(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            // Captura modificadores -10ADK o +2ADK
+            // 2. Resolver modificadores +5A
             txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)/gi, (m, sign, val, k) => {
                 const key = k.toUpperCase();
                 if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
@@ -229,21 +220,22 @@
                 })
                 .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
-                // Regex mejorada para capturar dados incluso con variables pegadas
-                .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
-                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
+                // FIX: Regex estricta para el dado, evitando capturar el modificador pegado
+                .replace(/(\d*d\d+)/gi, (f, match) => {
+                    // Buscamos el final de la expresión matemática (paréntesis, variables, números)
+                    const rest = txt.substring(txt.indexOf(f) + f.length).split(/\s/)[0];
+                    const fullFormula = f + rest;
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${fullFormula}', ${JSON.stringify(memory)})">${fullFormula}</div>`;
                 });
         }
-
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
 
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
             let breakdown = [];
             
-            // Reemplazar variables por sus valores ANTES de procesar el dado
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            for(let k of keys) {
+            // Sustituir variables en la lógica
+            const sortedKeys = Object.keys(memory).sort((a,b) => b.length - a.length);
+            for(let k of sortedKeys) {
                 const regex = new RegExp(k, 'g');
                 if(regex.test(logic)) {
                     breakdown.push(`${k}:${memory[k]}`);
@@ -251,7 +243,7 @@
                 }
             }
 
-            // Detectar el dado NdS (ej: 1d20)
+            // Extraer solo el dado NdS
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
@@ -281,19 +273,15 @@
                 });
             }
 
-            // Calcular final limpiando la lógica de cualquier letra residual
             let final;
             try {
-                // Sustituimos el NdS por el total de los dados y limpiamos
+                // REGLA DE ORO: Sustituir el dado por su suma y LIMPIAR todo lo que no sea matemático
                 let evalString = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
                 final = Math.floor(eval(evalString));
-            } catch(e) { 
-                final = currentSum; 
-            }
+            } catch(e) { final = currentSum; }
 
             setTimeout(() => { 
-                totalVal.innerText = final; 
-                totalVal.classList.add('show'); 
+                totalVal.innerText = final; totalVal.classList.add('show'); 
                 document.getElementById('d-res').innerText = `[${results.join('+')}] mod: ${breakdown.join(', ') || '0'}`; 
             }, 200);
 
@@ -301,6 +289,7 @@
             if(state.log.length > 15) state.log.pop(); save();
         }
 
+        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
         function switchTab(isEdit) {
             state.edit = isEdit;
             document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
@@ -309,27 +298,23 @@
             document.getElementById('t-view').style.color = !isEdit ? "black" : "white";
             syncView();
         }
-
         function cloneToMyDash(text) {
             const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero OWNEA un Dash para recibir clones.");
+            if(!myDash) return alert("Primero OWNEA un Dash.");
             myDash.content += "\n" + text; save(); alert("¡Clonado!");
         }
-
         function toggleOwnership() { 
             const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return alert("Este Dash ya tiene dueño.");
-            it.owner = it.owner ? null : state.uid; 
-            save(); 
+            if(it.owner && it.owner !== state.uid) return alert("Ya tiene dueño.");
+            it.owner = it.owner ? null : state.uid; save(); 
         }
-
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Espacio doble = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar Carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
 
         init();
     </script>
