@@ -13,74 +13,75 @@
         
         /* Cabecera */
         .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .version { font-size: 10px; color: var(--p); letter-spacing: 2px; }
+        .version { font-size: 10px; color: var(--p); letter-spacing: 2px; font-weight: bold; }
         .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); }
 
-        /* Barra de Herramientas Extendida */
+        /* Barra de Herramientas */
         .toolbar { 
             display: flex; gap: 4px; background: #222; padding: 8px; 
             border-radius: 8px 8px 0 0; flex-wrap: wrap; border: 1px solid #444;
         }
         .tool { 
-            background: #333; color: white; border: none; padding: 4px 8px; 
-            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;
+            background: #333; color: white; border: none; padding: 6px 10px; 
+            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;
         }
         .tool:hover { background: var(--p); color: #000; }
+        .tool.accent { background: var(--accent); color: #000; }
 
-        /* Contenedor Unificado */
-        .main-container { border: 1px solid #444; border-radius: 0 0 8px 8px; background: var(--c); position: relative; }
-        
+        /* Editor y Preview */
         #editor { 
-            width: 100%; height: 250px; background: #121214; color: #aaa; 
-            padding: 12px; border: none; font-family: monospace; resize: vertical;
-            display: block; box-sizing: border-box; outline: none;
+            width: 100%; height: 280px; background: #121214; color: #ccc; 
+            padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: vertical;
+            display: block; box-sizing: border-box; outline: none; border-radius: 0 0 8px 8px;
         }
 
         #preview { 
-            padding: 20px; min-height: 100px; line-height: 1.6; display: none; 
-            background: rgba(0,0,0,0.2);
+            padding: 20px; min-height: 100px; line-height: 1.8; display: none; 
+            background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid #333;
         }
 
-        /* Estilos de Diseño Avanzados */
-        .glow { text-shadow: 0 0 10px var(--p); color: var(--p); }
-        .fire { text-shadow: 0 0 8px #ff4400; color: #ffbb00; font-weight: bold; }
+        /* Estilos de Texto */
+        .glow { text-shadow: 0 0 10px var(--p); color: var(--p); font-weight: bold; }
+        .italic-style { font-style: italic; color: #bbb; }
         .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 5px; border-radius: 4px; }
         .stat-tag { color: var(--accent); font-weight: bold; }
-        .bonus-tag { color: var(--bonus); font-weight: bold; }
+        
+        /* ExtraNote Style */
+        .info-btn { 
+            color: var(--accent); font-weight: bold; cursor: pointer; 
+            background: rgba(3,218,198,0.1); padding: 0 5px; border-radius: 4px; 
+            margin-left: 5px; font-size: 12px; border: 1px solid var(--accent);
+        }
 
-        /* Botón de Alternar Modo */
+        /* Modales / Overlays */
+        .overlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(0,0,0,0.9); display: none; align-items: center; 
+            justify-content: center; z-index: 9999; backdrop-filter: blur(5px);
+        }
+        .modal { 
+            background: #1e1e1e; border: 2px solid var(--p); padding: 25px; 
+            border-radius: 15px; text-align: center; max-width: 85%;
+            box-shadow: 0 0 30px rgba(187,134,252,0.3);
+        }
+
         .mode-toggle { 
             width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; background: var(--p); color: black;
-            text-transform: uppercase; letter-spacing: 1px;
         }
-
-        /* Overlay Dados */
-        #dice-overlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.9); display: none; align-items: center; 
-            justify-content: center; z-index: 9999;
-        }
-        .dice-modal { 
-            background: #1e1e1e; border: 2px solid var(--p); padding: 30px; 
-            border-radius: 20px; text-align: center; box-shadow: 0 0 50px var(--p);
-        }
-
-        /* Lista */
         .dash-card { background: #1a1a1d; padding: 15px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
-        .dash-card:hover { border-color: var(--p); }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">1.0.1v</div>
+            <div class="version">1.1.0v</div>
             <div class="signature">By Redrant :v</div>
-            <h2 style="margin:5px 0;">My Dashes</h2>
+            <h2 style="margin:5px 0; color:var(--p)">My Dashes</h2>
         </div>
         <input type="text" id="dashName" placeholder="Nombre del personaje..." style="width:100%; padding:10px; margin-bottom:10px; background:#1e1e1e; color:white; border:1px solid #333; border-radius:6px;">
-        <button onclick="createDash()" class="mode-toggle">Crear Nuevo</button>
+        <button onclick="createDash()" class="mode-toggle">CREAR NUEVO</button>
         <div id="list-container"></div>
     </div>
 
@@ -95,12 +96,10 @@
 
         <div id="editor-ui">
             <div class="toolbar">
-                <button class="tool" onclick="ins('**','**')">B</button>
-                <button class="tool" onclick="ins('*','*')">I</button>
-                <button class="tool" onclick="ins('# ','')">H1</button>
-                <button class="tool" onclick="ins('<span class=\'glow\'>','</span>')">Brillo</button>
-                <button class="tool" onclick="ins('<span class=\'fire\'>','</span>')">Fuego</button>
-                <button class="tool" onclick="ins('<span style=\'color:red\'>','</span>')">Rojo</button>
+                <button class="tool" onclick="wrapSelection('**','**')">B</button>
+                <button class="tool" onclick="wrapSelection('<span class=\'italic-style\'>','</span>')">I</button>
+                <button class="tool" onclick="wrapSelection('<span class=\'glow\'>','</span>')">Brillo</button>
+                <button class="tool accent" onclick="addExtraNote()">+ ExtraNote</button>
                 <button class="tool" onclick="ins('FUE=10','')">Variable</button>
                 <button class="tool" onclick="ins('+5FUE','')">Bonus</button>
             </div>
@@ -110,12 +109,8 @@
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" onclick="this.style.display='none'">
-        <div class="dice-modal">
-            <div id="d-formula" style="font-size:12px; color:var(--p);"></div>
-            <div id="d-faces" style="font-size:28px; margin:15px 0;"></div>
-            <div id="d-total" style="font-size:48px; font-weight:bold; color:var(--accent);"></div>
-        </div>
+    <div id="global-overlay" class="overlay" onclick="this.style.display='none'">
+        <div id="modal-content" class="modal" onclick="event.stopPropagation()"></div>
     </div>
 
     <script>
@@ -132,20 +127,102 @@
 
         function toggleMode() {
             state.editing = !state.editing;
-            const ed = document.getElementById('editor-ui');
-            const pre = document.getElementById('preview');
-            const btn = document.getElementById('btn-mode');
+            document.getElementById('editor-ui').style.display = state.editing ? 'block' : 'none';
+            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
+            document.getElementById('btn-mode').innerText = state.editing ? "👁️ VER MODO JUEGO" : "✍️ VOLVER A EDITAR";
+            document.getElementById('btn-mode').style.background = state.editing ? "var(--p)" : "#444";
+            if(!state.editing) saveAndParse();
+        }
+
+        // Función intuitiva para Brillo e Italics
+        function wrapSelection(pre, post) {
+            const el = document.getElementById('editor');
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const text = el.value;
+            const selected = text.substring(start, end);
             
-            if(state.editing) {
-                ed.style.display = 'block'; pre.style.display = 'none';
-                btn.innerText = "👁️ VER MODO JUEGO";
-                btn.style.background = "var(--p)";
-            } else {
-                ed.style.display = 'none'; pre.style.display = 'block';
-                btn.innerText = "✍️ VOLVER A EDITAR";
-                btn.style.background = "#444";
-                saveAndParse();
+            el.value = text.substring(0, start) + pre + selected + post + text.substring(end);
+            el.focus();
+            saveAndParse();
+        }
+
+        // Función de ExtraNote
+        function addExtraNote() {
+            const title = prompt("Título de la nota (lo que se verá):", "Info");
+            if (!title) return;
+            const content = prompt("Contenido de la nota (lo que está oculto):");
+            if (!content) return;
+            
+            ins(`${title} [NOTE:${content}]`, "");
+        }
+
+        function saveAndParse() {
+            const txt = document.getElementById('editor').value;
+            state.dashes[state.id].content = txt;
+            
+            // Lógica de Stats
+            state.stats = {};
+            txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
+            txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
+                const name = n.toUpperCase();
+                state.stats[name] = (state.stats[name] || 0) + (parseInt(v) * (op === '-' ? -1 : 1));
+            });
+
+            // Renderizado
+            let html = txt
+                .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
+                .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/#(.*?)(\n|$)/g, '<h2 class="glow">$1</h2>')
+                // Render ExtraNote
+                .replace(/(.*?) \[NOTE:(.*?)\]/g, '$1 <span class="info-btn" onclick="openNote(\'$2\')">[INFO]</span>')
+                // Render Dados
+                .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
+            
+            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+            save();
+        }
+
+        function openNote(msg) {
+            const modal = document.getElementById('modal-content');
+            modal.innerHTML = `<h3 style="color:var(--p)">Nota Extra</h3><p style="text-align:left; line-height:1.6;">${msg}</p><button onclick="closeModal()" class="tool" style="margin-top:15px; width:100%">Cerrar</button>`;
+            document.getElementById('global-overlay').style.display = 'flex';
+        }
+
+        function roll(formula) {
+            let f = formula.toUpperCase();
+            Object.keys(state.stats).forEach(s => f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]));
+            
+            const dm = f.match(/(\d*)D(\d+)/i);
+            if (!dm) return;
+            const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
+            let rs = [], sum = 0;
+            for(let i=0; i<n; i++) {
+                const r = Math.floor(Math.random()*sides)+1;
+                sum += r;
+                rs.push(`<span style="color:${r===sides?'var(--crit)':(r===1?'var(--fail)':'inherit')}">${r}</span>`);
             }
+            
+            let res; try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = sum; }
+            
+            const modal = document.getElementById('modal-content');
+            modal.innerHTML = `
+                <div style="font-size:12px; color:var(--p); opacity:0.7;">${formula}</div>
+                <div style="font-size:28px; margin:15px 0;">[ ${rs.join(', ')} ]</div>
+                <div style="font-size:48px; font-weight:bold; color:var(--accent);">${res}</div>
+                <button onclick="closeModal()" class="tool" style="margin-top:15px; width:100%">Cerrar</button>
+            `;
+            document.getElementById('global-overlay').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('global-overlay').style.display = 'none'; }
+        
+        function ins(a, b) {
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            saveAndParse();
         }
 
         function createDash() {
@@ -154,6 +231,7 @@
             const id = "d"+Date.now();
             state.dashes[id] = { name: n, content: "# " + n + "\nFUE=10\n1d20+FUE" };
             save(); renderList();
+            document.getElementById('dashName').value = '';
         }
 
         function renderList() {
@@ -174,60 +252,11 @@
             const d = state.dashes[state.id];
             document.getElementById('current-name').innerText = d.name;
             document.getElementById('editor').value = d.content;
-            state.editing = true; toggleMode(); toggleMode(); // Reset view
-            saveAndParse();
-        }
-
-        function saveAndParse() {
-            const txt = document.getElementById('editor').value;
-            state.dashes[state.id].content = txt;
-            
-            state.stats = {};
-            txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
-            txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
-                const name = n.toUpperCase();
-                state.stats[name] = (state.stats[name] || 0) + (parseInt(v) * (op === '-' ? -1 : 1));
-            });
-
-            let html = txt
-                .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
-                .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h1 class="glow">$1</h1>')
-                .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
-            
-            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
-            save();
-        }
-
-        function roll(formula) {
-            let f = formula.toUpperCase();
-            Object.keys(state.stats).forEach(s => f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]));
-            const dm = f.match(/(\d*)D(\d+)/i);
-            if (!dm) return;
-            const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
-            let rs = [], sum = 0;
-            for(let i=0; i<n; i++) {
-                const r = Math.floor(Math.random()*sides)+1;
-                sum += r;
-                rs.push(`<span style="color:${r===sides?'var(--crit)':(r===1?'var(--fail)':'inherit')}">${r}</span>`);
-            }
-            let res; try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = sum; }
-            document.getElementById('d-formula').innerText = formula;
-            document.getElementById('d-faces').innerHTML = `[ ${rs.join(', ')} ]`;
-            document.getElementById('d-total').innerText = res;
-            document.getElementById('dice-overlay').style.display = 'flex';
-        }
-
-        function ins(a, b) {
-            const e = document.getElementById('editor');
-            const s = e.selectionStart, end = e.selectionEnd;
-            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
-            saveAndParse();
+            state.editing = true; toggleMode(); toggleMode();
         }
 
         function showList() { document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
-        function deleteDash() { if(confirm("¿Borrar?")) { delete state.dashes[state.id]; save(); showList(); } }
+        function deleteDash() { if(confirm("¿Borrar este personaje?")) { delete state.dashes[state.id]; save(); showList(); } }
     </script>
 </body>
 </html>
