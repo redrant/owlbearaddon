@@ -24,18 +24,20 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; font-size: 14px; }
+        /* DECORATIVOS TIPO DADO */
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
+        .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
+        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
+        
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; }
+        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
+
+        /* CASILLA CLONADORA */
+        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
         .check-btn:hover { background: rgba(187, 134, 252, 0.15); border-color: var(--p); }
         .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
-        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-        
-        /* BOTONES DECORADOS ESTILO DADO */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; transition: 0.2s; }
-        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
-
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
@@ -46,15 +48,14 @@
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
-        /* LOG MEJORADO */
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; line-height: 1.4; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
         .log-crit { color: var(--crit); font-weight: bold; }
         .log-fail { color: var(--fail); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v4.8</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM v5.0</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -102,25 +103,23 @@
     </div>
 
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; font-size:16px;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px;">CERRAR</button>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; font-size: 16px;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent);">CERRAR</button>
         </div>
     </div>
 
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
-        const DB = "DASH_ITEMS_V4", LG = "DASH_LOGS_V4", OF = "DASH_FOLDERS_V4";
+        const DB = "V5_ITEMS", LG = "V5_LOGS", OF = "V5_FOLDERS";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { 
-                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); 
-                    });
+                    OBR.scene.onMetadataChange(m => { state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); });
                     const m = await OBR.scene.getMetadata();
                     state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
                 });
@@ -132,9 +131,8 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE', parent: null, owner: null };
-            document.getElementById('newName').value = "";
-            save();
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE\n[note=Info]Doble espacio  para bajar linea[/note]', parent: null, owner: null };
+            document.getElementById('newName').value = ""; save();
         }
 
         function render() {
@@ -146,7 +144,7 @@
                 const fd = document.createElement('div');
                 fd.className = "card folder"; fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
                 fd.onclick = (e) => { e.stopPropagation(); state.openFolders[f.id] = !isOpen; save(); };
-                fd.ondragover = e => { e.preventDefault(); fd.style.borderColor = "var(--var)"; };
+                fd.ondragover = e => e.preventDefault();
                 fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
                 cont.appendChild(fd);
                 if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
@@ -160,11 +158,9 @@
                 cont.appendChild(card);
             });
             
-            // LOG RENDER CON COLORES
             document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>${l.faces || ""}</small></div>`
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>${l.details||""}</small></div>`
             ).join('');
-            
             if(state.id) syncView();
         }
 
@@ -191,10 +187,6 @@
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            
-            const btn = document.getElementById('own-btn');
-            btn.innerText = (it.owner === state.uid) ? "LIBERAR" : "OWNEAR";
-
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
@@ -210,9 +202,8 @@
             const processedLines = lines.map(line => {
                 if (line.trim().startsWith('[+]')) {
                     const contentToClone = line.replace('[+]', '').trim();
-                    const escapedContent = contentToClone.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     const innerRender = renderElements(contentToClone, memory);
-                    return `<div class="check-btn" onclick="cloneToMyDash('${escapedContent}')">${innerRender}</div>`;
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${contentToClone.replace(/`/g, "\\`")}\`)">${innerRender}</div>`;
                 }
                 return renderElements(line, memory);
             });
@@ -225,24 +216,27 @@
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    // FIX NOTA: doble espacio -> enter
-                    const cleanC = c.replace(/  /g, '\n').replace(/'/g, "\\'");
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="event.stopPropagation(); showNote('${t}', '${cleanC}')">[${t}]</span>`;
+                    const safeContent = encodeURIComponent(c.replace(/  /g, '\n'));
+                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${safeContent}')">${t}</div>`;
                 })
                 .replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
                     if(!/d/i.test(f)) return f;
-                    return `<div class="block-roll" onclick='event.stopPropagation(); runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
+                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
                 });
+        }
+
+        function openNote(title, content) {
+            document.getElementById('note-title').innerText = title;
+            document.getElementById('note-body').innerText = decodeURIComponent(content);
+            document.getElementById('note-overlay').style.display = 'flex';
         }
 
         function cloneToMyDash(text) {
             const myDash = Object.values(state.items).find(it => it.owner === state.uid);
             if(!myDash) return alert("Primero debes OWNEAR un Dash personal.");
-            myDash.content += "\n" + text;
-            save();
-            alert("¡Acción clonada!");
+            myDash.content += "\n" + text; save(); alert("¡Acción clonada!");
         }
 
         async function runRoll(formula, memory) {
@@ -262,9 +256,7 @@
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
 
-            let currentSum = 0; 
-            let logFaces = []; // Para el historial
-
+            let currentSum = 0; let logFaces = [];
             for(let res of results) {
                 const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
                 await new Promise(r => {
@@ -273,37 +265,24 @@
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++ > 8) {
                             clearInterval(iv); die.innerText = res;
-                            let colorClass = "";
-                            if(res === s) { die.style.color = "var(--crit)"; colorClass = "log-crit"; }
-                            else if(res === 1) { die.style.color = "var(--fail)"; colorClass = "log-fail"; }
-                            
-                            logFaces.push(`<span class="${colorClass}">${res}</span>`);
-                            currentSum += res; r();
+                            let color = ""; if(res===s) {color="log-crit"; die.style.color="var(--crit)";} else if(res===1) {color="log-fail"; die.style.color="var(--fail)";}
+                            logFaces.push(`<span class="${color}">${res}</span>`); currentSum += res; r();
                         }
                     }, 60);
                 });
             }
-            
             let final; try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
-            
-            setTimeout(() => { 
-                totalVal.innerText = final; 
-                totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`; 
-            }, 200);
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`; }, 200);
 
-            // GUARDAR EN LOG CON CARAS
-            state.log.unshift({ u: state.uname, f: formula, r: final, faces: `(${logFaces.join(',')})` });
-            if(state.log.length > 15) state.log.pop();
-            save();
+            state.log.unshift({ u: state.uname, f: formula, r: final, details: `(${logFaces.join(',')})` });
+            if(state.log.length > 15) state.log.pop(); save();
         }
 
-        function showNote(t, b) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = b; document.getElementById('note-overlay').style.display = 'flex'; }
         function toggleOwnership() { const it=state.items[state.id]; it.owner = (it.owner === state.uid) ? null : state.uid; save(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = Salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
 
