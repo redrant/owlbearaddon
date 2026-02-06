@@ -2,251 +2,157 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Plus</title>
 <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
 
 <style>
 :root{
-  --bg:#0d0d0f;--c:#1a1a1d;--p:#bb86fc;
-  --t:#eee;--ok:#00ff88;--bad:#ff4466;--acc:#03dac6
+ --bg:#0d0d0f; --card:#1a1a1d; --txt:#eee;
+ --p:#bb86fc; --accent:#03dac6;
+ --crit:#00ff88; --fail:#ff4466;
 }
-body{margin:0;font-family:Segoe UI;background:var(--bg);color:var(--t)}
-button{cursor:pointer}
-.hidden{display:none}
-
-.item{padding:10px;border:1px solid #333;border-radius:8px;margin:6px 0;background:var(--c)}
-.item:hover{border-color:var(--p)}
-textarea,input{background:#111;color:#eee;border:1px solid #333;border-radius:6px;padding:8px}
-
-.dice-pop{
- position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
- background:#111;border:2px solid var(--p);
- padding:20px;border-radius:14px;z-index:99;text-align:center
-}
-.c-max{color:var(--ok);font-weight:bold}
-.c-min{color:var(--bad);font-weight:bold}
-.log{font-size:11px;border-bottom:1px solid #222;padding:4px}
+body{margin:0;padding:10px;background:var(--bg);color:var(--txt);font-family:Segoe UI}
+button,input,textarea{background:#222;color:white;border:1px solid #333;border-radius:6px;padding:6px}
+button:hover{background:var(--p);color:black;cursor:pointer}
+.card{background:var(--card);border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:8px}
+.dice{color:var(--p);font-weight:bold;cursor:pointer;text-decoration:underline}
+.glow{text-shadow:0 0 10px currentColor}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center}
+.modal{background:#1e1e1e;border:2px solid var(--p);padding:20px;border-radius:15px;min-width:300px}
+.log{font-size:12px;border-top:1px solid #333;margin-top:10px;padding-top:6px}
+.slot{display:flex;gap:5px;margin:5px 0}
 </style>
 </head>
 
 <body>
 
-<div id="listView">
-  <h2>📊 Dashboard+</h2>
-  <input id="dashName" placeholder="Nuevo Dash">
-  <button onclick="createDash()">➕ Crear</button>
-  <div id="dashList"></div>
+<h2 style="color:var(--p)">Smart Dashboards</h2>
+
+<div id="list"></div>
+<button onclick="newDash()">➕ Nuevo Dash</button>
+
+<hr>
+
+<div id="dashView" style="display:none">
+<h3 id="dashTitle"></h3>
+
+<div id="editorWrap">
+<textarea id="editor" style="width:100%;height:160px" oninput="parse()"></textarea>
 </div>
 
-<div id="dashView" class="hidden">
-  <button onclick="back()">⬅ Volver</button>
-  <h3 id="dashTitle"></h3>
-  <button id="editBtn" onclick="toggleEdit()">✏ Editar</button>
+<div id="preview" class="card"></div>
 
-  <div id="editorBox" class="hidden">
-    <textarea id="editor" rows="10" oninput="saveDash()"></textarea>
-  </div>
+<div id="slots"></div>
 
-  <div id="preview"></div>
+<h4>📜 Log de Dados</h4>
+<div id="log" class="card"></div>
+<button onclick="clearLog()">RESET LOG</button>
 
-  <h4>☑ ExtraCasilla+</h4>
-  <input id="extraInput" placeholder="Texto / dados">
-  <button onclick="addExtra()">✔</button>
-
-  <h4>📜 Log Global</h4>
-  <button onclick="clearLog()">🗑 Reset (GM)</button>
-  <div id="logBox"></div>
+<button onclick="back()">⬅ Volver</button>
 </div>
 
-<div id="dicePop" class="dice-pop hidden"></div>
+<div id="overlay" onclick="this.style.display='none'">
+ <div class="modal" onclick="event.stopPropagation()" id="modal"></div>
+</div>
 
 <script>
-/* ===================== CONFIG ===================== */
-const DASH_KEY="dashplus.dashes.v3";
-const LOG_KEY="dashplus.log.v3";
+const KEY="dash.smart.data";
+let state={dashes:{},id:null,stats:{},user:"Anon",role:"player",log:[]};
 
-/* ===================== STATE ===================== */
-let S={
- dashes:{},log:[],dash:null,
- user:{id:"local",name:"Web",role:"PLAYER"},
- edit:false
-};
+OBR.onReady(async()=>{
+ const p=await OBR.player.getSelf();
+ state.user=p.name;
+ state.role=p.role||"player";
+ const m=await OBR.scene.getMetadata();
+ Object.assign(state,m[KEY]||state);
+ renderList();
+});
 
-/* ===================== INIT ===================== */
-async function init(){
- try{
-  await OBR.onReady(async()=>{
-   S.user.id=await OBR.player.getId();
-   S.user.name=await OBR.player.getName();
-   S.user.role=await OBR.player.getRole();
+function save(){OBR.scene.setMetadata({[KEY]:state})}
 
-   const m=await OBR.scene.getMetadata();
-   S.dashes=m[DASH_KEY]||{};
-   S.log=m[LOG_KEY]||[];
-
-   OBR.scene.onMetadataChange(mm=>{
-    S.dashes=mm[DASH_KEY]||{};
-    S.log=mm[LOG_KEY]||[];
-    renderList();renderLog();
-    if(S.dash)renderDash();
-   });
-   renderList();renderLog();
-  });
- }catch{
-  S.dashes=JSON.parse(localStorage.getItem(DASH_KEY)||"{}");
-  S.log=JSON.parse(localStorage.getItem(LOG_KEY)||"[]");
-  renderList();renderLog();
- }
-}
-init();
-
-/* ===================== SAVE ===================== */
-async function save(){
- try{
-  const m=await OBR.scene.getMetadata();
-  m[DASH_KEY]=S.dashes;m[LOG_KEY]=S.log;
-  await OBR.scene.setMetadata(m);
- }catch{
-  localStorage.setItem(DASH_KEY,JSON.stringify(S.dashes));
-  localStorage.setItem(LOG_KEY,JSON.stringify(S.log));
- }
-}
-
-/* ===================== DASH ===================== */
-function createDash(){
- const n=dashName.value||"Nuevo";
+function newDash(){
  const id="d"+Date.now();
- S.dashes[id]={
-  id,name:n,content:"",
-  owner:S.user.id,
-  users:{}
- };
- dashName.value="";
- save();
+ state.dashes[id]={name:"Nuevo Dash",content:"FUE=10\n1d20+FUE",owner:state.user};
+ save();renderList();
 }
 
 function renderList(){
- dashList.innerHTML="";
- Object.values(S.dashes).forEach(d=>{
-  const div=document.createElement("div");
-  div.className="item";
-  div.innerText=d.name;
-  div.onclick=()=>openDash(d.id);
-  dashList.appendChild(div);
+ const l=document.getElementById("list");l.innerHTML="";
+ Object.entries(state.dashes).forEach(([id,d])=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.textContent=d.name;
+  c.onclick=()=>openDash(id);
+  l.appendChild(c);
  });
 }
 
 function openDash(id){
- S.dash=id;
- listView.classList.add("hidden");
- dashView.classList.remove("hidden");
- renderDash();
+ state.id=id;
+ const d=state.dashes[id];
+ document.getElementById("dashView").style.display="block";
+ document.getElementById("dashTitle").textContent=d.name;
+ document.getElementById("editor").value=d.content;
+ document.getElementById("editorWrap").style.display=
+   (state.role==="dm"||d.owner===state.user)?"block":"none";
+ parse();
 }
 
-function back(){
- S.dash=null;
- dashView.classList.add("hidden");
- listView.classList.remove("hidden");
-}
+function back(){document.getElementById("dashView").style.display="none"}
 
-function renderDash(){
- const d=S.dashes[S.dash];
- dashTitle.innerText=d.name;
- editor.value=d.content;
- editBtn.style.display=canEdit(d)?"block":"none";
- editorBox.classList.toggle("hidden",!S.edit);
- renderPreview(d);
-}
-
-function toggleEdit(){
- S.edit=!S.edit;
- renderDash();
-}
-
-function saveDash(){
- S.dashes[S.dash].content=editor.value;
+function parse(){
+ const d=state.dashes[state.id];
+ d.content=document.getElementById("editor").value;
+ state.stats={};
+ d.content.replace(/([A-Z]+)=([0-9]+)/g,(m,n,v)=>state.stats[n]=+v);
+ let html=d.content
+  .replace(/<g=(.*?)>(.*?)<\/g>/g,'<span class="glow" style="color:$1">$2</span>')
+  .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
+  .replace(/(\d*d\d+[\+\-\*A-Z0-9\(\)]*)/gi,f=>`<span class="dice" onclick="roll('${f}')">${f}</span>`);
+ document.getElementById("preview").innerHTML=html.replace(/\n/g,"<br>");
+ buildSlots(d.content);
  save();
 }
 
-/* ===================== PERMS ===================== */
-function canEdit(d){
- return S.user.role==="GM"||d.owner===S.user.id;
-}
-
-/* ===================== EXTRA ===================== */
-function addExtra(){
- const v=extraInput.value;
- if(!v)return;
- const d=S.dashes[S.dash];
- d.users[S.user.id]=(d.users[S.user.id]||"")+"\n"+v;
- extraInput.value="";
- save();
-}
-
-/* ===================== PREVIEW ===================== */
-function renderPreview(d){
- let txt=d.content+"\n"+(d.users[S.user.id]||"");
- let vars={};
- txt.replace(/([A-Z]+)\s*=\s*(\d+)/g,(_,k,v)=>vars[k]=+v);
-
- let html=txt.replace(/(\d*d\d+[A-Z0-9+\-*()/]*)/gi,f=>{
-  return `<span style="color:var(--p);cursor:pointer" onclick="roll('${f}')">${f}</span>`;
+function buildSlots(txt){
+ const s=document.getElementById("slots");s.innerHTML="<h4>🧩 ExtraCasillas</h4>";
+ txt.replace(/\[slot=(.*?)\](.*)/g,(m,n,v)=>{
+  const d=document.createElement("div");
+  d.className="slot";
+  d.innerHTML=`<b>${n}</b><input oninput="slotInput('${n}',this.value)" placeholder="${v.trim()}">`;
+  s.appendChild(d);
  });
-
- preview.innerHTML=html.replace(/\n/g,"<br>");
 }
 
-/* ===================== DICE ===================== */
-function roll(f){
- let d=S.dashes[S.dash];
- let txt=d.content+(d.users[S.user.id]||"");
- let vars={};
- txt.replace(/([A-Z]+)\s*=\s*(\d+)/g,(_,k,v)=>vars[k]=+v);
+function slotInput(name,val){
+ const d=state.dashes[state.id];
+ d.content+=`\n${name}: ${val}`;
+ parse();
+}
 
- let exp=f.replace(/[A-Z]+/g,m=>vars[m]??0);
- let m=exp.match(/(\d*)d(\d+)/i);
- if(!m)return;
-
- let n=+m[1]||1,s=+m[2],r=[],sum=0;
- for(let i=0;i<n;i++){
-  let v=Math.floor(Math.random()*s)+1;
-  r.push(v);sum+=v;
+function roll(formula){
+ let f=formula.toUpperCase();
+ Object.entries(state.stats).forEach(([k,v])=>f=f.replace(k,v));
+ const [,n,s]=f.match(/(\d*)D(\d+)/i);
+ let r=[],sum=0;
+ for(let i=0;i<(+n||1);i++){
+  const x=Math.floor(Math.random()*s)+1;
+  sum+=x;
+  r.push(`<span style="color:${x==1?'var(--fail)':x==s?'var(--crit)':'#fff'}">${x}</span>`);
  }
-
- let res;
- try{res=eval(exp.replace(m[0],sum));}
- catch{res=sum;}
-
- showDice(f,r,res);
- logRoll(f,r,res);
-}
-
-function showDice(f,r,res){
- dicePop.innerHTML=`<b>${f}</b><br>
- ${r.map(v=>`<span class="${v==1?'c-min':v==Math.max(...r)?'c-max':''}">${v}</span>`).join(", ")}
- <h1>${res}</h1>`;
- dicePop.classList.remove("hidden");
- setTimeout(()=>dicePop.classList.add("hidden"),2500);
-}
-
-/* ===================== LOG ===================== */
-function logRoll(f,r,res){
- S.log.unshift({
-  u:S.user.name,f,r,res,t:new Date().toLocaleTimeString()
- });
- S.log=S.log.slice(0,30);
+ state.log.unshift(`${state.user}: ${formula} → ${sum}`);
+ renderLog();
+ document.getElementById("modal").innerHTML=`<h3>${formula}</h3>[${r.join(",")}]<h1>${sum}</h1>`;
+ document.getElementById("overlay").style.display="flex";
  save();
 }
 
 function renderLog(){
- logBox.innerHTML=S.log.map(l=>
-  `<div class="log"><b>${l.u}</b> ${l.f} → ${l.res}</div>`
- ).join("");
+ document.getElementById("log").innerHTML=state.log.slice(0,20).join("<br>");
 }
 
 function clearLog(){
- if(S.user.role!=="GM")return;
- S.log=[];save();
+ if(state.role!=="dm")return;
+ state.log=[];renderLog();save();
 }
 </script>
 </body>
