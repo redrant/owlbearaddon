@@ -1,0 +1,13 @@
+{
+  "name": "Dashisboard+",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "action": {
+    "title": "Dashisboard+",
+    "icon": "/icon.svg",
+    "main": "/index.html",
+    "width": 400,
+    "height": 600
+  },
+  "permissions": ["SCENE"]
+}

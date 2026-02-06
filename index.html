@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #212529; color: white; padding: 15px; }
+        .card { background: #2c3035; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #444; }
+        .die-roll { color: #bb86fc; font-weight: bold; cursor: pointer; text-decoration: underline; }
+        .res-crit { color: #00ff00; } .res-fail { color: #ff4444; }
+        input, textarea { width: 100%; background: #1a1d20; color: white; border: 1px solid #555; padding: 5px; margin: 5px 0; }
+        .tab-bar { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 10px; }
+        .tab { background: #444; padding: 5px 10px; cursor: pointer; border-radius: 4px 4px 0 0; }
+        .active-tab { background: #bb86fc; color: black; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Dashisboard+</h2>
+        <div id="main-menu">
+            <input type="text" id="newDashName" placeholder="Nombre del Dash...">
+            <button onclick="createDash()">Crear Dash</button>
+            <div id="dashList"></div>
+        </div>
+
+        <div id="dashView" style="display:none;">
+            <div class="tab-bar" id="tabs"></div>
+            <button onclick="showMenu()">⬅ Volver</button>
+            <button onclick="addPage()">+ Nueva Página</button>
+            <div id="contentArea">
+                <textarea id="editor" rows="10" oninput="updateContent()"></textarea>
+                <div id="preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDashId = null;
+        let stats = {};
+
+        OBR.onReady(async () => {
+            renderList();
+            // Escuchar cambios de otros jugadores
+            OBR.scene.onMetadataChange((metadata) => {
+                renderList();
+                if(currentDashId) loadDash(currentDashId);
+            });
+        });
+
+        async function createDash() {
+            const name = document.getElementById('newDashName').value;
+            if(!name) return;
+            const id = Date.now().toString();
+            const metadata = await OBR.scene.getMetadata();
+            const dashes = metadata.dashes || {};
+            dashes[id] = { name, pages: [{title: 'Principal', content: '', type: 'normal'}] };
+            await OBR.scene.setMetadata({ dashes });
+            document.getElementById('newDashName').value = '';
+            renderList();
+        }
+
+        async function renderList() {
+            const metadata = await OBR.scene.getMetadata();
+            const list = document.getElementById('dashList');
+            list.innerHTML = '<h3>Lista de dashes:</h3>';
+            for (const [id, dash] of Object.entries(metadata.dashes || {})) {
+                const btn = document.createElement('button');
+                btn.innerText = dash.name;
+                btn.onclick = () => openDash(id);
+                list.appendChild(btn);
+            }
+        }
+
+        function openDash(id) {
+            currentDashId = id;
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('dashView').style.display = 'block';
+            loadDash(id);
+        }
+
+        async function loadDash(id) {
+            const metadata = await OBR.scene.getMetadata();
+            const dash = metadata.dashes[id];
+            // Aquí iría la lógica de renderizar pestañas y procesar el texto (FUE, 2d6, etc)
+            parseContent(dash.pages[0].content);
+        }
+
+        function parseContent(text) {
+            // 1. Extraer Variables (FUE=10)
+            const varRegex = /([A-Z]+)\s*=\s*(\d+)/g;
+            let match;
+            while ((match = varRegex.exec(text)) !== null) {
+                stats[match[1]] = parseInt(match[2]);
+            }
+
+            // 2. Procesar Dados (2d20+FUE)
+            let processed = text.replace(/(\d+d\d+[\+\-\*\/A-Z]*)/g, (m) => {
+                return `<span class="die-roll" onclick="rollDice('${m}')">${m}</span>`;
+            });
+            
+            document.getElementById('preview').innerHTML = processed.replace(/\n/g, '<br>');
+        }
+
+        function rollDice(formula) {
+            // Sustituir variables en la fórmula
+            let finalFormula = formula;
+            for (const [stat, val] of Object.entries(stats)) {
+                finalFormula = finalFormula.replace(stat, val);
+            }
+            
+            // Lógica simple de dados (esto se puede expandir)
+            alert("Tirando: " + finalFormula + "...");
+            // Aquí conectarías con un evaluador matemático
+        }
+
+        function showMenu() {
+            document.getElementById('main-menu').style.display = 'block';
+            document.getElementById('dashView').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
