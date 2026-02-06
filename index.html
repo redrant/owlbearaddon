@@ -8,7 +8,6 @@
         :root { 
             --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-            --dice-bg: #2d2d3d;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -24,34 +23,30 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; }
         .dash { border-left: 5px solid var(--p); }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
+        /* Estilos de Dados y Variables */
+        .block-roll { color: #8cafff; background: #2d2d3d; border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        /* Casillas corregidas */
-        .check-line { display: flex; align-items: center; margin: 8px 0; padding: 5px; border-radius: 5px; transition: 0.2s; }
-        .check-line:hover { background: rgba(255,255,255,0.05); }
+        /* CASILLAS CLEAN */
+        .check-line { display: flex; align-items: center; margin: 8px 0; padding: 5px; border-radius: 5px; }
         .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 10px; }
 
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
-        .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
-        .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
-        .total-box.show { opacity: 1; }
-        
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        /* Dados y Log */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
+        .die-num { font-size: 40px; font-weight: 900; color: white; margin: 10px; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; }
         .log b { color: #eee; }
-        .log-crit { color: var(--crit); font-weight: bold; }
-        .log-fail { color: var(--fail); font-weight: bold; }
+        .crit { color: var(--crit); } .fail { color: var(--fail); }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v2.1 PLATINUM</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -67,7 +62,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <button onclick="goBack()" class="tool">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="tool">OWNEAR</button>
+            <button id="own-btn" onclick="toggleOwnership()" class="tool" style="background:var(--accent); color:black;">OWNEAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
@@ -80,8 +75,6 @@
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
                 <button class="tool" onclick="ins('[+] ','')">Casilla</button>
-                <button class="tool" onclick="askNote()">Nota+</button>
-                <button class="tool" onclick="askGlow()">Glow</button>
                 <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
             </div>
             <textarea id="editor" oninput="updateContent()"></textarea>
@@ -91,16 +84,15 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-f" style="color:#555; font-family:monospace; font-size:12px;"></div>
-            <div id="dice-container" class="dice-display"></div>
-            <div id="total-val" class="total-box">0</div>
-            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
+            <div id="d-f" style="color:#555; font-size:12px;"></div>
+            <div id="d-res" class="die-num">0</div>
+            <div id="d-faces" style="color:#777; font-size:13px; border-top:1px solid #222; padding-top:10px;"></div>
         </div>
     </div>
 
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, dragId: null };
-        const DB = "V2_P_ITEMS", LG = "V2_P_LOGS", CH = "V2_P_CHECKS";
+        const DB = "PLAT_DB_V3", LG = "PLAT_LOG_V3", CH = "PLAT_CHK_V3";
 
         async function init() {
             try {
@@ -119,7 +111,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n[+] Acción\n\n1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción\n1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -128,7 +120,8 @@
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            vals.filter(it => it.type === 'folder').forEach(f => {
+            // Render Carpetas y su contenido
+            vals.filter(f => f.type === 'folder').forEach(f => {
                 const fd = document.createElement('div');
                 fd.className = "card folder"; fd.innerHTML = `<span>📁 ${f.name}</span>`;
                 fd.ondragover = e => e.preventDefault();
@@ -137,27 +130,34 @@
                 vals.filter(d => d.parent === f.id).forEach(d => cont.appendChild(createCard(d, true)));
             });
 
+            // Dashboards raíz
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => cont.appendChild(createCard(d, false)));
             
+            // Log con colores rojo/verde
             document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.details})</small></div>`
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.det})</small></div>`
             ).join('');
+
             if(state.id) syncView();
         }
 
         function createCard(it, isChild) {
             const d = document.createElement('div');
-            d.className = "card dash"; 
-            if(isChild) d.style.marginLeft = "20px";
+            d.className = "card dash"; if(isChild) d.style.marginLeft = "20px";
             d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner?'🔒':''}`;
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
             d.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = null; save(); };
             return d;
         }
 
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
+        function openDetails() { 
+            document.getElementById('view-list').style.display='none'; 
+            document.getElementById('view-details').style.display='flex'; 
+            switchTab(false); 
+        }
+
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
 
         function switchTab(isEdit) {
@@ -174,30 +174,36 @@
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
+            
+            // Lógica Ownear/Liberar
+            const btnOwn = document.getElementById('own-btn');
+            if(it.owner === state.uid) {
+                btnOwn.innerText = "LIBERAR";
+                btnOwn.style.background = "var(--fail)";
+            } else {
+                btnOwn.innerText = "OWNEAR";
+                btnOwn.style.background = "var(--accent)";
+            }
+
+            if(state.edit) document.getElementById('editor').value = it.content; 
+            else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
             const memory = {};
             txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, s, v, k) => {
-                const key = k.toUpperCase();
-                if(memory[key] !== undefined) memory[key] += (s === '+' ? 1 : -1) * parseInt(v);
-            });
 
+            // LIMPIEZA DE CASILLAS: Solo el checkbox y el texto, sin códigos raros
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[\+\] (.*)/g, (m, label) => {
+                .replace(/\[\+\]\s*(.*)/g, (m, label) => {
                     const cid = state.id + label.trim();
                     const checked = state.checks[cid] ? 'checked' : '';
                     return `<div class="check-line"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span>${label}</span></div>`;
-                })
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<span style="color:var(--accent); cursor:pointer; font-weight:bold;">[${t}]</span>`);
+                });
 
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
-            html = html.replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>');
             html = html.replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
                 if(!/d/i.test(f)) return f;
                 return `<div class="block-roll" onclick='runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
@@ -208,14 +214,7 @@
 
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
-            let breakdown = "";
-            for(let k in memory) {
-                const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) {
-                    breakdown += `${k}(${memory[k]}) `;
-                    logic = logic.replace(regex, memory[k]);
-                }
-            }
+            for(let k in memory) logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), memory[k]);
 
             const match = logic.match(/(\d*)D(\d+)/i);
             const n = parseInt(match[1]) || 1;
@@ -223,63 +222,41 @@
             const results = [];
             for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
 
+            let sum = results.reduce((a,b)=>a+b, 0);
+            let final;
+            try { final = eval(logic.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = sum; }
+
+            // Formateo de caras con colores
+            const detLog = results.map(r => {
+                if(r === s) return `<span class="crit">${r}</span>`;
+                if(r === 1) return `<span class="fail">${r}</span>`;
+                return r;
+            }).join(', ');
+
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formula;
-            const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = "";
-            totalVal.classList.remove('show');
+            document.getElementById('d-res').innerText = final;
+            document.getElementById('d-faces').innerHTML = `Caras: [${detLog}]`;
 
-            let currentSum = 0;
-            let logDetails = [];
-
-            for(let res of results) {
-                const die = document.createElement('div');
-                die.className = "die-num";
-                die.innerText = "?";
-                container.appendChild(die);
-
-                await new Promise(r => {
-                    let t = 0;
-                    const iv = setInterval(() => {
-                        die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 8) {
-                            clearInterval(iv);
-                            die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
-                            else logDetails.push(res);
-                            currentSum += res;
-                            r();
-                        }
-                    }, 60);
-                });
-            }
-
-            let final;
-            try {
-                const mathStr = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                final = eval(mathStr);
-            } catch(e) { final = currentSum; }
-
-            setTimeout(() => {
-                totalVal.innerText = final;
-                totalVal.classList.add('show');
-                document.getElementById('d-res').innerText = `[${results.join('+')}] + ${breakdown}`;
-            }, 200);
-
-            state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
+            state.log.unshift({ u: state.uname, f: formula, r: final, det: detLog });
             if(state.log.length > 15) state.log.pop();
             save();
         }
 
         function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
-        function toggleOwnership() { const it=state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
+        function toggleOwnership() { 
+            const it = state.items[state.id];
+            it.owner = (it.owner === state.uid) ? null : state.uid;
+            save(); 
+        }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
+        function wrap(a, b) { 
+            const e = document.getElementById('editor');
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            updateContent();
+        }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
