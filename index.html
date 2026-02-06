@@ -4,45 +4,108 @@
     <meta charset="UTF-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        :root { --p: #bb86fc; --bg: #121212; --c: #1e1e1e; --t: #e0e0e0; --crit: #00ff00; --fail: #ff4444; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; }
+        :root { 
+            --p: #bb86fc; 
+            --p-dark: #3700b3;
+            --bg: #0f0f12; 
+            --c: #1e1e1e; 
+            --t: #f0f0f0; 
+            --crit: #00ff88; 
+            --fail: #ff4466;
+            --accent: #03dac6;
+            --bonus: #ffab40;
+        }
         
-        .toolbar { display: flex; gap: 5px; background: #2c2c2c; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #444; }
-        .btn { background: #444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: var(--p); color: black; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; }
+        
+        /* Títulos y Firma */
+        .header-main { text-align: center; margin-bottom: 20px; }
+        .header-main h2 { color: var(--p); margin: 0; text-shadow: 0 0 10px rgba(187, 134, 252, 0.3); }
+        .signature { font-size: 10px; color: #666; font-style: italic; }
 
-        textarea { background: #1a1a1a; border: 1px solid #444; border-top: none; color: white; padding: 10px; width: 100%; box-sizing: border-box; font-family: monospace; border-radius: 0 0 6px 6px; }
+        /* Botones y Entradas */
+        .btn { background: var(--p); color: #000; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: var(--accent); transform: scale(1.02); }
+        .btn-sec { background: #333; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+        input[type="text"] { background: #1e1e1e; border: 1px solid #333; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+
+        /* Dashboard Unificado */
+        .unified-card { background: var(--c); border-radius: 12px; border: 1px solid #333; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         
-        #preview { margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px dashed #444; }
-        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 4px; border-radius: 4px; }
+        .toolbar { display: flex; gap: 5px; background: #252525; padding: 10px; border-bottom: 1px solid #333; }
         
-        .result-box { background: #000; padding: 15px; border: 2px solid var(--p); margin-top: 15px; border-radius: 8px; }
-        .c-max { color: var(--crit); font-weight: bold; }
-        .c-min { color: var(--fail); font-weight: bold; }
-        .stat-tag { color: #03dac6; font-weight: bold; }
-        .bonus-tag { color: #ffab40; font-style: italic; }
+        .editor-container { position: relative; padding: 15px; }
+        
+        textarea { 
+            background: transparent; border: 1px solid #333; color: var(--t); padding: 12px; 
+            width: 100%; box-sizing: border-box; font-family: 'Consolas', monospace; 
+            border-radius: 8px; outline: none; line-height: 1.5; font-size: 14px;
+            min-height: 150px;
+        }
+
+        #preview { 
+            margin-top: 15px; padding: 15px; background: rgba(187, 134, 252, 0.05); 
+            border-radius: 8px; border: 1px dashed var(--p-dark); 
+            line-height: 1.6; min-height: 50px;
+        }
+
+        /* Resaltados */
+        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187, 134, 252, 0.1); padding: 2px 5px; border-radius: 4px; }
+        .stat-tag { color: var(--accent); font-weight: bold; }
+        .bonus-tag { color: var(--bonus); font-weight: bold; font-style: italic; }
+
+        /* Lista de Personajes */
+        .dash-item { 
+            background: #1e1e1e; padding: 15px; margin-bottom: 10px; border-radius: 10px; 
+            cursor: pointer; border: 1px solid #333; display: flex; align-items: center; 
+            transition: 0.2s;
+        }
+        .dash-item:hover { border-color: var(--p); background: #252525; }
+        .dash-item::before { content: "👤"; margin-right: 12px; font-size: 18px; }
+
+        /* Resultado de Dados */
+        .result-box { 
+            background: #000; padding: 15px; border: 2px solid var(--p); 
+            margin-top: 15px; border-radius: 10px; text-align: center;
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="view-list">
-        <h2>Mis Dashes</h2>
-        <input type="text" id="dashName" placeholder="Nombre...">
-        <button onclick="createDash()" class="btn">CREAR</button>
-        <div id="list-container"></div>
+        <div class="header-main">
+            <h2>My Dashes</h2>
+            <div class="signature">By Redrant :v</div>
+        </div>
+        
+        <input type="text" id="dashName" placeholder="Nombre del personaje (ej. Grog)">
+        <button onclick="createDash()" class="btn" style="width:100%">+ CREAR NUEVO PERSONAJE</button>
+        
+        <div id="list-container" style="margin-top:20px;"></div>
     </div>
 
     <div id="view-details" style="display:none;">
-        <button onclick="showList()" class="btn">⬅ Volver</button>
-        <h3 id="dash-title"></h3>
-        <div class="toolbar">
-            <button class="btn" onclick="ins('**','**')">B</button>
-            <button class="btn" onclick="ins('# ','')">H1</button>
-            <button class="btn" onclick="ins('FUE=10','')">Base</button>
-            <button class="btn" onclick="ins('+5FUE','')">Bonus</button>
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <button onclick="showList()" class="btn-sec">⬅ LISTA</button>
+            <h3 id="dash-title" style="margin:0; color:var(--p)"></h3>
+            <button onclick="deleteDash()" class="btn-sec" style="color:var(--fail)">BORRAR</button>
         </div>
-        <textarea id="editor" rows="10" oninput="update()"></textarea>
-        <div id="preview"></div>
-        <div id="dice-output"></div>
+
+        <div class="unified-card">
+            <div class="toolbar">
+                <button class="btn-sec" onclick="ins('**','**')">B</button>
+                <button class="btn-sec" onclick="ins('# ','')">H1</button>
+                <button class="btn-sec" onclick="ins('FUE=10','')">BASE</button>
+                <button class="btn-sec" onclick="ins('+5FUE','')">BONUS</button>
+            </div>
+            <div class="editor-container">
+                <textarea id="editor" oninput="update()" placeholder="Escribe aquí..."></textarea>
+                <div id="preview"></div>
+                <div id="dice-output"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -62,6 +125,7 @@
             if(!n) return;
             const id = "d"+Date.now();
             state.dashes[id] = { name: n, content: "FUE=10\nCasco: +5FUE\nAtaque: 1d20+FUE" };
+            document.getElementById('dashName').value = '';
             save(); renderList();
         }
 
@@ -70,13 +134,14 @@
             c.innerHTML = '';
             Object.keys(state.dashes).forEach(id => {
                 const d = document.createElement('div');
-                d.style.padding = "10px"; d.style.cursor = "pointer"; d.innerText = "📂 " + state.dashes[id].name;
-                d.onclick = () => { state.id = id; open(); };
+                d.className = 'dash-item';
+                d.innerText = state.dashes[id].name;
+                d.onclick = () => { state.id = id; openDash(); };
                 c.appendChild(d);
             });
         }
 
-        function open() {
+        function openDash() {
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
             const d = state.dashes[state.id];
@@ -89,20 +154,22 @@
             const txt = document.getElementById('editor').value;
             state.dashes[state.id].content = txt;
             
-            // Lógica de Variables y Bonus
             state.stats = {};
-            // 1. Valores base (FUE=10)
+            // 1. Bases
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
             // 2. Bonus (+5FUE)
             txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
                 const name = n.toUpperCase();
-                const val = parseInt(v) * (op === '-' ? -1 : 1);
-                state.stats[name] = (state.stats[name] || 0) + val;
+                const bonus = parseInt(v) * (op === '-' ? -1 : 1);
+                state.stats[name] = (state.stats[name] || 0) + bonus;
             });
 
+            // Preview dinámico
             let html = txt
                 .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
                 .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin-top:0;">$1</h2>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
@@ -117,12 +184,13 @@
 
             const dm = f.match(/(\d*)D(\d+)/i);
             if (!dm) return;
-            const n = parseInt(dm[1]) || 1, s = parseInt(dm[2]);
+            const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
             let rs = [], sum = 0;
             for(let i=0; i<n; i++) {
-                const r = Math.floor(Math.random()*s)+1;
+                const r = Math.floor(Math.random()*sides)+1;
                 sum += r;
-                rs.push(`<span class="${r===s?'c-max':(r===1?'c-min':'')}">${r}</span>`);
+                let cl = r === sides ? 'style="color:var(--crit);font-weight:bold;"' : (r === 1 ? 'style="color:var(--fail);font-weight:bold;"' : '');
+                rs.push(`<span ${cl}>${r}</span>`);
             }
 
             let res;
@@ -131,22 +199,28 @@
 
             document.getElementById('dice-output').innerHTML = `
                 <div class="result-box" onclick="this.innerHTML=''">
-                    <div style="font-size:12px; opacity:0.6;">${formula} (Final: ${f})</div>
-                    <div style="font-size:1.2em;">[ ${rs.join(', ')} ]</div>
-                    <div style="font-size:24px; font-weight:bold;">TOTAL: ${res}</div>
+                    <div style="font-size:11px; opacity:0.5; margin-bottom:5px;">${formula} → ${f}</div>
+                    <div style="font-size:1.1em; margin-bottom:5px;">[ ${rs.join(', ')} ]</div>
+                    <div style="font-size:26px; font-weight:bold; color:var(--accent);">TOTAL: ${res}</div>
+                    <div style="font-size:9px; color:#555; margin-top:5px;">(clic para cerrar)</div>
                 </div>`;
         }
 
         function ins(a, b) {
             const e = document.getElementById('editor');
-            const start = e.selectionStart, end = e.selectionEnd;
-            e.value = e.value.substring(0, start) + a + e.value.substring(start, end) + b + e.value.substring(end);
+            const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
             update();
+            e.focus();
         }
 
         function showList() {
             document.getElementById('view-list').style.display = 'block';
             document.getElementById('view-details').style.display = 'none';
+        }
+
+        function deleteDash() {
+            if(confirm("¿Eliminar este personaje?")) { delete state.dashes[state.id]; save(); showList(); }
         }
     </script>
 </body>
