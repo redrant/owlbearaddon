@@ -2,84 +2,76 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
             --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
         }
-        
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: all 0.2s ease; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 1px; }
+        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
+        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
         #view-details { display: none; }
 
-        /* LISTA Y CARPETAS */
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 14px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .folder { border-left: 5px solid var(--var); font-weight: bold; background: #1e1e1a; }
+        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; }
+        .folder { border-left: 5px solid var(--var); }
         .dash { border-left: 5px solid var(--p); }
-        .folder-content { display: none; flex-direction: column; gap: 4px; padding-left: 15px; margin-top: -2px; }
-        .folder-content.open { display: flex; }
+        .f-content { display: none; flex-direction: column; gap: 4px; padding-left: 15px; }
+        .f-content.open { display: flex; }
 
-        /* CASILLAS PRO */
-        .cb-row { display: flex; align-items: center; background: rgba(3, 218, 198, 0.05); padding: 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(3, 218, 198, 0.2); }
-        .cb-custom { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; accent-color: var(--accent); }
+        /* Componentes del Preview */
+        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 10px; border-radius: 8px; margin: 5px 0; border: 1px solid rgba(3,218,198,0.2); }
+        .cb-input { width: 18px; height: 18px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); }
+        .var-tag { color: var(--var); font-weight: bold; background: rgba(255,171,64,0.1); padding: 0 4px; border-radius: 4px; }
+        .note-btn { background: rgba(3,218,198,0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 2px; }
 
-        /* PREVIEW */
-        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 4px 2px; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); padding: 0 2px; font-size: 1.05em; }
-        .var-tag { color: var(--var); font-weight: bold; background: rgba(255,171,64,0.1); padding: 0 5px; border-radius: 4px; }
+        /* Editor */
+        .toolbar { display: flex; gap: 4px; background: #222; padding: 6px; border-radius: 8px 8px 0 0; border: 1px solid #444; }
+        .tool { background: #333; color: white; border: 1px solid #444; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        textarea { flex: 1; background: #080808; color: #ccc; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: none; outline: none; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; }
 
-        /* EDITOR */
-        .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 10px 10px 0 0; border: 1px solid #444; flex-wrap: wrap; }
-        .tool { background: #333; color: white; border: 1px solid #444; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; border-top: none; border-radius: 0 0 10px 10px; font-family: monospace; resize: none; outline: none; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg); display: none; line-height: 1.8; }
+        /* Animación Slot */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; }
+        .slot-box { font-size: 70px; font-weight: bold; margin: 20px 0; height: 80px; display: flex; justify-content: center; align-items: center; }
+        .crit { color: var(--crit); text-shadow: 0 0 20px var(--crit); }
+        .fail { color: var(--fail); text-shadow: 0 0 20px var(--fail); }
 
-        /* MODAL DADOS (SLOT ANIMATION) */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 85%; max-width: 380px; text-align: center; }
-        .slot-container { font-size: 80px; font-weight: bold; margin: 20px 0; height: 100px; color: white; display: flex; justify-content: center; align-items: center; }
-        .crit { color: var(--crit); text-shadow: 0 0 25px var(--crit); transform: scale(1.1); }
-        .fail { color: var(--fail); text-shadow: 0 0 25px var(--fail); }
-
-        .log { height: 120px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; overflow-y: auto; margin-top: 15px; border: 1px solid #333; }
+        .log { height: 100px; background: #000; padding: 8px; font-size: 11px; border-radius: 8px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v5.5 - ULTRA LOGIC</div></div>
+    <div class="header"><div class="sig">MY DASHES v5.8 - ENGINE FIXED</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#222; border:1px solid #444; color:white; border-radius:8px;">
-            <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">DASH</button>
-            <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">FOLDER</button>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:6px;">
+            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
+            <button onclick="addItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
         </div>
         <div id="items-container" class="items-area"></div>
         <div class="log" id="log-content"></div>
     </div>
 
     <div id="view-details">
-        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:10px;">
             <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
-            <b id="det-title" style="color:var(--p); letter-spacing: 1px;"></b>
+            <b id="det-title" style="color:var(--p)"></b>
             <button onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
-        
-        <button id="toggle-btn" onclick="toggleVisual()" style="width:100%; padding:14px; background:var(--p); border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom:12px;">MODO JUEGO / EDITAR</button>
+        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:12px; background:var(--p); border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
         
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
                 <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="wrap('*','*')">I</button>
                 <button class="tool" onclick="promptGlow()">GLOW</button>
                 <button class="tool" onclick="ins('[cb] ','')">CASILLA</button>
                 <button class="tool" onclick="promptNote()">NOTA</button>
@@ -90,50 +82,39 @@
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" class="overlay" onclick="closeDice()">
+    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-user" style="font-size:12px; color:var(--p); letter-spacing:3px; font-weight:bold;">PLAYER</div>
-            <div id="d-form" style="opacity:0.5; font-size:14px; margin:10px 0;">Formula</div>
-            <div id="d-slot" class="slot-container">0</div>
-            <div id="d-faces" style="font-size:16px; color:#555; margin-top:10px;"></div>
+            <div id="d-formula" style="opacity:0.5; font-size:14px;"></div>
+            <div id="d-slot" class="slot-box">0</div>
+            <div id="d-det" style="font-size:14px; color:#666;"></div>
         </div>
     </div>
 
     <div id="msg-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()">
-            <h2 id="msg-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="msg-body" style="text-align:left; font-size:16px; line-height:1.6;"></div>
-        </div>
+        <div class="modal" onclick="event.stopPropagation()"><h3 id="msg-t"></h3><div id="msg-b" style="text-align:left;"></div></div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: true, uid: 'local', uname: 'DM', foldersOpen: {} };
-        const DB = "MD_55_DATA"; const LG = "MD_55_LOGS";
+        let state = { items: {}, log: [], id: null, edit: true, folders: {} };
+        const DB = "MD_DATA_58", LG = "MD_LOG_58";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
-                    state.uid = await OBR.player.getId();
-                    state.uname = await OBR.player.getName();
                     OBR.scene.onMetadataChange(m => { state.items = m[DB]||{}; state.log = m[LG]||[]; render(); });
                     const m = await OBR.scene.getMetadata();
                     state.items = m[DB]||{}; state.log = m[LG]||[]; render();
                 });
-            } catch(e) { 
-                const s = localStorage.getItem(DB); if(s) state.items = JSON.parse(s); render(); 
-            }
+            } catch(e) { render(); }
         }
 
         async function save() {
-            if(window.OBR && OBR.scene.isReady) {
-                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log });
-            } else {
-                localStorage.setItem(DB, JSON.stringify(state.items)); render();
-            }
+            if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log });
+            render();
         }
 
-        function newItem(type) {
-            const n = document.getElementById('newName').value || "Nuevo " + type;
+        function addItem(type) {
+            const n = document.getElementById('newName').value || "Nuevo";
             const id = "i" + Date.now();
             state.items[id] = { id, type, name: n, content: type==='dash'?'FUE=10\n1d20+FUE':'', parent: null };
             document.getElementById('newName').value = "";
@@ -145,157 +126,103 @@
             const vals = Object.values(state.items);
             
             vals.filter(f => f.type === 'folder').forEach(f => {
-                const fDiv = document.createElement('div');
-                fDiv.className = "card folder";
-                fDiv.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.foldersOpen[f.id] ? '▲' : '▼'}</span>`;
-                fDiv.onclick = () => { state.foldersOpen[f.id] = !state.foldersOpen[f.id]; render(); };
-                fDiv.ondragover = e => e.preventDefault();
-                fDiv.ondrop = () => { if(state.drag) { state.items[state.drag].parent = f.id; save(); } };
-                cont.appendChild(fDiv);
-
-                const childCont = document.createElement('div');
-                childCont.className = "folder-content" + (state.foldersOpen[f.id] ? " open" : "");
-                vals.filter(d => d.parent === f.id).forEach(d => childCont.appendChild(createCard(d)));
-                cont.appendChild(childCont);
+                const d = document.createElement('div');
+                d.className = "card folder"; d.innerHTML = `<span>📁 ${f.name}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
+                d.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
+                cont.appendChild(d);
+                const sub = document.createElement('div');
+                sub.className = "f-content" + (state.folders[f.id] ? " open" : "");
+                vals.filter(i => i.parent === f.id).forEach(i => sub.appendChild(createCard(i)));
+                cont.appendChild(sub);
             });
-
-            vals.filter(d => d.type === 'dash' && !d.parent).forEach(d => cont.appendChild(createCard(d)));
+            vals.filter(i => i.type === 'dash' && !i.parent).forEach(i => cont.appendChild(createCard(i)));
             
-            document.getElementById('log-content').innerHTML = state.log.map(l => `
-                <div style="border-bottom:1px solid #222; padding:4px 0;">
-                    <b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b> <small style="opacity:0.4">${l.det}</small>
-                </div>`).join('');
-            if(state.id) syncView();
+            document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.f}:</b> ${l.r}</div>`).join('');
+            if(state.id) sync();
         }
 
         function createCard(it) {
-            const d = document.createElement('div');
-            d.className = "card dash";
-            d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span>`;
-            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; openDetails(); };
-            d.ondragstart = () => state.drag = it.id;
-            d.ondragover = e => e.preventDefault();
-            d.ondrop = (e) => { e.stopPropagation(); state.items[state.drag].parent = null; save(); };
+            const d = document.createElement('div'); d.className = "card dash";
+            d.innerHTML = `<span>📄 ${it.name}</span>`;
+            d.onclick = (e) => { e.stopPropagation(); state.id = it.id; open(); };
             return d;
         }
 
-        function openDetails() {
-            document.getElementById('view-list').style.display='none';
-            document.getElementById('view-details').style.display='flex';
-            state.edit = false; syncView();
-        }
+        function open() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; state.edit = false; sync(); }
 
-        function syncView() {
-            const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
+        function sync() {
+            const it = state.items[state.id];
+            document.getElementById('det-title').innerText = it.name;
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            if(state.edit) {
-                if(document.activeElement !== document.getElementById('editor')) document.getElementById('editor').value = it.content;
-            } else renderPreview(it.content);
+            if(state.edit) document.getElementById('editor').value = it.content;
+            else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
             const stats = {};
-            // RECOLECTOR DE VARIABLES MEJORADO
-            txt.replace(/([A-Z]{2,})\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([A-Z]+)\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
             
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const clean = c.replace(/\n/g, '<br>').replace(/  /g, '<br>').replace(/'/g, "\\'");
-                    return `<button class="note-btn" onclick="showMsg('${t}','${clean}')">${t}</button>`;
-                })
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="note-btn" onclick="showNote('${t}','${c.replace(/\n/g,'<br>')}')">${t}</button>`)
+                .replace(/\[cb\] (.*)/g, '<div class="cb-row"><input type="checkbox" class="cb-input"><span>$1</span></div>')
                 .replace(/\b([A-Z]{2,})\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
-            // MOTOR DE DADOS Y CASILLAS
-            const lines = html.split('\n').map(line => {
-                let processed = line;
-                if(line.includes('[cb]')) {
-                    const content = line.replace('[cb]', '').trim();
-                    processed = `<div class="cb-row"><input type="checkbox" class="cb-custom"><div>${parseRolls(content, stats)}</div></div>`;
-                } else {
-                    processed = parseRolls(line, stats);
-                }
-                return processed;
-            });
-
-            document.getElementById('preview').innerHTML = lines.join('<br>');
-        }
-
-        function parseRolls(t, stats) {
-            return t.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
+            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
                 return `<span class="roll-link" onclick="runRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
             });
+
+            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
         function runRoll(formula, stats) {
             let f = formula.toUpperCase();
-            let logDet = "";
-            for(let s in stats) {
-                if(f.includes(s)) {
-                    logDet += `[${s}:${stats[s]}] `;
-                    f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
-                }
-            }
+            let rawF = f;
+            for(let s in stats) f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
             
             const match = f.match(/(\d*)D(\d+)/i);
             const num = parseInt(match[1]) || 1;
             const sides = parseInt(match[2]);
             let rolls = [], sum = 0;
-
-            for(let i=0; i<num; i++) {
-                const r = Math.floor(Math.random()*sides)+1;
-                sum += r; rolls.push(r);
-            }
+            for(let i=0; i<num; i++) { const r = Math.floor(Math.random()*sides)+1; sum += r; rolls.push(r); }
 
             let total;
-            try { 
-                const mathPart = f.replace(match[0], '').replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                total = Math.floor(eval(sum + mathPart)); 
-            } catch(e) { total = sum; }
+            try { total = eval(f.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { total = sum; }
 
-            // SLOT ANIMATION 1.5s
             const ov = document.getElementById('dice-overlay');
             const slot = document.getElementById('d-slot');
             ov.style.display = 'flex';
-            document.getElementById('d-user').innerText = state.uname.toUpperCase();
-            document.getElementById('d-form').innerText = formula;
+            document.getElementById('d-formula').innerText = formula;
             
-            let c = 0;
-            const interval = setInterval(() => {
-                slot.innerText = Math.floor(Math.random() * (sides * num + 1));
-                if(c++ > 20) {
-                    clearInterval(interval);
+            // Animación Slot: 1.5s mostrando caras aleatorias
+            let count = 0;
+            const anim = setInterval(() => {
+                slot.innerText = Math.floor(Math.random() * (sides * num)) + 1;
+                if(count++ > 20) {
+                    clearInterval(anim);
                     slot.innerText = total;
-                    slot.className = "slot-container " + (sum === (sides*num) ? 'crit' : (sum === num ? 'fail' : ''));
-                    document.getElementById('d-faces').innerText = `Caras: [${rolls.join(', ')}]`;
+                    slot.className = "slot-box " + (sum === (sides*num) ? 'crit' : (sum === num ? 'fail' : ''));
+                    document.getElementById('d-det').innerText = `Caras: [${rolls.join('+')}]`;
                 }
             }, 70);
 
-            state.log.unshift({ u: state.uname, f: formula, r: total, det: logDet + `(${rolls.join('+')})` });
-            if(state.log.length > 20) state.log.pop();
+            state.log.unshift({ f: formula, r: total });
+            if(state.log.length > 10) state.log.pop();
             save();
         }
 
-        function showMsg(t, b) {
-            document.getElementById('msg-title').innerText = t;
-            document.getElementById('msg-body').innerHTML = b;
-            document.getElementById('msg-overlay').style.display = 'flex';
-        }
-
-        function toggleVisual() { state.edit = !state.edit; syncView(); }
-        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
-        function closeDice() { document.getElementById('dice-overlay').style.display='none'; document.getElementById('d-slot').className="slot-container"; }
+        function toggleMode() { state.edit = !state.edit; sync(); }
+        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
+        function showNote(t, b) { document.getElementById('msg-t').innerText = t; document.getElementById('msg-b').innerHTML = b; document.getElementById('msg-overlay').style.display = 'flex'; }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { const e = document.getElementById('editor'); e.value += a + b; updateContent(); }
-        function promptNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function promptNote() { const t = prompt("T:"); const c = prompt("C:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
         function promptGlow() { const c = prompt("Color:", "cyan"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Eliminar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
     </script>
