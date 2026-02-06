@@ -20,39 +20,37 @@
         #view-details { display: none; }
 
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
-        .card:hover { background: #252529; }
 
-        /* Casillas Clean */
-        .check-line { display: flex; align-items: center; margin: 6px 0; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.02); }
-        .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 12px; }
-
-        /* Estilos Texto */
+        /* Dados y Variables */
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-        .note-tag { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; margin: 0 4px; }
+        
+        /* Casillas estilo original pero limpias */
+        .check-line { display: flex; align-items: center; margin: 6px 0; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.03); }
+        .check-box { width: 18px; height: 18px; cursor: pointer; accent-color: var(--p); margin-right: 10px; }
 
-        /* UI Botones */
+        /* Editor */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        /* Dados Modales */
+        /* Modales */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
+        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; transition: 0.3s; }
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 12px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v2.2 PERFECT</div></div>
+    <div class="header"><div class="sig">MY DASHES v2.2 PLATINUM</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -80,10 +78,11 @@
             <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Casilla</button>
+                <button class="tool" onclick="ins('[+] ','')">Check</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
                 <button class="tool" onclick="askGlow()">Glow</button>
-                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">BORRAR</button>
+                <button class="tool" onclick="moveItem()" style="background:var(--var); color:black;">MOVER</button>
+                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
             </div>
             <textarea id="editor" oninput="updateContent()"></textarea>
         </div>
@@ -92,86 +91,84 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-f" style="color:#555; font-size:12px;"></div>
+            <div id="d-f" style="color:#555; font-family:monospace; font-size:12px;"></div>
             <div id="dice-container" class="dice-display"></div>
             <div id="total-val" class="total-box">0</div>
-            <div id="d-res" style="color:#777; font-size:13px; margin-top:10px;"></div>
+            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
         </div>
     </div>
 
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h3 id="n-t" style="color:var(--accent); margin-top:0;"></h3>
-            <div id="n-b" style="text-align:left; color:#ccc; white-space: pre-wrap; font-size: 15px; line-height: 1.5;"></div>
+            <div id="n-b" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.5;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:15px; background:var(--p); color:black;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, dragId: null, collapsed: {} };
-        const DB = "V3_ITEMS", LG = "V3_LOGS", CH = "V3_CHECKS", CL = "V3_COLLAPSE";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, folded: {} };
+        const DB = "V2_ULT_ITEMS", LG = "V2_ULT_LOGS", CH = "V2_ULT_CHECKS", FL = "V2_ULT_FOLDED";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.collapsed=m[CL]||{}; render(); });
+                    OBR.scene.onMetadataChange(m => { 
+                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.folded=m[FL]||{}; render(); 
+                    });
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.collapsed=m[CL]||{}; render();
+                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.folded=m[FL]||{}; render();
                 });
             } catch(e) { render(); }
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [CH]: state.checks, [CL]: state.collapsed }); render(); }
+        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [CH]: state.checks, [FL]: state.folded }); render(); }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Atacar\n1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción\n1d20+FUE', owner: null, parent: null };
             document.getElementById('newName').value = "";
             save();
         }
 
         function render() {
-            const cont = document.getElementById('items-area');
-            const container = document.getElementById('items-container');
-            container.innerHTML = "";
-            const vals = Object.values(state.items);
+            const cont = document.getElementById('items-container'); cont.innerHTML = "";
+            const items = Object.values(state.items);
             
-            // Render Carpetas
-            vals.filter(it => it.type === 'folder').forEach(f => {
-                const fd = document.createElement('div');
-                const isCollapsed = state.collapsed[f.id];
-                fd.className = "card folder";
-                fd.innerHTML = `<span>${isCollapsed ? '➕' : '➖'} 📁 ${f.name}</span>`;
-                fd.onclick = () => { state.collapsed[f.id] = !state.collapsed[f.id]; save(); };
-                fd.ondragover = e => e.preventDefault();
-                fd.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = f.id; save(); };
-                container.appendChild(fd);
-                
-                if(!isCollapsed) {
-                    vals.filter(d => d.parent === f.id).forEach(d => container.appendChild(createCard(d, true)));
+            // Renderizar Carpetas primero
+            items.filter(it => it.type === 'folder').forEach(f => {
+                const card = document.createElement('div');
+                card.className = "card folder";
+                const isFolded = state.folded[f.id];
+                card.innerHTML = `<span>${isFolded ? '📁' : '📂'} ${f.name}</span>`;
+                card.onclick = () => { state.folded[f.id] = !isFolded; save(); };
+                cont.appendChild(card);
+
+                if(!isFolded) {
+                    items.filter(d => d.parent === f.id).forEach(d => {
+                        const child = createItemCard(d);
+                        child.style.marginLeft = "20px";
+                        child.style.width = "calc(100% - 20px)";
+                        cont.appendChild(child);
+                    });
                 }
             });
 
-            // Dashboards Sueltos
-            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => container.appendChild(createCard(d, false)));
-            
+            // Dashboards sin carpeta
+            items.filter(it => it.type === 'dash' && !it.parent).forEach(it => cont.appendChild(createItemCard(it)));
+
             document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span></div>`).join('');
             if(state.id) syncView();
         }
 
-        function createCard(it, isChild) {
+        function createItemCard(it) {
             const d = document.createElement('div');
-            d.className = "card dash"; 
-            if(isChild) d.style.marginLeft = "25px";
-            d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner?'🔒':''}`;
+            d.className = "card dash";
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
-            d.ondragstart = () => state.dragId = it.id;
-            d.ondragover = e => e.preventDefault();
-            d.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = null; save(); };
             return d;
         }
 
@@ -194,8 +191,11 @@
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             
             const btnOwn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { btnOwn.innerText = "LIBERAR"; btnOwn.style.background = "var(--fail)"; btnOwn.style.color="white"; }
-            else { btnOwn.innerText = "OWNEAR"; btnOwn.style.background = "var(--p)"; btnOwn.style.color="black"; }
+            if(it.owner === state.uid) {
+                btnOwn.innerText = "LIBERAR"; btnOwn.style.background = "var(--fail)"; btnOwn.style.color = "white";
+            } else {
+                btnOwn.innerText = "OWNEAR"; btnOwn.style.background = "var(--p)"; btnOwn.style.color = "black";
+            }
 
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
@@ -203,19 +203,23 @@
         function renderPreview(txt) {
             const memory = {};
             txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, s, v, k) => {
+                const key = k.toUpperCase(); if(memory[key] !== undefined) memory[key] += (s === '+' ? 1 : -1) * parseInt(v);
+            });
 
+            // Lógica de casillas Limpia (Reescrita)
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[\+\]\s*(.*)/g, (m, label) => {
-                    const cid = state.id + label.trim();
+                    const cid = state.id + label.trim().substring(0,10);
                     const checked = state.checks[cid] ? 'checked' : '';
                     return `<div class="check-line"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span>${label}</span></div>`;
                 })
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const cleanC = c.replace(/'/g, "&apos;").replace(/  /g, "\n");
-                    return `<span class="note-tag" onclick="showNote('${t}',\`${cleanC}\`)">[${t}]</span>`;
+                    const clean = c.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}', \`${clean}\`)">[${t}]</span>`;
                 });
 
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
@@ -232,9 +236,8 @@
             for(let k in memory) logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), memory[k]);
             const match = logic.match(/(\d*)D(\d+)/i);
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
-            const results = [];
-            for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
-
+            const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+            
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formula;
             const container = document.getElementById('dice-container');
@@ -243,16 +246,13 @@
 
             let currentSum = 0;
             for(let res of results) {
-                const die = document.createElement('div');
-                die.className = "die-num"; die.innerText = "?";
-                container.appendChild(die);
+                const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
                 await new Promise(r => {
                     let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++ > 8) {
-                            clearInterval(iv);
-                            die.innerText = res;
+                            clearInterval(iv); die.innerText = res;
                             if(res === s) die.style.color = "var(--crit)";
                             if(res === 1) die.style.color = "var(--fail)";
                             currentSum += res; r();
@@ -260,17 +260,29 @@
                     }, 60);
                 });
             }
-            let final;
-            try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); }, 200);
+            let final; try { final = eval(logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { final = currentSum; }
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Caras: [${results.join('+')}]`; }, 200);
             state.log.unshift({ u: state.uname, f: formula, r: final });
             if(state.log.length > 15) state.log.pop();
             save();
         }
 
         function toggleCheck(id) { state.checks[id] = !state.checks[id]; save(); }
-        function showNote(t, b) { document.getElementById('n-t').innerText = t; document.getElementById('n-b').innerText = b; document.getElementById('note-overlay').style.display='flex'; }
+        function showNote(t, b) { 
+            document.getElementById('n-t').innerText = t; 
+            // Interpretación de 2 espacios como salto de línea
+            document.getElementById('n-b').innerText = b.replace(/  /g, '\n'); 
+            document.getElementById('note-overlay').style.display='flex'; 
+        }
         function toggleOwnership() { const it=state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
+        function moveItem() {
+            const folders = Object.values(state.items).filter(i => i.type === 'folder');
+            if(folders.length === 0) return alert("No hay carpetas");
+            let msg = "ID de Carpeta:\n" + folders.map(f => `- ${f.name} (id: ${f.id})`).join("\n") + "\n(Vacio para sacar)";
+            const target = prompt(msg);
+            state.items[state.id].parent = target || null;
+            save();
+        }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
