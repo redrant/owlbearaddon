@@ -13,8 +13,7 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* UI */
-        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
+        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
@@ -25,32 +24,34 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; }
         .dash { border-left: 5px solid var(--p); }
 
-        /* Renderizado */
+        /* Dados y Variables */
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
-        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 0 2px; }
+        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        /* Check+ Moderno */
-        .check-line { display: flex; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; margin: 6px 0; border-left: 3px solid var(--accent); }
-        .btn-check { width: 22px; height: 22px; border: 2px solid #555; border-radius: 6px; margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: 0.2s; }
-        .btn-check.on { background: var(--accent); border-color: var(--accent); color: black; }
-        .btn-check.on::after { content: '✓'; font-weight: bold; }
+        /* Casillas estilo original pero en bloque */
+        .check-container { display: block; margin: 8px 0; width: 100%; }
+        .check-box { width: 20px; height: 20px; cursor: pointer; vertical-align: middle; accent-color: var(--p); }
+        .check-label { margin-left: 8px; vertical-align: middle; }
 
         /* Editor */
         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; }
-        .note-tag { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold; margin: 0 4px; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
-        /* Modal Dados */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; }
-        .slot { font-size: 60px; font-weight: 900; color: var(--p); margin: 10px 0; text-shadow: 0 0 20px var(--p); }
-        .log { height: 100px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+        /* Modal Dados Mejorado */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
+        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; transition: 0.3s; }
+        .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
+        .total-box.show { opacity: 1; }
+        
+        .log { height: 110px; background: #000; padding: 10px; font-size: 12px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES v2.0.0 REBORN</div></div>
+    <div class="header"><div class="sig">MY DASHES v2.0.0 FINAL PLATINUM</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -91,8 +92,9 @@
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <div id="d-f" style="color:#555; font-family:monospace; font-size:12px;"></div>
-            <div id="d-s" class="slot">0</div>
-            <div id="d-res" style="color:#777; font-size:13px;"></div>
+            <div id="dice-container" class="dice-display"></div>
+            <div id="total-val" class="total-box">0</div>
+            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
         </div>
     </div>
 
@@ -105,8 +107,8 @@
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, memory: {} };
-        const DB = "V2_ITEMS", LG = "V2_LOGS", CH = "V2_CHECKS";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {} };
+        const DB = "V2_FINAL_ITEMS", LG = "V2_FINAL_LOGS", CH = "V2_FINAL_CHECKS";
 
         async function init() {
             try {
@@ -125,7 +127,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Habilidad\n1d20+FUE', owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n\n[+] Atacar con espada\n\n1d20+FUE', owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -164,82 +166,104 @@
         }
 
         function renderPreview(txt) {
-            state.memory = {}; 
-            // 1. Extraer variables
-            txt.replace(/([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => state.memory[k.toUpperCase()] = parseInt(v));
-            
-            // 2. Procesar Texto
+            const memory = {};
+            // 1. Calcular variables (incluyendo sumas/restas)
+            txt.replace(/\b([A-Z]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([\+\-])(\d+)([A-Z]+)\b/gi, (m, sign, val, k) => {
+                const key = k.toUpperCase();
+                if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
+            });
+
+            // 2. Procesar Texto y Botones
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[\+\] (.*)/g, (m, label) => {
                     const cid = state.id + label.trim();
-                    const active = state.checks[cid] ? 'on' : '';
-                    return `<div class="check-line"><div class="btn-check ${active}" onclick="toggleCheck('${cid}')"></div><span>${label}</span></div>`;
+                    const checked = state.checks[cid] ? 'checked' : '';
+                    return `<div class="check-container"><input type="checkbox" class="check-box" ${checked} onclick="toggleCheck('${cid}')"><span class="check-label">${label}</span></div>`;
                 })
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
                     const cleanC = c.replace(/'/g, "&apos;").replace(/  /g, "\n");
-                    return `<span class="note-tag" onclick="showNote('${t}',\`${cleanC}\`)">[${t}]</span>`;
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}',\`${cleanC}\`)">[${t}]</span>`;
                 });
 
-            // Variables visuales
+            // Variables y Dados
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
+            html = html.replace(/([\+\-]\d+[A-Z]+)\b/gi, '<span class="block-var">$1</span>');
 
-            // Dados - Limpieza de fórmula para evitar SyntaxError
             html = html.replace(/(\d*d\d+([\+\-\*\/][A-Z0-9]+)*)/gi, (f) => {
                 if(!/d/i.test(f)) return f;
-                return `<div class="block-roll" onclick="runRoll('${f}')">${f}</div>`;
+                return `<div class="block-roll" onclick='runRoll("${f}", ${JSON.stringify(memory)})'>${f}</div>`;
             });
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        async function runRoll(formula) {
+        async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
             let breakdown = "";
-            
-            // Aplicar variables de la memoria
-            for(let k in state.memory) {
+            for(let k in memory) {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
                 if(regex.test(logic)) {
-                    breakdown += `${k}(${state.memory[k]}) `;
-                    logic = logic.replace(regex, state.memory[k]);
+                    breakdown += `${k}(${memory[k]}) `;
+                    logic = logic.replace(regex, memory[k]);
                 }
             }
 
             const match = logic.match(/(\d*)D(\d+)/i);
-            if(!match) return;
-
             const n = parseInt(match[1]) || 1;
             const s = parseInt(match[2]);
-            let rolls = [];
-            for(let i=0; i<n; i++) rolls.push(Math.floor(Math.random()*s)+1);
-            const sum = rolls.reduce((a,b)=>a+b, 0);
+            const results = [];
+            for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
 
-            // Calcular total final
-            let total;
-            try {
-                const mathStr = logic.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                total = eval(mathStr);
-            } catch(e) { total = sum; }
-
-            // UI Animación
+            // UI Reset
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formula;
-            const slot = document.getElementById('d-s');
-            
-            let i = 0;
-            const iv = setInterval(() => {
-                slot.innerText = Math.floor(Math.random()*s*n)+1;
-                if(i++ > 10) {
-                    clearInterval(iv);
-                    slot.innerText = total;
-                    document.getElementById('d-res').innerText = `Caras: [${rolls.join('+')}] ${breakdown}`;
-                }
-            }, 50);
+            const container = document.getElementById('dice-container');
+            const totalVal = document.getElementById('total-val');
+            container.innerHTML = "";
+            totalVal.classList.remove('show');
 
-            state.log.unshift({ u: state.uname, f: formula, r: total });
+            let currentSum = 0;
+            // Animación de cada cara de izquierda a derecha
+            for(let res of results) {
+                const die = document.createElement('div');
+                die.className = "die-num";
+                die.innerText = "?";
+                container.appendChild(die);
+
+                await new Promise(resolve => {
+                    let ticks = 0;
+                    const iv = setInterval(() => {
+                        die.innerText = Math.floor(Math.random()*s)+1;
+                        if(ticks++ > 8) {
+                            clearInterval(iv);
+                            die.innerText = res;
+                            if(res === s) die.style.color = "var(--crit)";
+                            if(res === 1) die.style.color = "var(--fail)";
+                            currentSum += res;
+                            resolve();
+                        }
+                    }, 60);
+                });
+            }
+
+            // Cálculo final suave
+            let final;
+            try {
+                const mathStr = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                final = eval(mathStr);
+            } catch(e) { final = currentSum; }
+
+            setTimeout(() => {
+                totalVal.innerText = final;
+                totalVal.classList.add('show');
+                document.getElementById('d-res').innerText = `Caras: [${results.join(' + ')}] | Variables: ${breakdown}`;
+            }, 300);
+
+            state.log.unshift({ u: state.uname, f: formula, r: final });
             if(state.log.length > 15) state.log.pop();
             save();
         }
@@ -250,8 +274,8 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (2 espacios = salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c=prompt("Color (ej: gold, cyan):"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
