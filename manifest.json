@@ -2,7 +2,6 @@
   "name": "Dashisboard Plus",
   "version": "1.2.0",
   "manifest_version": 1,
-  "id": "com.redrant.dashisboard",
   "action": {
     "title": "Dashisboard+",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
