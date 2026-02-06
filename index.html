@@ -28,11 +28,11 @@
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; }
         .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
 
-        .btn-owner-true { border-color: var(--fail); color: var(--fail); }
-        .btn-owner-false { border-color: var(--crit); color: var(--crit); }
+        .btn-owner-user { border-color: var(--fail); color: var(--fail); }
+        .btn-owner-none { border-color: var(--crit); color: var(--crit); }
 
         .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
         .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
@@ -55,7 +55,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES 2.0V</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM V.FINAL</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -71,7 +71,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
+            <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">OWNEAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
@@ -102,14 +102,6 @@
         </div>
     </div>
 
-    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
-            <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
-        </div>
-    </div>
-
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
         const DB = "VPLAT_ITEMS", LG = "VPLAT_LOGS", OF = "VPLAT_FOLDERS";
@@ -131,7 +123,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'STR=10\n+2STR\n[+] Ataque 1d20+STR', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'ADK=10\n+2ADK\n[+] Ataque 1d20+ADK', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -145,19 +137,13 @@
                 fd.className = "card folder"; 
                 fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
                 fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
-                fd.ondragover = e => e.preventDefault();
-                fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
                 cont.appendChild(fd);
                 if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
                     const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
                 });
             });
 
-            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
-                const card = createCard(d);
-                card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
-                cont.appendChild(card);
-            });
+            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => cont.appendChild(createCard(d)));
             
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
@@ -166,10 +152,9 @@
         }
 
         function createCard(it) {
-            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
+            const d = document.createElement('div'); d.className = "card dash";
             d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
             d.onclick = () => { state.id = it.id; openDetails(); };
-            d.ondragstart = () => state.dragId = it.id;
             return d;
         }
 
@@ -180,14 +165,13 @@
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             
-            // UI DEL BOTÓN OWNER
+            // UI BOTÓN OWNER VISUAL
             const obtn = document.getElementById('own-btn');
             if(it.owner === state.uid) {
-                obtn.innerText = "LIBERAR";
-                obtn.className = "btn-dice btn-owner-true";
+                obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-user";
             } else {
                 obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR";
-                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-none");
             }
 
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
@@ -197,9 +181,9 @@
 
         function renderPreview(txt) {
             const memory = {};
-            // Procesar variables y modificadores
-            txt.replace(/\b([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)\b/gi, (m, sign, val, k) => {
+            // Captura variables ADK=10 o -2ADK
+            txt.replace(/\b([A-Z0-9]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => memory[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([\+\-])(\d+)([A-Z0-9]+)\b/gi, (m, sign, val, k) => {
                 const key = k.toUpperCase();
                 if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
             });
@@ -207,9 +191,8 @@
             const lines = txt.split('\n');
             const processedLines = lines.map(line => {
                 if (line.trim().startsWith('[+]')) {
-                    const contentToClone = line.replace('[+]', '').trim();
-                    const innerRender = renderElements(contentToClone, memory);
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${contentToClone.replace(/`/g, "\\`")}\`)">${innerRender}</div>`;
+                    const content = line.replace('[+]', '').trim();
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
                 }
                 return renderElements(line, memory);
             });
@@ -221,34 +204,27 @@
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const safe = encodeURIComponent(c.replace(/  /g, '\n'));
-                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${safe}')">${t}</div>`;
-                })
-                .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
+                .replace(/\b([A-Z0-9]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
+                .replace(/([\+\-]\d+[A-Z0-9]+)\b/gi, '<span class="block-var">$1</span>')
+                // REGEX MEJORADA PARA DADOS + VARIABLES
+                .replace(/(\d*d\d+([a-z0-9\+\-\*\/\(\)]*))/gi, (f) => {
+                    if(!/d/i.test(f)) return f;
                     return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
                 });
         }
-
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
 
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
             let breakdown = "";
             
-            // 1. Reemplazar variables en la lógica
+            // Reemplazo inteligente de variables (de más larga a más corta)
             const sortedKeys = Object.keys(memory).sort((a,b) => b.length - a.length);
             for(let k of sortedKeys) {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) {
-                    breakdown += `${k}(${memory[k]}) `;
-                    logic = logic.replace(regex, memory[k]);
-                }
+                if(regex.test(logic)) { breakdown += `${k}(${memory[k]}) `; logic = logic.replace(regex, memory[k]); }
             }
 
-            // 2. Extraer el dado (NdS)
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
@@ -267,67 +243,40 @@
                     let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 8) {
+                        if(t++ > 7) {
                             clearInterval(iv); die.innerText = res;
                             if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
                             else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
                             else logDetails.push(res);
                             currentSum += res; r();
                         }
-                    }, 60);
+                    }, 50);
                 });
             }
 
-            // 3. Evaluar el resto de la fórmula con seguridad
             let final;
             try {
-                // Reemplazamos el NdS por el total de los dados y limpiamos caracteres prohibidos
-                let evalString = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(evalString));
-            } catch(e) { 
-                console.error("Error en eval:", e);
-                final = currentSum; 
-            }
+                // Limpiamos la cadena para que eval solo reciba matemáticas
+                let mathString = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                final = Math.floor(eval(mathString));
+            } catch(e) { final = currentSum; }
 
             setTimeout(() => { 
-                totalVal.innerText = final; 
-                totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `[${results.join('+')}] mod: ${breakdown || "ninguno"}`; 
-            }, 200);
+                totalVal.innerText = final; totalVal.classList.add('show'); 
+                document.getElementById('d-res').innerText = `[${results.join('+')}] mod: ${breakdown || "0"}`; 
+            }, 150);
 
             state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
-        function switchTab(isEdit) {
-            state.edit = isEdit;
-            document.getElementById('t-edit').style.background = isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-edit').style.color = isEdit ? "black" : "white";
-            document.getElementById('t-view').style.background = !isEdit ? "var(--p)" : "transparent";
-            document.getElementById('t-view').style.color = !isEdit ? "black" : "white";
-            syncView();
-        }
-
-        function cloneToMyDash(text) {
-            const myDash = Object.values(state.items).find(it => it.owner === state.uid);
-            if(!myDash) return alert("Primero OWNEA un Dash para recibir clones.");
-            myDash.content += "\n" + text; save(); alert("¡Clonado a tu Dash personal!");
-        }
-
-        function toggleOwnership() { 
-            const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return alert("Este Dash ya tiene dueño.");
-            it.owner = it.owner ? null : state.uid; 
-            save(); 
-        }
-
+        function toggleOwnership() { const it=state.items[state.id]; if(it.owner && it.owner !== state.uid) return alert("Ocupado"); it.owner = it.owner ? null : state.uid; save(); }
+        function switchTab(isEdit) { state.edit = isEdit; syncView(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Espacio doble = Enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar Carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
+        function deleteItem() { if(confirm("Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function openNote(t, c) { alert(t + ": " + decodeURIComponent(c)); }
 
         init();
     </script>
