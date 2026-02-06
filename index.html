@@ -5,106 +5,91 @@
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
         :root { 
-            --p: #bb86fc; 
-            --p-dark: #3700b3;
-            --bg: #0f0f12; 
-            --c: #1e1e1e; 
-            --t: #f0f0f0; 
-            --crit: #00ff88; 
-            --fail: #ff4466;
-            --accent: #03dac6;
-            --bonus: #ffab40;
+            --p: #bb86fc; --bg: #0d0d0f; --c: #1a1a1d; --t: #f0f0f0; 
+            --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --bonus: #ffab40;
         }
         
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; overflow-x: hidden; }
         
-        /* Títulos y Firma */
+        /* Estilo de la Firma */
         .header-main { text-align: center; margin-bottom: 20px; }
-        .header-main h2 { color: var(--p); margin: 0; text-shadow: 0 0 10px rgba(187, 134, 252, 0.3); }
-        .signature { font-size: 10px; color: #666; font-style: italic; }
+        .signature { font-size: 11px; color: var(--p); opacity: 0.7; font-style: italic; margin-top: 4px; }
 
-        /* Botones y Entradas */
-        .btn { background: var(--p); color: #000; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background: var(--accent); transform: scale(1.02); }
-        .btn-sec { background: #333; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-
-        input[type="text"] { background: #1e1e1e; border: 1px solid #333; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-
-        /* Dashboard Unificado */
-        .unified-card { background: var(--c); border-radius: 12px; border: 1px solid #333; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        /* Contenedor Unificado (Editor + Preview) */
+        .unified-box { position: relative; background: var(--c); border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         
-        .toolbar { display: flex; gap: 5px; background: #252525; padding: 10px; border-bottom: 1px solid #333; }
-        
-        .editor-container { position: relative; padding: 15px; }
-        
-        textarea { 
-            background: transparent; border: 1px solid #333; color: var(--t); padding: 12px; 
-            width: 100%; box-sizing: border-box; font-family: 'Consolas', monospace; 
-            border-radius: 8px; outline: none; line-height: 1.5; font-size: 14px;
-            min-height: 150px;
+        #editor { 
+            width: 100%; height: 180px; background: #121214; color: var(--t); 
+            padding: 15px; border: none; font-family: 'Consolas', monospace; 
+            resize: vertical; outline: none; border-bottom: 2px solid #333; font-size: 14px;
         }
 
         #preview { 
-            margin-top: 15px; padding: 15px; background: rgba(187, 134, 252, 0.05); 
-            border-radius: 8px; border: 1px dashed var(--p-dark); 
-            line-height: 1.6; min-height: 50px;
+            padding: 20px; min-height: 100px; line-height: 1.8; 
+            background: linear-gradient(180deg, #1a1a1d 0%, #161618 100%);
         }
 
-        /* Resaltados */
-        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187, 134, 252, 0.1); padding: 2px 5px; border-radius: 4px; }
-        .stat-tag { color: var(--accent); font-weight: bold; }
-        .bonus-tag { color: var(--bonus); font-weight: bold; font-style: italic; }
+        /* Coloreado en el mismo lugar */
+        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.15); padding: 2px 6px; border-radius: 4px; transition: 0.2s; }
+        .dice-roll:hover { background: var(--p); color: #000; }
+        .stat-tag { color: var(--accent); font-weight: bold; border-bottom: 1px solid rgba(3,218,198,0.3); }
+        .bonus-tag { color: var(--bonus); font-style: italic; font-weight: bold; }
 
-        /* Lista de Personajes */
-        .dash-item { 
-            background: #1e1e1e; padding: 15px; margin-bottom: 10px; border-radius: 10px; 
-            cursor: pointer; border: 1px solid #333; display: flex; align-items: center; 
-            transition: 0.2s;
+        /* NOTIFICACIÓN FLOTANTE (Overlay de Dados) */
+        #dice-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); display: none; align-items: center; 
+            justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
         }
-        .dash-item:hover { border-color: var(--p); background: #252525; }
-        .dash-item::before { content: "👤"; margin-right: 12px; font-size: 18px; }
+        .dice-modal { 
+            background: #1e1e1e; border: 2px solid var(--p); padding: 25px; 
+            border-radius: 15px; text-align: center; width: 80%; max-width: 300px;
+            box-shadow: 0 0 30px rgba(187,134,252,0.4); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* Resultado de Dados */
-        .result-box { 
-            background: #000; padding: 15px; border: 2px solid var(--p); 
-            margin-top: 15px; border-radius: 10px; text-align: center;
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* Lista de Dashes */
+        .dash-card { 
+            background: var(--c); padding: 15px; margin-bottom: 10px; border-radius: 10px; 
+            cursor: pointer; border: 1px solid #333; transition: 0.3s;
         }
-        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .dash-card:hover { border-color: var(--p); background: #25252a; }
+
+        .btn { background: var(--p); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-back { background: #333; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
+
     <div id="view-list">
         <div class="header-main">
-            <h2>My Dashes</h2>
+            <h2 style="color:var(--p); margin:0;">My Dashes</h2>
             <div class="signature">By Redrant :v</div>
         </div>
-        
-        <input type="text" id="dashName" placeholder="Nombre del personaje (ej. Grog)">
-        <button onclick="createDash()" class="btn" style="width:100%">+ CREAR NUEVO PERSONAJE</button>
-        
+        <input type="text" id="dashName" placeholder="Nombre (ej. Guerrero)" style="width:100%; padding:12px; background:#1e1e1e; border:1px solid #333; color:white; border-radius:8px; margin-bottom:10px;">
+        <button onclick="createDash()" class="btn" style="width:100%">+ CREAR NUEVO</button>
         <div id="list-container" style="margin-top:20px;"></div>
     </div>
 
     <div id="view-details" style="display:none;">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <button onclick="showList()" class="btn-sec">⬅ LISTA</button>
-            <h3 id="dash-title" style="margin:0; color:var(--p)"></h3>
-            <button onclick="deleteDash()" class="btn-sec" style="color:var(--fail)">BORRAR</button>
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+            <button onclick="showList()" class="btn-back">⬅ Volver</button>
+            <h3 id="current-name" style="margin:0; color:var(--p)"></h3>
+            <button onclick="deleteDash()" style="background:transparent; color:var(--fail); border:none; cursor:pointer; font-size:12px;">Borrar</button>
         </div>
 
-        <div class="unified-card">
-            <div class="toolbar">
-                <button class="btn-sec" onclick="ins('**','**')">B</button>
-                <button class="btn-sec" onclick="ins('# ','')">H1</button>
-                <button class="btn-sec" onclick="ins('FUE=10','')">BASE</button>
-                <button class="btn-sec" onclick="ins('+5FUE','')">BONUS</button>
-            </div>
-            <div class="editor-container">
-                <textarea id="editor" oninput="update()" placeholder="Escribe aquí..."></textarea>
-                <div id="preview"></div>
-                <div id="dice-output"></div>
-            </div>
+        <div class="unified-box">
+            <textarea id="editor" oninput="process()" placeholder="Escribe aquí... FUE=10 o +5FUE o 1d20+FUE"></textarea>
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <div id="dice-overlay" onclick="this.style.display='none'">
+        <div class="dice-modal">
+            <div id="dice-formula" style="font-size:12px; color:var(--p); opacity:0.7; margin-bottom:10px;"></div>
+            <div id="dice-faces" style="font-size:20px; margin-bottom:15px; letter-spacing:2px;"></div>
+            <div id="dice-total" style="font-size:32px; font-weight:bold; color:var(--accent);"></div>
+            <div style="font-size:10px; margin-top:20px; opacity:0.5;">Toca para cerrar</div>
         </div>
     </div>
 
@@ -133,11 +118,11 @@
             const c = document.getElementById('list-container');
             c.innerHTML = '';
             Object.keys(state.dashes).forEach(id => {
-                const d = document.createElement('div');
-                d.className = 'dash-item';
-                d.innerText = state.dashes[id].name;
-                d.onclick = () => { state.id = id; openDash(); };
-                c.appendChild(d);
+                const card = document.createElement('div');
+                card.className = 'dash-card';
+                card.innerText = "📂 " + state.dashes[id].name;
+                card.onclick = () => { state.id = id; openDash(); };
+                c.appendChild(card);
             });
         }
 
@@ -145,31 +130,30 @@
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
             const d = state.dashes[state.id];
-            document.getElementById('dash-title').innerText = d.name;
+            document.getElementById('current-name').innerText = d.name;
             document.getElementById('editor').value = d.content;
-            update();
+            process();
         }
 
-        function update() {
+        function process() {
             const txt = document.getElementById('editor').value;
             state.dashes[state.id].content = txt;
             
+            // Lógica de Variables (Base + Bonus)
             state.stats = {};
-            // 1. Bases
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
-            // 2. Bonus (+5FUE)
             txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
                 const name = n.toUpperCase();
-                const bonus = parseInt(v) * (op === '-' ? -1 : 1);
-                state.stats[name] = (state.stats[name] || 0) + bonus;
+                const val = parseInt(v) * (op === '-' ? -1 : 1);
+                state.stats[name] = (state.stats[name] || 0) + val;
             });
 
-            // Preview dinámico
+            // Preview dinámico (Markdown + Dados)
             let html = txt
                 .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
                 .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin-top:0;">$1</h2>')
+                .replace(/#(.*?)(\n|$)/g, '<h2 style="color:var(--p);margin:0;">$1</h2>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
@@ -186,32 +170,23 @@
             if (!dm) return;
             const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
             let rs = [], sum = 0;
+
             for(let i=0; i<n; i++) {
                 const r = Math.floor(Math.random()*sides)+1;
                 sum += r;
-                let cl = r === sides ? 'style="color:var(--crit);font-weight:bold;"' : (r === 1 ? 'style="color:var(--fail);font-weight:bold;"' : '');
-                rs.push(`<span ${cl}>${r}</span>`);
+                let style = r === sides ? 'color:var(--crit)' : (r === 1 ? 'color:var(--fail)' : '');
+                rs.push(`<span style="${style}">${r}</span>`);
             }
 
             let res;
             try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } 
             catch { res = sum; }
 
-            document.getElementById('dice-output').innerHTML = `
-                <div class="result-box" onclick="this.innerHTML=''">
-                    <div style="font-size:11px; opacity:0.5; margin-bottom:5px;">${formula} → ${f}</div>
-                    <div style="font-size:1.1em; margin-bottom:5px;">[ ${rs.join(', ')} ]</div>
-                    <div style="font-size:26px; font-weight:bold; color:var(--accent);">TOTAL: ${res}</div>
-                    <div style="font-size:9px; color:#555; margin-top:5px;">(clic para cerrar)</div>
-                </div>`;
-        }
-
-        function ins(a, b) {
-            const e = document.getElementById('editor');
-            const s = e.selectionStart, end = e.selectionEnd;
-            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
-            update();
-            e.focus();
+            // Mostrar el Modal Flotante
+            document.getElementById('dice-formula').innerText = `${formula} (Cálculo: ${f})`;
+            document.getElementById('dice-faces').innerHTML = `[ ${rs.join(', ')} ]`;
+            document.getElementById('dice-total').innerText = `TOTAL: ${res}`;
+            document.getElementById('dice-overlay').style.display = 'flex';
         }
 
         function showList() {
@@ -220,7 +195,7 @@
         }
 
         function deleteDash() {
-            if(confirm("¿Eliminar este personaje?")) { delete state.dashes[state.id]; save(); showList(); }
+            if(confirm("¿Eliminar personaje?")) { delete state.dashes[state.id]; save(); showList(); }
         }
     </script>
 </body>
