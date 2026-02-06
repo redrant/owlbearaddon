@@ -12,9 +12,9 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; }
         .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; }
         .version { font-size: 10px; color: var(--p); letter-spacing: 2px; font-weight: bold; }
-        .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); color: var(--p); }
+        .signature { font-size: 14px; font-weight: bold; text-shadow: 0 0 8px var(--p); color: var(--p); margin-bottom: 5px; }
 
-        /* Herramientas */
+        /* Controles */
         .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
         .tool { background: #333; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .tool:hover { background: var(--p); color: #000; }
@@ -22,19 +22,18 @@
         #editor { width: 100%; height: 250px; background: #121214; color: #888; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
         #preview { padding: 20px; min-height: 100px; display: none; background: rgba(0,0,0,0.3); border-radius: 8px; line-height: 1.6; }
 
-        /* Listado */
-        .item-card { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        /* Lista */
+        .item-card { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .dash-item { background: #1a1a1d; border-left: 4px solid var(--p); }
         .folder-item { background: #2a1b0a; border-left: 4px solid var(--folder); color: var(--folder); }
-        .item-card:hover { transform: translateX(5px); }
 
-        /* Log de Dados */
+        /* Log */
         #dice-log { margin-top: 20px; background: #000; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
-        .log-header { background: #222; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
+        .log-header { background: #222; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 11px; }
         #log-content { height: 120px; overflow-y: auto; padding: 10px; font-size: 12px; }
         .log-entry { margin-bottom: 5px; border-bottom: 1px solid #1a1a1d; padding-bottom: 3px; }
 
-        /* Casilla Plus */
+        /* Casilla */
         .cb-plus { transform: scale(1.3); margin-right: 10px; cursor: pointer; accent-color: var(--accent); }
 
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
@@ -46,7 +45,7 @@
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">1.2.1v</div>
+            <div class="version">1.2.2v</div>
             <div class="signature">By Redrant :v</div>
             <h2 style="margin:5px 0;">My Dashes</h2>
         </div>
@@ -62,7 +61,7 @@
         <div id="dice-log">
             <div class="log-header">
                 <span>LOG GLOBAL</span>
-                <button onclick="clearLog()" id="btn-clear" style="background:var(--fail); color:white; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; display:none;">REINICIAR 🔄</button>
+                <button onclick="clearLog()" id="btn-clear" style="background:var(--fail); color:white; border:none; border-radius:3px; padding:2px 6px; cursor:pointer;">REINICIAR 🔄</button>
             </div>
             <div id="log-content"></div>
         </div>
@@ -72,11 +71,9 @@
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <button onclick="showList()" class="tool">⬅ ATRÁS</button>
             <div id="current-title" class="signature"></div>
-            <button id="btn-lock" onclick="openOwnerMenu()" class="tool" style="display:none;">👤</button>
+            <button id="btn-lock" onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
-
         <button onclick="toggleMode()" id="btn-mode" class="mode-toggle">👁️ VER MODO JUEGO</button>
-
         <div id="editor-ui">
             <div class="toolbar">
                 <button class="tool" onclick="wrap('**','**')">B</button>
@@ -94,26 +91,44 @@
     </div>
 
     <script>
-        let state = { items: {}, id: null, stats: {}, editing: true, role: 'PLAYER', userId: '', userName: '' };
-        const KEY = "com.redrant.dashes.final";
-        const LOG_KEY = "com.redrant.dashes.log";
+        let state = { items: {}, id: null, stats: {}, editing: true, role: 'GM', userId: 'local', userName: 'Usuario' };
+        const KEY = "com.redrant.dashes.hybrid";
+        const LOG_KEY = "com.redrant.dashes.log.hybrid";
 
-        OBR.onReady(async () => {
-            state.role = await OBR.player.getRole();
-            state.userId = await OBR.player.getId();
-            state.userName = await OBR.player.getName();
+        // Inicialización Dual (Web + Owlbear)
+        async function init() {
+            try {
+                await OBR.onReady(async () => {
+                    state.role = await OBR.player.getRole();
+                    state.userId = await OBR.player.getId();
+                    state.userName = await OBR.player.getName();
+                    OBR.scene.onMetadataChange((m) => {
+                        state.items = m[KEY] || {};
+                        updateUI(m[LOG_KEY] || []);
+                    });
+                });
+            } catch (e) {
+                console.log("Modo Web: Usando LocalStorage");
+                const localData = localStorage.getItem(KEY);
+                if(localData) state.items = JSON.parse(localData);
+                updateUI(JSON.parse(localStorage.getItem(LOG_KEY) || "[]"));
+            }
+        }
 
-            if(state.role === 'GM') document.getElementById('btn-clear').style.display = 'block';
+        async function save() {
+            try {
+                await OBR.scene.setMetadata({ [KEY]: state.items });
+            } catch (e) {
+                localStorage.setItem(KEY, JSON.stringify(state.items));
+                updateUI(JSON.parse(localStorage.getItem(LOG_KEY) || "[]"));
+            }
+        }
 
-            OBR.scene.onMetadataChange((m) => {
-                state.items = m[KEY] || {};
-                renderList();
-                renderLog(m[LOG_KEY] || []);
-                if(state.id) syncView();
-            });
-        });
-
-        async function save() { await OBR.scene.setMetadata({ [KEY]: state.items }); }
+        function updateUI(logs) {
+            renderList();
+            renderLog(logs);
+            if(state.id) syncView();
+        }
 
         function createItem(type) {
             const n = document.getElementById('itemName').value || "Nuevo";
@@ -128,7 +143,7 @@
             Object.values(state.items).forEach(item => {
                 const d = document.createElement('div');
                 d.className = `item-card ${item.type}-item`;
-                d.innerHTML = `<span>${item.type==='folder'?'📁':'📄'} ${item.name}</span>`;
+                d.innerHTML = `<span>${item.type==='folder'?'📁':'📄'} ${item.name}</span> <span style="font-size:10px; opacity:0.5">${item.owner ? '👤' : ''}</span>`;
                 d.onclick = () => { if(item.type==='dash'){ state.id=item.id; openDash(); } };
                 c.appendChild(d);
             });
@@ -137,7 +152,7 @@
         function openDash() {
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
-            state.editing = false; toggleMode(); // Empieza en modo juego
+            state.editing = false; syncView();
         }
 
         function syncView() {
@@ -147,9 +162,12 @@
             const editor = document.getElementById('editor');
             const canEdit = (state.role === 'GM' || item.owner === state.userId);
             
-            if(state.role === 'GM') document.getElementById('btn-lock').style.display = 'block';
             editor.readOnly = !canEdit;
             if(document.activeElement !== editor) editor.value = item.content;
+            
+            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
+            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
+            document.getElementById('btn-mode').innerText = state.editing ? "✍️ GUARDAR Y VER" : "⚙️ EDITAR DASH";
             
             renderPreview(item.content);
         }
@@ -159,7 +177,7 @@
             txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => state.stats[n.toUpperCase()] = parseInt(v));
 
             let html = txt
-                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => `<div><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${c.replace(/'/g,"\\'")}', this)"><span>${c}</span></div>`)
+                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => `<div style="display:flex;align-items:center;"><input type="checkbox" class="cb-plus" onclick="handleCBPlus('${c.replace(/'/g,"\\'")}', this)"><span>${c}</span></div>`)
                 .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow: 0 0 10px $1; color: $1; font-weight: bold;">$2</span>')
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="tool" onclick="showNote('${t}','${c.replace(/\n/g,'<br>')}')">[${t}]</button>`)
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span style="color:var(--p);cursor:pointer;font-weight:bold;" onclick="roll('${f}')">${f}</span>`);
@@ -172,7 +190,9 @@
             const myDash = Object.values(state.items).find(i => i.owner === state.userId);
             if(myDash) {
                 myDash.content += "\n" + content;
-                await save();
+                save();
+            } else if (state.userId === 'local') {
+                alert("En modo web, asígnate primero como dueño de un dash (clic en 👤)");
             }
             setTimeout(() => cb.checked = false, 500);
         }
@@ -185,43 +205,52 @@
             let total = 0; for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1;
             let res; try { res = eval(total + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = total; }
             
-            const meta = await OBR.scene.getMetadata();
-            const logs = meta[LOG_KEY] || [];
-            logs.unshift({ user: state.userName, formula, res, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
-            await OBR.scene.setMetadata({ [LOG_KEY]: logs.slice(0, 20) });
+            const entry = { user: state.userName, formula, res, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+            
+            try {
+                const meta = await OBR.scene.getMetadata();
+                const logs = [entry, ...(meta[LOG_KEY] || [])].slice(0, 20);
+                await OBR.scene.setMetadata({ [LOG_KEY]: logs });
+            } catch (e) {
+                const logs = [entry, ...JSON.parse(localStorage.getItem(LOG_KEY) || "[]")].slice(0, 20);
+                localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+                updateUI(logs);
+            }
         }
 
         function renderLog(logs) {
             document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.user}:</b> ${l.formula} ➔ <span style="color:var(--accent)">${l.res}</span> <small style="opacity:0.3">${l.time}</small></div>`).join('');
         }
 
-        async function clearLog() { if(confirm("¿Borrar log global?")) await OBR.scene.setMetadata({ [LOG_KEY]: [] }); }
-
-        function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function toggleMode() {
-            state.editing = !state.editing;
-            const canEdit = (state.role === 'GM' || state.items[state.id].owner === state.userId);
-            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
-            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('btn-mode').innerText = state.editing ? "✍️ GUARDAR Y VER" : "⚙️ EDITAR DASH";
+        async function clearLog() {
+            if(!confirm("¿Borrar log global?")) return;
+            try { await OBR.scene.setMetadata({ [LOG_KEY]: [] }); } 
+            catch (e) { localStorage.setItem(LOG_KEY, "[]"); updateUI([]); }
         }
 
+        function handleInput() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function toggleMode() { state.editing = !state.editing; syncView(); }
+        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
+        
         async function openOwnerMenu() {
-            const players = await OBR.party.getPlayers();
             let h = `<h3>Dueño del Dash</h3>`;
-            players.forEach(p => h += `<button class="mode-toggle" onclick="setOwner('${p.id}')">${p.name}</button>`);
+            try {
+                const players = await OBR.party.getPlayers();
+                players.forEach(p => h += `<button class="mode-toggle" onclick="setOwner('${p.id}')">${p.name}</button>`);
+            } catch(e) { h += `<button class="mode-toggle" onclick="setOwner('local')">Asignarme a mí (Web)</button>`; }
             h += `<button class="mode-toggle" style="background:#444" onclick="setOwner(null)">Nadie</button>`;
             document.getElementById('modal-content').innerHTML = h;
             document.getElementById('global-overlay').style.display = 'flex';
         }
         function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-overlay').style.display = 'none'; }
 
-        function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
         function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
         function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function promptExtraNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
         function showNote(t, c) { document.getElementById('modal-content').innerHTML = `<h3>${t}</h3><p style="text-align:left">${c}</p>`; document.getElementById('global-overlay').style.display = 'flex'; }
+        
+        init();
     </script>
 </body>
 </html>
