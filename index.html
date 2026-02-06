@@ -54,7 +54,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM V3</div></div>
+    <div class="header"><div class="sig">My Star Dash Platinum v1</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -104,7 +104,7 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
         </div>
     </div>
@@ -186,25 +186,18 @@
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
-        // MOTOR DE MEMORIA GLOBAL: Procesa todo el Dash para calcular variables finales
         function calculateMemory(txt) {
             const memory = {};
             const lines = txt.split('\n');
-            
-            // Paso 1: Buscar definiciones base (FUE=20)
             lines.forEach(line => {
                 const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
                 if(base) memory[base[1].toUpperCase()] = parseInt(base[2]);
             });
-
-            // Paso 2: Aplicar modificadores Plus/Minus (-5FUE o +10FUE)
             lines.forEach(line => {
                 const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
                 if(plus) {
                     const sign = plus[1], val = parseInt(plus[2]), key = plus[3].toUpperCase();
-                    if(memory[key] !== undefined) {
-                        memory[key] += (sign === '+' ? 1 : -1) * val;
-                    }
+                    if(memory[key] !== undefined) memory[key] += (sign === '+' ? 1 : -1) * val;
                 }
             });
             return memory;
@@ -233,7 +226,6 @@
                 })
                 .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
                 .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
-                // Captura el dado y el resto de la fórmula pegada
                 .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (formula) => {
                     return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${formula}\`)">${formula}</div>`;
                 });
@@ -244,8 +236,6 @@
             const memory = calculateMemory(it.content);
             let logic = formulaRaw.toUpperCase();
             let breakdown = [];
-
-            // Sustituir variables por sus valores finales calculados
             const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
             keys.forEach(k => {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
@@ -254,20 +244,15 @@
                     logic = logic.replace(regex, memory[k]);
                 }
             });
-
-            // Extraer el dado NdS
             const diceMatch = logic.match(/(\d*)D(\d+)/i);
-            if(!diceMatch) return alert("Fórmula de dado no válida");
-            
+            if(!diceMatch) return;
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
-
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formulaRaw;
             const container = document.getElementById('dice-container');
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
-
             let currentSum = 0; let logDetails = [];
             for(let res of results) {
                 const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
@@ -285,19 +270,15 @@
                     }, 50);
                 });
             }
-
             let final;
             try {
-                // Reemplazamos el NdS por el total de los dados y limpiamos texto residual
                 let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
                 final = Math.floor(eval(mathStr));
             } catch(e) { final = currentSum; }
-
             setTimeout(() => { 
                 totalVal.innerText = final; totalVal.classList.add('show'); 
                 document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; 
             }, 200);
-
             state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop(); save();
         }
@@ -308,12 +289,27 @@
             it.owner = it.owner ? null : state.uid; save(); 
         }
 
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c); document.getElementById('note-overlay').style.display='flex'; }
+        function openNote(t, c) { 
+            document.getElementById('note-title').innerText = t; 
+            // Restaurar saltos de línea al mostrar
+            document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); 
+            document.getElementById('note-overlay').style.display='flex'; 
+        }
+
         function switchTab(isEdit) { state.edit = isEdit; syncView(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        
+        function askNote() { 
+            const t=prompt("Título:"); 
+            let c=prompt("Contenido (Usa doble espacio para saltar de línea):"); 
+            if(t && c) {
+                // El doble espacio se guarda como doble espacio, pero la visualización ahora lo interpreta
+                ins(`\n[note=${t}]${c}[/note]`, ""); 
+            }
+        }
+
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
