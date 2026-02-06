@@ -20,13 +20,15 @@
         #view-details { display: none; }
 
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; transition: 0.2s; }
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
+        .card:hover { border-color: #444; }
 
-        /* Casillas Rediseñadas */
-        .check-row { display: flex; align-items: center; margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .check-box { width: 20px; height: 20px; cursor: pointer; accent-color: var(--p); margin-right: 12px; }
+        /* NUEVAS CASILLAS CLONADORAS */
+        .check-btn { display: flex; align-items: center; margin: 10px 0; padding: 10px; background: rgba(187, 134, 252, 0.1); border: 1px solid var(--p); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .check-btn:hover { background: rgba(187, 134, 252, 0.2); transform: translateX(5px); }
+        .check-btn::before { content: '✚'; margin-right: 10px; font-weight: bold; color: var(--p); }
 
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
@@ -50,7 +52,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v4.0</div></div>
+    <div class="header"><div class="sig">MY DASHES v2.0</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -66,7 +68,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <button onclick="goBack()" class="tool">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="tool">OWNEAR</button>
+            <button id="own-btn" onclick="toggleOwnership()" class="tool" style="background:var(--p); color:black;">OWNEAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
@@ -78,7 +80,7 @@
             <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
                 <button class="tool" onclick="wrap('**','**')">B</button>
                 <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Casilla</button>
+                <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
                 <button class="tool" onclick="askGlow()">Glow</button>
                 <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
@@ -100,14 +102,14 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', checks: {}, openFolders: {}, dragId: null };
-        const DB = "V4_ITEMS", LG = "V4_LOGS", CH = "V4_CHECKS", OF = "V4_FOLDERS";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        const DB = "V4_ITEMS", LG = "V4_LOGS", OF = "V4_FOLDERS";
 
         async function init() {
             try {
@@ -115,20 +117,20 @@
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
                     OBR.scene.onMetadataChange(m => { 
-                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.openFolders=m[OF]||{}; render(); 
+                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); 
                     });
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.checks=m[CH]||{}; state.openFolders=m[OF]||{}; render();
+                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
                 });
             } catch(e) { render(); }
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [CH]: state.checks, [OF]: state.openFolders }); render(); }
+        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Acción Extra\n1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Atacar con espada\n1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = "";
             save();
         }
@@ -144,8 +146,10 @@
                 fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
                 fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
                 
-                fd.ondragover = e => e.preventDefault();
-                fd.ondrop = () => { state.items[state.dragId].parent = f.id; save(); };
+                // Drag & Drop
+                fd.ondragover = e => { e.preventDefault(); fd.style.borderColor = "var(--var)"; };
+                fd.ondragleave = () => { fd.style.borderColor = "#252529"; };
+                fd.ondrop = () => { if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
                 
                 cont.appendChild(fd);
                 if(isOpen) {
@@ -196,9 +200,11 @@
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             
             const btn = document.getElementById('own-btn');
-            btn.innerText = it.owner === state.uid ? "LIBERAR" : "OWNEAR";
-            btn.style.background = it.owner === state.uid ? "var(--fail)" : "var(--accent)";
-            btn.style.color = it.owner === state.uid ? "white" : "black";
+            if(it.owner === state.uid) {
+                btn.innerText = "LIBERAR"; btn.style.background = "var(--fail)"; btn.style.color = "white";
+            } else {
+                btn.innerText = "OWNEAR"; btn.style.background = "var(--p)"; btn.style.color = "black";
+            }
 
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
@@ -212,13 +218,11 @@
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                 .replace(/\[\+\]\s*(.*)/g, (m, label) => {
-                    const cid = state.id + label.trim();
-                    const checked = state.checks[cid] ? 'checked' : '';
-                    return `<div class="check-row"><input type="checkbox" class="check-box" ${checked} onclick="actionCheck('${cid}', '${label.trim()}')"><span>${label}</span></div>`;
+                    return `<div class="check-btn" onclick="cloneAction('${label.trim()}')">${label}</div>`;
                 })
                 .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    const cleanC = c.replace(/  /g, '\n'); // Doble espacio = Enter
-                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
+                    const cleanC = c.replace(/  /g, '\n');
+                    return `<span style="color:var(--accent); cursor:pointer; font-weight:bold; border-bottom:1px dotted;" onclick="showNote('${t}', \`${cleanC}\`)">[${t}]</span>`;
                 });
 
             html = html.replace(/\b([A-Z]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>');
@@ -230,15 +234,14 @@
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
 
-        function actionCheck(cid, label) {
-            state.checks[cid] = !state.checks[cid];
-            if(state.checks[cid]) {
-                const myDash = Object.values(state.items).find(i => i.owner === state.uid);
-                if(myDash) {
-                    myDash.content += `\n${label}`;
-                    save();
-                }
-            } else { save(); }
+        function cloneAction(label) {
+            // Busca el Dash propio del jugador que hizo click
+            const myDash = Object.values(state.items).find(it => it.owner === state.uid && it.type === 'dash');
+            if(!myDash) { alert("¡Debes OWNEAR un Dash primero para recibir acciones!"); return; }
+            
+            myDash.content += `\n**Acción Copiada:** ${label}`;
+            save();
+            alert(`Acción "${label}" enviada a tu Dash.`);
         }
 
         async function runRoll(formula, memory) {
@@ -288,7 +291,7 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (doble espacio para enter):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
