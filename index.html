@@ -25,7 +25,7 @@
         .dash { border-left: 5px solid var(--p); }
 
         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.2s; }
-        .block-roll:hover { background: #3d3d4d; transform: scale(1.05); }
+        .block-roll:hover { background: #3d3d4d; transform: scale(1.03); }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
@@ -57,7 +57,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">My Dashesh 2.0.0v</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM V.FINAL</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -114,7 +114,7 @@
 
     <script>
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
-        const DB = "VFINAL_ITEMS", LG = "VFINAL_LOGS", OF = "VFINAL_FOLDERS";
+        const DB = "VPLAT_ITEMS", LG = "VPLAT_LOGS", OF = "VPLAT_FOLDERS";
 
         async function init() {
             try {
@@ -133,7 +133,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+5FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -181,16 +181,34 @@
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
+            
             const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
-            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
+            if(it.owner === state.uid) {
+                obtn.innerText = "LIBERAR";
+                obtn.className = "btn-dice btn-owner-true";
+            } else {
+                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR";
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
+            }
+
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
 
         function renderPreview(txt) {
-            const memory = calculateMemory(txt);
+            const memory = {};
+            // 1. PRIMERO: Capturar variables base (FUE=10)
+            txt.replace(/\b([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi, (m, k, v) => {
+                memory[k.toUpperCase()] = parseInt(v);
+            });
+            // 2. SEGUNDO: Aplicar modificadores acumulativos (+5FUE o -2FUE)
+            txt.replace(/([\+\-])(\d+)([A-Z0-9_]+)\b/gi, (m, sign, val, k) => {
+                const key = k.toUpperCase();
+                if(memory[key] === undefined) memory[key] = 0; // Si no existe, inicia en 0
+                memory[key] += (sign === '+' ? 1 : -1) * parseInt(val);
+            });
+
             const lines = txt.split('\n');
             const processedLines = lines.map(line => {
                 if (line.trim().startsWith('[+]')) {
@@ -203,24 +221,6 @@
             document.getElementById('preview').innerHTML = processedLines.join('<br>');
         }
 
-        // NUEVA FUNCIÓN DE CÁLCULO DE MEMORIA (FIX VARIABLES)
-        function calculateMemory(txt) {
-            const mem = {};
-            // 1. Capturar bases FUE=10
-            const bases = txt.matchAll(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/gi);
-            for (const m of bases) mem[m[1].toUpperCase()] = parseInt(m[2]);
-            
-            // 2. Capturar Plus +5FUE o -2FUE
-            const plus = txt.matchAll(/([\+\-])(\d+)([A-Z0-9_]+)/gi);
-            for (const m of plus) {
-                const key = m[3].toUpperCase();
-                const val = (m[1] === '+' ? 1 : -1) * parseInt(m[2]);
-                if (mem[key] !== undefined) mem[key] += val;
-                else mem[key] = val; // Si no existe base, se crea con el valor plus
-            }
-            return mem;
-        }
-
         function renderElements(txt, memory) {
             return txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -230,8 +230,8 @@
                     const safe = encodeURIComponent(c.replace(/  /g, '\n'));
                     return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${safe}')">${t}</div>`;
                 })
-                .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
+                .replace(/\b([A-Z0-9_]+\s*=\s*[\+\-]?\d+)\b/gi, '<span class="block-var">$1</span>')
+                .replace(/([\+\-]\d+[A-Z0-9_]+)\b/gi, '<span class="block-var">$1</span>')
                 .replace(/(\d*d\d+([^\s]*))/gi, (f) => {
                     return `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}', ${JSON.stringify(memory)})">${f}</div>`;
                 });
@@ -243,9 +243,9 @@
             let logic = formula.toUpperCase();
             let breakdown = [];
             
-            // Reemplazar variables por valores (Orden de longitud para evitar pisar FUE con FUE_MAX)
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            for(let k of keys) {
+            // Sustituir variables por valores de forma segura (del nombre más largo al más corto para evitar conflictos)
+            const sortedKeys = Object.keys(memory).sort((a,b) => b.length - a.length);
+            for(let k of sortedKeys) {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
                 if(regex.test(logic)) {
                     breakdown.push(`${k}:${memory[k]}`);
@@ -253,6 +253,7 @@
                 }
             }
 
+            // Identificar el dado (NdS)
             const match = logic.match(/(\d*)D(\d+)/i);
             if(!match) return;
             const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
@@ -271,7 +272,7 @@
                     let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 8) {
+                        if(t++ > 7) {
                             clearInterval(iv); die.innerText = res;
                             if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span class="log-crit">${res}</span>`); }
                             else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span class="log-fail">${res}</span>`); }
@@ -282,21 +283,21 @@
                 });
             }
 
+            // EVAL FINAL: Limpieza absoluta para evitar SyntaxError
             let final;
             try {
-                // Sustituir el NdS por el resultado físico y limpiar de letras
-                let mathStr = logic.replace(match[0], currentSum).replace(/[A-Z_]/gi, '');
-                // Eliminar cualquier operador duplicado o basura al inicio/fin que cause SyntaxError
-                mathStr = mathStr.replace(/[^\d\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathStr));
+                // Reemplazamos el NdS por el total de los dados y borramos CUALQUIER texto residual
+                let cleanEval = logic.replace(match[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                final = Math.floor(eval(cleanEval));
             } catch(e) { 
-                console.error("Math Error:", e);
+                console.error("Fallo en formula:", e);
                 final = currentSum; 
             }
 
             setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `[${results.join('+')}] mod: ${breakdown.join(', ') || '0'}`; 
+                totalVal.innerText = final; 
+                totalVal.classList.add('show'); 
+                document.getElementById('d-res').innerText = breakdown.length > 0 ? `Variables: ${breakdown.join(' | ')}` : "Sin modificadores"; 
             }, 200);
 
             state.log.unshift({ u: state.uname, f: formula, r: final, details: logDetails.join(', ') });
@@ -321,7 +322,8 @@
         function toggleOwnership() { 
             const it = state.items[state.id];
             if(it.owner && it.owner !== state.uid) return alert("Este Dash ya tiene dueño.");
-            it.owner = it.owner ? null : state.uid; save(); 
+            it.owner = it.owner ? null : state.uid; 
+            save(); 
         }
 
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
