@@ -20,7 +20,7 @@
         #view-details { display: none; }
 
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; position: relative; }
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
@@ -29,10 +29,9 @@
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; }
+        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; gap: 5px; }
         .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
 
-        /* CASILLA CLONADORA */
         .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
         .check-btn:hover { background: rgba(187, 134, 252, 0.15); border-color: var(--p); }
         .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
@@ -51,11 +50,12 @@
         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
         .log-crit { color: var(--crit); font-weight: bold; }
         .log-fail { color: var(--fail); font-weight: bold; }
+        .del-folder { color: var(--fail); font-size: 18px; cursor: pointer; padding: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASHES PLATINUM v5.0</div></div>
+    <div class="header"><div class="sig">MY DASHES PLATINUM v5.2</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -86,7 +86,7 @@
                 <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
                 <button class="tool" onclick="askNote()">Nota+</button>
                 <button class="tool" onclick="askGlow()">Glow</button>
-                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
+                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR DASH</button>
             </div>
             <textarea id="editor" oninput="updateContent()"></textarea>
         </div>
@@ -106,7 +106,7 @@
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
             <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; font-size: 16px;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent);">CERRAR</button>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content: center;">CERRAR</button>
         </div>
     </div>
 
@@ -131,7 +131,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE\n[note=Info]Doble espacio  para bajar linea[/note]', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n+2FUE\n[+] Atacar 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -142,7 +142,8 @@
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
-                fd.className = "card folder"; fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span>`;
+                fd.className = "card folder"; 
+                fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</span>`;
                 fd.onclick = (e) => { e.stopPropagation(); state.openFolders[f.id] = !isOpen; save(); };
                 fd.ondragover = e => e.preventDefault();
                 fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
@@ -239,6 +240,7 @@
             myDash.content += "\n" + text; save(); alert("¡Acción clonada!");
         }
 
+        // ANIMACION DE DADO RECUPERADA (RULETA)
         async function runRoll(formula, memory) {
             let logic = formula.toUpperCase();
             let breakdown = "";
@@ -265,7 +267,9 @@
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++ > 8) {
                             clearInterval(iv); die.innerText = res;
-                            let color = ""; if(res===s) {color="log-crit"; die.style.color="var(--crit)";} else if(res===1) {color="log-fail"; die.style.color="var(--fail)";}
+                            let color = ""; 
+                            if(res===s) {color="log-crit"; die.style.color="var(--crit)";} 
+                            else if(res===1) {color="log-fail"; die.style.color="var(--fail)";}
                             logFaces.push(`<span class="${color}">${res}</span>`); currentSum += res; r();
                         }
                     }, 60);
@@ -285,6 +289,7 @@
         function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = Salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar Dash?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar Carpeta? (Los Dashes se mantendrán pero perderán su carpeta)")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
 
         init();
     </script>
