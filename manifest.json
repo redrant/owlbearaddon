@@ -5,7 +5,7 @@
   "action": {
     "title": "Dashisboard+",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
-    "main": "/index.html",
+    "popover": "/index.html",
     "width": 400,
     "height": 600
   },
