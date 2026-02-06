@@ -1,159 +1,364 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+    <style>
+        :root { 
+            --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
+            --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
+        }
+        
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* HEADER & SIGNATURE */
+        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; background: var(--surf); }
+        .sig { font-size: 18px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 1px; }
 
-<style>
-:root{
- --bg:#0d0d0f; --card:#1a1a1d; --txt:#eee;
- --p:#bb86fc; --accent:#03dac6;
- --crit:#00ff88; --fail:#ff4466;
-}
-body{margin:0;padding:10px;background:var(--bg);color:var(--txt);font-family:Segoe UI}
-button,input,textarea{background:#222;color:white;border:1px solid #333;border-radius:6px;padding:6px}
-button:hover{background:var(--p);color:black;cursor:pointer}
-.card{background:var(--card);border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:8px}
-.dice{color:var(--p);font-weight:bold;cursor:pointer;text-decoration:underline}
-.glow{text-shadow:0 0 10px currentColor}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center}
-.modal{background:#1e1e1e;border:2px solid var(--p);padding:20px;border-radius:15px;min-width:300px}
-.log{font-size:12px;border-top:1px solid #333;margin-top:10px;padding-top:6px}
-.slot{display:flex;gap:5px;margin:5px 0}
-</style>
+        /* VISTAS */
+        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; width: 100%; }
+        #view-details { display: none; }
+
+        /* CONTROLES DE LISTA */
+        .controls { display: flex; gap: 8px; margin-bottom: 15px; }
+        input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; outline: none; }
+        .btn { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s; color: #000; text-transform: uppercase; }
+        .btn-p { background: var(--p); } 
+        .btn-f { background: var(--folder); }
+        .btn-ghost { background: transparent; color: var(--t); border: 1px solid #444; }
+
+        /* AREA DE ITEMS (CARPETAS Y DASHES) */
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px; }
+        .card { padding: 14px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .card:hover { border-color: var(--p); }
+        .card.folder { border-left: 5px solid var(--folder); background: #1d170e; }
+        .card.dash { border-left: 5px solid var(--p); }
+        .child { margin-left: 20px; display: none; }
+        .is-open { display: flex !important; }
+
+        /* EDITOR Y PREVIEW */
+        .toolbar { display: flex; gap: 5px; background: #1e1e1e; padding: 10px; border-radius: 10px 10px 0 0; border: 1px solid #333; flex-wrap: wrap; }
+        textarea { flex: 1; background: #0a0a0c; color: #999; padding: 15px; border: 1px solid #333; border-top: none; border-radius: 0 0 10px 10px; font-family: 'Consolas', monospace; resize: none; outline: none; font-size: 14px; line-height: 1.5; }
+        #preview { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); border-radius: 10px; line-height: 1.8; display: none; border: 1px solid #222; }
+
+        /* RENDER ELEMENTS */
+        .glow-text { font-weight: bold; filter: drop-shadow(0 0 5px currentColor); }
+        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 12px; border-radius: 6px; cursor: pointer; margin: 4px; font-weight: bold; transition: 0.2s; }
+        .note-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+        .cb-row { display: flex; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin: 8px 0; border-left: 4px solid var(--accent); }
+        .cb-input { width: 22px; height: 22px; margin-right: 12px; accent-color: var(--accent); cursor: pointer; }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline dotted; padding: 0 2px; }
+
+        /* LOG GLOBAL */
+        .log-panel { height: 130px; background: #000; border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 11px; margin-top: 10px; border: 1px solid #222; }
+        .log-row { padding: 5px 0; border-bottom: 1px solid #111; display: flex; justify-content: space-between; }
+
+        /* MODALES */
+        .modal-dice { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7); background: #1a1a1d; border: 2px solid var(--p); border-radius: 20px; padding: 30px; z-index: 10000; text-align: center; box-shadow: 0 0 60px #000; opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.49); }
+        .modal-dice.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: all; }
+        .dice-res { font-size: 64px; font-weight: bold; margin: 10px 0; display: block; }
+        .crit { color: var(--crit); text-shadow: 0 0 20px var(--crit); animation: shake 0.4s; }
+        .fail { color: var(--fail); text-shadow: 0 0 20px var(--fail); }
+
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .modal-box { background: #1a1a1d; border: 2px solid var(--p); padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
+
+        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px,0); } 75% { transform: translate(5px,0); } }
+    </style>
 </head>
-
 <body>
 
-<h2 style="color:var(--p)">Smart Dashboards</h2>
+    <div class="header">
+        <div class="sig">MY DASHES - REDRANT</div>
+    </div>
 
-<div id="list"></div>
-<button onclick="newDash()">➕ Nuevo Dash</button>
+    <div id="view-list">
+        <div class="controls">
+            <input type="text" id="newItemName" placeholder="Nombre del Dash o Carpeta...">
+            <button onclick="create('dash')" class="btn btn-p">+Dash</button>
+            <button onclick="create('folder')" class="btn btn-f">+Carpeta</button>
+        </div>
+        <div id="items-container" class="items-area"></div>
+        <div class="log-panel">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px;">
+                <b style="color:var(--p); font-size:9px;">GLOBAL DICE LOG</b>
+                <button id="admin-clear-log" onclick="clearLog()" style="background:none; border:none; color:var(--fail); font-size:9px; cursor:pointer; display:none;">REINICIAR 🔄</button>
+            </div>
+            <div id="log-content"></div>
+        </div>
+    </div>
 
-<hr>
+    <div id="view-details">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:12px;">
+            <button onclick="goBack()" class="btn btn-ghost">⬅ Volver</button>
+            <div id="details-title" style="font-weight:bold; color:var(--p); text-shadow: 0 0 5px var(--p);"></div>
+            <button id="owner-btn" onclick="openOwnerMenu()" class="btn btn-ghost" style="display:none;">👤</button>
+        </div>
+        
+        <button onclick="toggleVisual()" id="visual-btn" style="width:100%; padding:15px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:12px; cursor:pointer; margin-bottom:12px; font-size:13px; box-shadow: 0 4px 15px rgba(187,134,252,0.3);">MODO JUEGO</button>
 
-<div id="dashView" style="display:none">
-<h3 id="dashTitle"></h3>
+        <div id="editor-ui" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+            <div class="toolbar">
+                <button class="btn btn-ghost" onclick="ins('[cb] ','')">🔘 Casilla+</button>
+                <button class="btn btn-ghost" onclick="promptNote()">📝 Nota+</button>
+                <button class="btn btn-ghost" onclick="promptGlow()">✨ Glow</button>
+                <button class="btn btn-ghost" onclick="wrap('**','**')"><b>B</b></button>
+                <button class="btn btn-ghost" onclick="wrap('*','*')"><i>I</i></button>
+                <button id="delete-btn" class="btn btn-p" onclick="deleteItem()" style="background:var(--fail); color:white; margin-left:auto; display:none;">🗑️</button>
+            </div>
+            <textarea id="editor" oninput="updateContent()" placeholder="Variables: FUE=10\nBonos: +5FUE\nDados: 1d20+FUE"></textarea>
+        </div>
+        <div id="preview"></div>
+    </div>
 
-<div id="editorWrap">
-<textarea id="editor" style="width:100%;height:160px" oninput="parse()"></textarea>
-</div>
+    <div id="dice-modal" class="modal-dice" onclick="this.classList.remove('show')">
+        <div id="dice-player" style="font-size:11px; color:var(--p); letter-spacing: 2px;">TIRADA DE DADOS</div>
+        <div id="dice-formula" style="font-size:16px; margin-top:5px; color:#888;"></div>
+        <div id="dice-result" class="dice-res"></div>
+        <div id="dice-faces" style="color:#666; font-size:16px; margin-bottom:10px;"></div>
+        <div style="font-size:10px; color:#444;">CLICK PARA CERRAR</div>
+    </div>
 
-<div id="preview" class="card"></div>
+    <div id="general-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal-box" id="modal-content" onclick="event.stopPropagation()"></div>
+    </div>
 
-<div id="slots"></div>
+    <script>
+        const DB = "REDRANT_DASH_V2";
+        const LG = "REDRANT_LOG_V2";
+        let state = { items: {}, log: [], id: null, editing: true, uid: 'local', uname: 'Player', role: 'PLAYER', openFolders: {} };
 
-<h4>📜 Log de Dados</h4>
-<div id="log" class="card"></div>
-<button onclick="clearLog()">RESET LOG</button>
+        async function init() {
+            try {
+                await OBR.onReady(async () => {
+                    state.uid = await OBR.player.getId();
+                    state.uname = await OBR.player.getName();
+                    state.role = await OBR.player.getRole();
+                    
+                    if(state.role === 'GM') {
+                        document.getElementById('admin-clear-log').style.display = 'block';
+                        document.getElementById('owner-btn').style.display = 'block';
+                        document.getElementById('delete-btn').style.display = 'block';
+                    }
 
-<button onclick="back()">⬅ Volver</button>
-</div>
+                    OBR.scene.onMetadataChange(m => {
+                        state.items = m[DB] || {};
+                        state.log = m[LG] || [];
+                        render();
+                    });
 
-<div id="overlay" onclick="this.style.display='none'">
- <div class="modal" onclick="event.stopPropagation()" id="modal"></div>
-</div>
+                    const initial = await OBR.scene.getMetadata();
+                    state.items = initial[DB] || {};
+                    state.log = initial[LG] || [];
+                    render();
+                });
+            } catch(e) { 
+                console.warn("Modo Web"); 
+                const saved = localStorage.getItem(DB);
+                if(saved) state.items = JSON.parse(saved);
+                render(); 
+            }
+        }
 
-<script>
-const KEY="dash.smart.data";
-let state={dashes:{},id:null,stats:{},user:"Anon",role:"player",log:[]};
+        async function save() {
+            if(window.OBR && OBR.scene) {
+                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log });
+            } else {
+                localStorage.setItem(DB, JSON.stringify(state.items));
+                render();
+            }
+        }
 
-OBR.onReady(async()=>{
- const p=await OBR.player.getSelf();
- state.user=p.name;
- state.role=p.role||"player";
- const m=await OBR.scene.getMetadata();
- Object.assign(state,m[KEY]||state);
- renderList();
-});
+        function create(type) {
+            const n = document.getElementById('newItemName').value || "Nuevo";
+            const id = "i" + Date.now();
+            state.items[id] = { id, type, name: n, content: type === 'dash' ? "# " + n + "\nFUE=10\n1d20+FUE" : "", owner: null, parent: null };
+            document.getElementById('newItemName').value = "";
+            save();
+        }
 
-function save(){OBR.scene.setMetadata({[KEY]:state})}
+        function render() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = "";
+            const items = Object.values(state.items);
 
-function newDash(){
- const id="d"+Date.now();
- state.dashes[id]={name:"Nuevo Dash",content:"FUE=10\n1d20+FUE",owner:state.user};
- save();renderList();
-}
+            // Carpetas
+            items.filter(i => i.type === 'folder').forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'card folder';
+                div.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.openFolders[f.id] ? '▲' : '▼'}</span>`;
+                div.onclick = () => { state.openFolders[f.id] = !state.openFolders[f.id]; render(); };
+                div.ondragover = e => e.preventDefault();
+                div.ondrop = e => { e.preventDefault(); moveItem(state.dragId, f.id); };
+                container.appendChild(div);
 
-function renderList(){
- const l=document.getElementById("list");l.innerHTML="";
- Object.entries(state.dashes).forEach(([id,d])=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.textContent=d.name;
-  c.onclick=()=>openDash(id);
-  l.appendChild(c);
- });
-}
+                items.filter(c => c.parentId === f.id).forEach(child => {
+                    container.appendChild(makeDashCard(child, true, state.openFolders[f.id]));
+                });
+            });
 
-function openDash(id){
- state.id=id;
- const d=state.dashes[id];
- document.getElementById("dashView").style.display="block";
- document.getElementById("dashTitle").textContent=d.name;
- document.getElementById("editor").value=d.content;
- document.getElementById("editorWrap").style.display=
-   (state.role==="dm"||d.owner===state.user)?"block":"none";
- parse();
-}
+            // Dashes sueltos
+            items.filter(i => i.type === 'dash' && !i.parentId).forEach(dash => {
+                container.appendChild(makeDashCard(dash, false));
+            });
 
-function back(){document.getElementById("dashView").style.display="none"}
+            // Log
+            document.getElementById('log-content').innerHTML = state.log.map(l => `
+                <div class="log-row">
+                    <span><b>${l.u}:</b> ${l.f} ➔ <b style="color:var(--accent)">${l.r}</b></span>
+                    <small style="color:#444">${l.t}</small>
+                </div>
+            `).join('');
 
-function parse(){
- const d=state.dashes[state.id];
- d.content=document.getElementById("editor").value;
- state.stats={};
- d.content.replace(/([A-Z]+)=([0-9]+)/g,(m,n,v)=>state.stats[n]=+v);
- let html=d.content
-  .replace(/<g=(.*?)>(.*?)<\/g>/g,'<span class="glow" style="color:$1">$2</span>')
-  .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
-  .replace(/(\d*d\d+[\+\-\*A-Z0-9\(\)]*)/gi,f=>`<span class="dice" onclick="roll('${f}')">${f}</span>`);
- document.getElementById("preview").innerHTML=html.replace(/\n/g,"<br>");
- buildSlots(d.content);
- save();
-}
+            if(state.id) syncDetails();
+        }
 
-function buildSlots(txt){
- const s=document.getElementById("slots");s.innerHTML="<h4>🧩 ExtraCasillas</h4>";
- txt.replace(/\[slot=(.*?)\](.*)/g,(m,n,v)=>{
-  const d=document.createElement("div");
-  d.className="slot";
-  d.innerHTML=`<b>${n}</b><input oninput="slotInput('${n}',this.value)" placeholder="${v.trim()}">`;
-  s.appendChild(d);
- });
-}
+        function makeDashCard(item, isChild, isVisible) {
+            const div = document.createElement('div');
+            div.className = `card dash ${isChild ? 'child' : ''} ${isChild && isVisible ? 'is-open' : ''}`;
+            div.draggable = true;
+            div.innerHTML = `<span>📄 ${item.name}</span> <small style="opacity:0.5">${item.owner ? '👤' : ''}</small>`;
+            div.onclick = (e) => { e.stopPropagation(); state.id = item.id; openDetails(); };
+            div.ondragstart = () => state.dragId = item.id;
+            div.ondragover = e => e.preventDefault();
+            div.ondrop = e => { e.preventDefault(); moveItem(state.dragId, null); };
+            return div;
+        }
 
-function slotInput(name,val){
- const d=state.dashes[state.id];
- d.content+=`\n${name}: ${val}`;
- parse();
-}
+        async function moveItem(id, pid) { state.items[id].parentId = pid; await save(); }
 
-function roll(formula){
- let f=formula.toUpperCase();
- Object.entries(state.stats).forEach(([k,v])=>f=f.replace(k,v));
- const [,n,s]=f.match(/(\d*)D(\d+)/i);
- let r=[],sum=0;
- for(let i=0;i<(+n||1);i++){
-  const x=Math.floor(Math.random()*s)+1;
-  sum+=x;
-  r.push(`<span style="color:${x==1?'var(--fail)':x==s?'var(--crit)':'#fff'}">${x}</span>`);
- }
- state.log.unshift(`${state.user}: ${formula} → ${sum}`);
- renderLog();
- document.getElementById("modal").innerHTML=`<h3>${formula}</h3>[${r.join(",")}]<h1>${sum}</h1>`;
- document.getElementById("overlay").style.display="flex";
- save();
-}
+        function openDetails() {
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'flex';
+            state.editing = false;
+            syncDetails();
+        }
 
-function renderLog(){
- document.getElementById("log").innerHTML=state.log.slice(0,20).join("<br>");
-}
+        function syncDetails() {
+            const item = state.items[state.id];
+            if(!item) return goBack();
+            
+            const canEdit = (state.role === 'GM' || item.owner === state.uid);
+            document.getElementById('details-title').innerText = item.name.toUpperCase();
+            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'flex' : 'none';
+            document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
+            document.getElementById('visual-btn').innerText = state.editing ? "MODO JUEGO" : "EDITAR DASH";
+            document.getElementById('visual-btn').style.display = canEdit ? 'block' : 'none';
 
-function clearLog(){
- if(state.role!=="dm")return;
- state.log=[];renderLog();save();
-}
-</script>
+            if(state.editing) {
+                if(document.activeElement !== document.getElementById('editor')) document.getElementById('editor').value = item.content;
+            } else {
+                renderPreview(item.content);
+            }
+        }
+
+        function renderPreview(txt) {
+            const stats = {};
+            // Lógica de variables y bonos
+            txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, k) => {
+                const name = k.toUpperCase();
+                const val = parseInt(v) * (op === '-' ? -1 : 1);
+                stats[name] = (stats[name] || 0) + val;
+            });
+
+            let html = txt
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span class="glow-text" style="color:$1;">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    const sc = c.replace(/\n/g, '<br>').replace(/'/g, "\\'");
+                    return `<button class="note-btn" onclick="showModal('${t}', '${sc}')">${t}</button>`;
+                })
+                .replace(/\[cb\] (.*?)(\n|$)/g, (m, c) => {
+                    return `<div class="cb-row"><input type="checkbox" class="cb-input" onclick="transfer('${c.replace(/'/g,"\\'")}', this)"><span>${c}</span></div>`;
+                })
+                .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
+                    return `<span class="roll-link" onclick="roll('${f}', ${JSON.stringify(stats)})">${f}</span>`;
+                });
+
+            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+        }
+
+        async function roll(formula, stats) {
+            let f = formula.toUpperCase();
+            for (let s in stats) { f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]); }
+            
+            const dm = f.match(/(\d*)D(\d+)/i);
+            if(!dm) return;
+            const n = parseInt(dm[1]) || 1, sides = parseInt(dm[2]);
+            
+            let rolls = [], sum = 0, crit = false, fail = false;
+            for(let i=0; i<n; i++) {
+                const r = Math.floor(Math.random()*sides)+1;
+                sum += r;
+                if(sides === 20 && r === 20) crit = true;
+                if(sides === 20 && r === 1) fail = true;
+                rolls.push(`<span style="color:${r===sides? 'var(--crit)' : (r===1 ? 'var(--fail)' : 'inherit')}">${r}</span>`);
+            }
+
+            let final;
+            try { final = Math.floor(eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, ''))); } catch(e) { final = sum; }
+
+            // Animación
+            const modal = document.getElementById('dice-modal');
+            const resEl = document.getElementById('dice-result');
+            resEl.innerText = final;
+            resEl.className = `dice-res ${crit ? 'crit' : ''} ${fail ? 'fail' : ''}`;
+            document.getElementById('dice-formula').innerText = formula;
+            document.getElementById('dice-faces').innerHTML = `[ ${rolls.join(', ')} ]`;
+            modal.classList.add('show');
+            setTimeout(() => modal.classList.remove('show'), 4000);
+
+            // Log
+            const entry = { u: state.uname, f: formula, r: final, t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+            state.log.unshift(entry);
+            if(state.log.length > 20) state.log.pop();
+            save();
+        }
+
+        async function transfer(text, cb) {
+            if(!cb.checked) return;
+            const target = Object.values(state.items).find(i => i.owner === state.uid);
+            if(target) {
+                target.content += "\n✅ " + text;
+                await save();
+                cb.parentElement.style.opacity = "0.4";
+                cb.disabled = true;
+            } else {
+                alert("Debes asignarte un Dash (Icono 👤)");
+                cb.checked = false;
+            }
+        }
+
+        function showModal(t, c) {
+            document.getElementById('modal-content').innerHTML = `<h2 style="color:var(--p); margin-top:0;">${t}</h2><div style="line-height:1.6">${c}</div>`;
+            document.getElementById('general-overlay').style.display = 'flex';
+        }
+
+        async function openOwnerMenu() {
+            let p = []; try { p = await OBR.party.getPlayers(); } catch(e) {}
+            let h = `<h3>Dueño del Dash</h3>`;
+            p.forEach(pl => h += `<button onclick="setOwner('${pl.id}')" class="btn btn-p" style="width:100%; margin-bottom:5px;">${pl.name}</button>`);
+            h += `<button onclick="setOwner('${state.uid}')" class="btn btn-ghost" style="width:100%;">Asignarme a mí</button>`;
+            document.getElementById('modal-content').innerHTML = h;
+            document.getElementById('general-overlay').style.display = 'flex';
+        }
+
+        function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('general-overlay').style.display='none'; }
+        function toggleVisual() { state.editing = !state.editing; syncDetails(); }
+        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display = 'flex'; document.getElementById('view-details').style.display = 'none'; }
+        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); updateContent(); }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
+        function promptGlow() { const c = prompt("Color (violet, gold, red, #00ff00):", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function promptNote() { const t = prompt("Título:"); const c = prompt("Contenido:"); if(t && c) ins(`[note=${t}]${c}[/note]`, ""); }
+        async function deleteItem() { if(confirm("¿Borrar permanentemente?")) { delete state.items[state.id]; await save(); goBack(); } }
+        async function clearLog() { if(confirm("¿Reiniciar log global?")) { state.log = []; await save(); } }
+
+        init();
+    </script>
 </body>
 </html>
