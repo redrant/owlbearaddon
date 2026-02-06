@@ -9,70 +9,83 @@
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
         }
         
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; }
         
-        /* Cabecera */
-        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .version { font-size: 9px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
-        .signature { font-size: 15px; font-weight: bold; text-shadow: 0 0 10px var(--p); color: var(--p); }
+        /* HEADER */
+        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .version { font-size: 10px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
+        .signature { font-size: 15px; font-weight: bold; color: var(--p); text-shadow: 0 0 8px var(--p); }
 
-        /* Editor y Toolbar */
-        .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; }
-        .tool { background: #2d2d30; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; }
-        .tool:hover { background: var(--p); color: black; }
-        #editor { width: 100%; height: 280px; background: #0f0f11; color: #aaa; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: vertical; box-sizing: border-box; outline: none; }
+        /* INPUTS Y BOTONES */
+        .input-group { display: flex; gap: 5px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 10px; background: #1a1a1d; color: white; border: 1px solid #333; border-radius: 8px; outline: none; }
+        .tool { background: #2d2d30; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .tool:hover { background: var(--p); color: #000; }
 
-        /* Preview y Elementos de Juego */
-        #preview { padding: 20px; min-height: 120px; display: none; background: rgba(255,255,255,0.02); border-radius: 0 0 10px 10px; line-height: 1.8; border: 1px solid #333; border-top: none; }
-        
-        .cb-container { display: flex; align-items: center; background: rgba(3, 218, 198, 0.05); padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid var(--accent); }
-        .cb-plus { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
-        .cb-label { font-size: 14px; color: #eee; flex: 1; }
-
-        .note-btn { background: rgba(187, 134, 252, 0.1); color: var(--p); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 4px 2px; display: inline-flex; align-items: center; }
-        .note-btn:hover { background: var(--p); color: #000; }
-
-        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; }
-
-        /* Listas y Modales */
-        .item-card { padding: 12px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
+        /* LISTA Y CARPETAS */
+        #list-container { display: flex; flex-direction: column; gap: 5px; }
+        .item-card { padding: 12px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
         .dash-item { border-left: 4px solid var(--p); }
-        
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
-        .modal { background: #1a1a1d; border: 1px solid #333; padding: 25px; border-radius: 15px; width: 85%; max-width: 450px; }
+        .folder-item { background: #1d170e; border-left: 4px solid var(--folder); color: var(--folder); }
+        .child-dash { margin-left: 20px; }
+
+        /* EDITOR */
+        #editor-ui { display: none; }
+        .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; flex-wrap: wrap; }
+        textarea { width: 100%; height: 250px; background: #0f0f11; color: #ccc; padding: 15px; border: 1px solid #333; border-top: none; font-family: monospace; resize: vertical; box-sizing: border-box; outline: none; }
+
+        /* PREVIEW ELEMENTOS */
+        #preview { padding: 15px; display: none; background: rgba(255,255,255,0.02); border: 1px solid #333; border-top: none; border-radius: 0 0 10px 10px; line-height: 1.6; }
+        .cb-container { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 10px; border-radius: 8px; margin: 8px 0; border: 1px solid rgba(3,218,198,0.1); border-left: 4px solid var(--accent); }
+        .cb-plus { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--accent); }
+        .note-btn { background: rgba(187,134,252,0.1); color: var(--p); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 4px 2px; }
+
+        /* HISTORIAL */
+        .log-container { background: #000; border-radius: 10px; margin-top: 20px; border: 1px solid #222; }
+        #log-content { height: 100px; overflow-y: auto; padding: 8px; font-size: 11px; }
+        .log-entry { padding: 3px 0; border-bottom: 1px solid #111; }
+
+        /* MODALES */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .modal { background: #1a1a1d; border: 1px solid #333; padding: 20px; border-radius: 12px; width: 80%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">V 1.3.7 - STABLE</div>
+            <div class="version">V 1.3.8 - RESTORED</div>
             <div class="signature">By Redrant :v</div>
         </div>
-        <div style="display:flex; gap:5px; margin-bottom:15px;">
-            <input type="text" id="itemName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; color:white; border:1px solid #333; border-radius:8px;">
-            <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="Nombre...">
+            <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:#000;">+DASH</button>
+            <button onclick="createItem('folder')" class="tool" style="background:var(--folder); color:#000;">+CARPETA</button>
         </div>
         <div id="list-container"></div>
+        <div class="log-container">
+            <div style="font-size:9px; padding:5px; color:#555;">HISTORIAL DE DADOS</div>
+            <div id="log-content"></div>
+        </div>
     </div>
 
     <div id="view-details" style="display:none;">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:12px;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <button onclick="showList()" class="tool">⬅ ATRÁS</button>
             <div id="current-title" class="signature"></div>
             <button onclick="openOwnerMenu()" class="tool">👤</button>
         </div>
 
-        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:12px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
+        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:10px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
 
         <div id="editor-ui">
             <div class="toolbar">
-                <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[note=TÍTULO]CONTENIDO[/note]','')">📝 Nota+</button>
                 <button class="tool" onclick="ins('[cb] TEXTO','')">🔘 Casilla+</button>
+                <button class="tool" onclick="ins('[note=TÍTULO]CONTENIDO[/note]','')">📝 Nota+</button>
+                <button class="tool" onclick="wrap('**','**')">B</button>
+                <button class="tool" onclick="deleteItem()">🗑️ BORRAR</button>
             </div>
-            <textarea id="editor" oninput="handleInput()" placeholder="[cb] Espada de Fuego 1d8&#10;[note=Info]Secreto del arma...[/note]"></textarea>
+            <textarea id="editor" oninput="handleInput()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
@@ -80,20 +93,23 @@
     <div id="global-overlay" class="overlay" onclick="this.style.display='none'"><div id="modal-content" class="modal" onclick="event.stopPropagation()"></div></div>
 
     <script>
-        let state = { items: {}, id: null, stats: {}, editing: false, userId: 'local' };
-        const KEY = "com.redrant.dashes.v137";
+        let state = { items: {}, id: null, editing: false, userId: 'local', userName: 'User', draggedId: null };
+        const KEY = "RR_DASH_v138";
+        const LOG_KEY = "RR_LOG_v138";
 
         async function init() {
             try {
                 await OBR.onReady(async () => {
                     state.userId = await OBR.player.getId();
-                    OBR.scene.onMetadataChange(m => { 
-                        state.items = m[KEY] || {}; 
-                        renderList(); 
-                        if(state.id) syncView(); 
+                    state.userName = await OBR.player.getName();
+                    OBR.scene.onMetadataChange(m => {
+                        state.items = m[KEY] || {};
+                        renderList();
+                        renderLog(m[LOG_KEY] || []);
+                        if(state.id) syncView();
                     });
                 });
-            } catch(e) { /* Fallback local */ }
+            } catch(e) { /* Local Mode */ }
         }
 
         async function save() { await OBR.scene.setMetadata({ [KEY]: state.items }); }
@@ -101,58 +117,77 @@
         function createItem(type) {
             const n = document.getElementById('itemName').value || "Nuevo";
             const id = "i" + Date.now();
-            state.items[id] = { id, type, name: n, content: '# ' + n, owner: null };
+            state.items[id] = { id, type, name: n, content: "# " + n, owner: null, parentId: null };
             document.getElementById('itemName').value = '';
             save();
         }
 
         function renderList() {
-            const c = document.getElementById('list-container'); c.innerHTML = '';
-            Object.values(state.items).forEach(dash => {
-                const d = document.createElement('div');
-                d.className = 'item-card dash-item';
-                d.innerHTML = `<span>📄 ${dash.name}</span> ${dash.owner === state.userId ? '⭐' : ''}`;
-                d.onclick = () => { state.id = dash.id; openDash(); };
-                c.appendChild(d);
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            const items = Object.values(state.items);
+
+            // Carpetas
+            items.filter(i => i.type === 'folder').forEach(folder => {
+                const fDiv = document.createElement('div');
+                fDiv.className = 'item-card folder-item';
+                fDiv.innerHTML = `<span>📁 ${folder.name.toUpperCase()}</span>`;
+                fDiv.ondragover = e => e.preventDefault();
+                fDiv.ondrop = e => { e.preventDefault(); moveItem(state.draggedId, folder.id); };
+                fDiv.onclick = () => { /* Expandir/Colapsar lógica aquí si se desea */ };
+                container.appendChild(fDiv);
+
+                items.filter(i => i.parentId === folder.id).forEach(dash => {
+                    container.appendChild(createDashCard(dash, true));
+                });
+            });
+
+            // Dash sueltos
+            items.filter(i => i.type === 'dash' && !i.parentId).forEach(dash => {
+                container.appendChild(createDashCard(dash, false));
             });
         }
 
-        function openDash() { 
-            document.getElementById('view-list').style.display = 'none'; 
-            document.getElementById('view-details').style.display = 'block'; 
-            state.editing = false; 
-            syncView(); 
+        function createDashCard(dash, isChild) {
+            const d = document.createElement('div');
+            d.className = 'item-card dash-item' + (isChild ? ' child-dash' : '');
+            d.draggable = true;
+            d.innerHTML = `<span>📄 ${dash.name}</span> ${dash.owner ? '👤' : ''}`;
+            d.ondragstart = () => state.draggedId = dash.id;
+            d.onclick = () => { state.id = dash.id; openDash(); };
+            return d;
+        }
+
+        async function moveItem(id, parentId) { state.items[id].parentId = parentId; await save(); }
+
+        function openDash() {
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'block';
+            state.editing = false;
+            syncView();
         }
 
         function syncView() {
             const item = state.items[state.id];
+            if(!item) return;
             document.getElementById('current-title').innerText = item.name;
             document.getElementById('editor-ui').style.display = state.editing ? 'block' : 'none';
             document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
             document.getElementById('btn-mode').innerText = state.editing ? "💾 GUARDAR" : "✍️ EDITAR";
-            if(!state.editing) renderPreview(item.content);
             document.getElementById('editor').value = item.content;
+            if(!state.editing) renderPreview(item.content);
         }
 
         function renderPreview(txt) {
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>');
-
-            // 1. Procesar Notas (Botones)
-            html = html.replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
-                const cleanContent = content.trim().replace(/\n/g, '<br>').replace(/'/g, "\\'");
-                return `<button class="note-btn" onclick="showNote('${title}', '${cleanContent}')">📌 ${title}</button>`;
-            });
-
-            // 2. Procesar Casillas Plus
-            html = html.replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, content) => {
-                const cleanText = content.trim().replace(/'/g, "\\'");
-                return `<div class="cb-container"><input type="checkbox" class="cb-plus" onclick="transfer('${cleanText}', this)"><div class="cb-label">${content}</div></div>`;
-            });
-
-            // 3. Dados
-            html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="dice-roll">${f}</span>`);
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
+                    return `<button class="note-btn" onclick="showNote('${t}', '${c.replace(/\n/g, '<br>').replace(/'/g, "\\'")}')">📌 ${t}</button>`;
+                })
+                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, content) => {
+                    return `<div class="cb-container"><input type="checkbox" class="cb-plus" onclick="transfer('${content.replace(/'/g, "\\'")}', this)"><div>${content}</div></div>`;
+                })
+                .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span style="color:var(--p);cursor:pointer;text-decoration:underline;" onclick="roll('${f}')">${f}</span>`);
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
         }
@@ -164,18 +199,27 @@
                 myDash.content += "\n" + text;
                 await save();
                 cb.disabled = true;
-                cb.parentElement.style.opacity = "0.4";
+                cb.parentElement.style.opacity = "0.5";
             } else {
-                alert("Primero asígnate este Dash con el icono 👤");
+                alert("Primero asígnate un Dash usando el icono 👤");
                 cb.checked = false;
             }
         }
 
+        async function roll(formula) {
+            const r = Math.floor(Math.random()*20)+1; // Simplificado para estabilidad
+            const entry = { u: state.userName, f: formula, r: r };
+            const m = await OBR.scene.getMetadata();
+            const logs = [entry, ...(m[LOG_KEY] || [])].slice(0, 20);
+            await OBR.scene.setMetadata({ [LOG_KEY]: logs });
+        }
+
+        function renderLog(logs) {
+            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ ${l.r}</div>`).join('');
+        }
+
         function showNote(t, c) {
-            document.getElementById('modal-content').innerHTML = `
-                <h3 style="color:var(--accent); margin-top:0;">${t}</h3>
-                <div style="text-align:left; color:#ccc; line-height:1.6;">${c}</div>
-                <button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>`;
+            document.getElementById('modal-content').innerHTML = `<h3>${t}</h3><div style="text-align:left;">${c}</div><button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="width:100%;margin-top:15px;">CERRAR</button>`;
             document.getElementById('global-overlay').style.display = 'flex';
         }
 
@@ -185,8 +229,8 @@
         
         async function openOwnerMenu() {
             const players = await OBR.party.getPlayers();
-            let h = `<h3>Asignar este Dash a:</h3>`;
-            players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:#333; color:white; border:none; border-radius:6px; cursor:pointer;">${p.name}</button>`);
+            let h = `<h3>Asignar Dueño</h3>`;
+            players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:var(--p); border:none; border-radius:8px;">${p.name}</button>`);
             document.getElementById('modal-content').innerHTML = h;
             document.getElementById('global-overlay').style.display = 'flex';
         }
@@ -194,6 +238,7 @@
         function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('global-overlay').style.display='none'; }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); handleInput(); }
         function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); handleInput(); }
+        async function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; await save(); showList(); } }
 
         init();
     </script>
