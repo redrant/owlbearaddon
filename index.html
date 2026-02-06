@@ -11,62 +11,58 @@
         
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; user-select: none; }
         
-        /* Header */
-        .header-main { text-align: center; margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #333; }
+        /* Estética General */
+        .header-main { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .version { font-size: 9px; color: var(--p); font-weight: bold; letter-spacing: 2px; }
         .signature { font-size: 15px; font-weight: bold; text-shadow: 0 0 10px var(--p); color: var(--p); }
 
-        /* Inputs y Botones */
-        .input-group { display: flex; gap: 6px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; padding: 10px; background: #1a1a1d; color: white; border: 1px solid #333; border-radius: 8px; outline: none; }
-
-        /* Herramientas */
-        .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; }
+        .toolbar { display: flex; gap: 4px; background: #1e1e1e; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #333; flex-wrap: wrap; }
         .tool { background: #2d2d30; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; }
         .tool:hover { background: var(--p); color: black; }
 
         #editor { width: 100%; height: 280px; background: #0f0f11; color: #aaa; padding: 15px; border: 1px solid #333; border-top: none; font-family: 'Consolas', monospace; resize: vertical; box-sizing: border-box; outline: none; line-height: 1.5; }
         #preview { padding: 20px; min-height: 120px; display: none; background: rgba(255,255,255,0.02); border-radius: 0 0 10px 10px; line-height: 1.8; border: 1px solid #333; border-top: none; }
 
-        /* Listas */
+        /* Listas y Carpetas */
         .item-card { padding: 12px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #16161a; }
         .dash-item { border-left: 4px solid var(--p); }
         .folder-item { background: #1d170e; border-left: 4px solid var(--folder); color: var(--folder); font-weight: bold; }
         .folder-toggle { background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; padding: 2px 6px; margin-right: 8px; cursor: pointer; }
 
-        /* Casillas Estilizadas (Ahora ejecutan la acción directamente) */
-        .cb-container { display: flex; align-items: center; background: rgba(3, 218, 198, 0.05); padding: 8px 12px; border-radius: 8px; margin: 6px 0; border: 1px solid rgba(3, 218, 198, 0.1); }
-        .cb-plus { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--accent); }
+        /* CASILLA PLUS: El diseño que pediste */
+        .cb-container { display: flex; align-items: flex-start; background: rgba(3, 218, 198, 0.05); padding: 10px; border-radius: 8px; margin: 8px 0; border: 1px solid rgba(3, 218, 198, 0.1); border-left: 4px solid var(--accent); }
+        .cb-plus { width: 18px; height: 18px; margin: 4px 12px 0 0; cursor: pointer; accent-color: var(--accent); }
+        .cb-content { flex: 1; font-size: 14px; }
 
         /* Notas+ */
-        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 4px 0; }
+        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 4px 0; display: inline-block; }
         
-        /* Dados y Popups */
+        /* Dados con Animación y Colores Críticos */
         .dice-result-pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1d; border: 2px solid var(--p); padding: 30px; border-radius: 20px; text-align: center; z-index: 10000; box-shadow: 0 0 60px #000; animation: pop 0.2s cubic-bezier(0.17, 0.89, 0.32, 1.28); }
         @keyframes pop { from { transform: translate(-50%, -45%) scale(0.8); opacity: 0; } }
-        
-        .c-max { color: var(--crit); font-weight: bold; text-shadow: 0 0 8px var(--crit); }
-        .c-min { color: var(--fail); font-weight: bold; text-shadow: 0 0 8px var(--fail); }
+        .c-max { color: var(--crit); font-weight: bold; text-shadow: 0 0 10px var(--crit); }
+        .c-min { color: var(--fail); font-weight: bold; text-shadow: 0 0 10px var(--fail); }
 
-        .log-container { background: #000; border-radius: 10px; margin-top: 20px; border: 1px solid #222; }
+        /* Logs */
+        .log-container { background: #000; border-radius: 10px; margin-top: 20px; border: 1px solid #222; overflow: hidden; }
         .log-header { background: #1a1a1a; padding: 6px 12px; font-size: 10px; color: #555; display: flex; justify-content: space-between; }
         #log-content { height: 120px; overflow-y: auto; padding: 10px; font-size: 12px; }
         .log-entry { padding: 4px 0; border-bottom: 1px solid #111; }
 
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
-        .modal { background: #1a1a1d; border: 1px solid #333; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; }
+        .modal { background: #1a1a1d; border: 1px solid #333; padding: 25px; border-radius: 15px; width: 85%; max-width: 450px; }
     </style>
 </head>
 <body>
 
     <div id="view-list">
         <div class="header-main">
-            <div class="version">VERSION 1.3.4v</div>
+            <div class="version">VERSION 1.3.5v</div>
             <div class="signature">By Redrant :v</div>
         </div>
         
-        <div class="input-group">
-            <input type="text" id="itemName" placeholder="Nuevo nombre...">
+        <div class="input-group" style="display:flex; gap:5px; margin-bottom:15px;">
+            <input type="text" id="itemName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; color:white; border:1px solid #333; border-radius:8px;">
             <button onclick="createItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
             <button onclick="createItem('folder')" class="tool" style="background:var(--folder); color:black;">+CARPETA</button>
         </div>
@@ -74,7 +70,7 @@
         <div id="list-container"></div>
 
         <div class="log-container">
-            <div class="log-header"><span>HISTORIAL</span> <span onclick="clearLog()" style="cursor:pointer">LIMPIAR 🔄</span></div>
+            <div class="log-header"><span>HISTORIAL GLOBAL</span> <span onclick="clearLog()" style="cursor:pointer">LIMPIAR 🔄</span></div>
             <div id="log-content"></div>
         </div>
     </div>
@@ -97,9 +93,9 @@
                 <button class="tool" onclick="wrap('*','*')">I</button>
                 <button class="tool" onclick="promptGlow()">✨ Brillo</button>
                 <button class="tool" onclick="ins('[note=TÍTULO]CONTENIDO[/note]','')">📝 Nota+</button>
-                <button class="tool" onclick="ins('[cb] 1d20+2 Ataque','')">🔘 Casilla+</button>
+                <button class="tool" onclick="ins('[cb] TEXTO A COPIAR','')">🔘 Casilla+</button>
             </div>
-            <textarea id="editor" oninput="handleInput()"></textarea>
+            <textarea id="editor" oninput="handleInput()" placeholder="Escribe aquí..."></textarea>
         </div>
         <div id="preview"></div>
     </div>
@@ -109,8 +105,8 @@
 
     <script>
         let state = { items: {}, id: null, stats: {}, editing: false, role: 'GM', userId: 'local', userName: 'User', draggedId: null, collapsed: {} };
-        const KEY = "com.redrant.dashes.v134";
-        const LOG_KEY = "com.redrant.dashes.log.v134";
+        const KEY = "com.redrant.dashes.v135";
+        const LOG_KEY = "com.redrant.dashes.log.v135";
 
         async function init() {
             try {
@@ -154,7 +150,7 @@
                 const isCollapsed = state.collapsed[folder.id];
                 const fDiv = document.createElement('div');
                 fDiv.className = 'item-card folder-item';
-                fDiv.innerHTML = `<div><button class="folder-toggle" onclick="event.stopPropagation(); toggleFolder('${folder.id}')">${isCollapsed?'+':'-'}</button>📁 ${folder.name.toUpperCase()}</div><span onclick="event.stopPropagation(); deleteItem('${folder.id}')" style="color:red">✕</span>`;
+                fDiv.innerHTML = `<div><button class="folder-toggle" onclick="event.stopPropagation(); toggleFolder('${folder.id}')">${isCollapsed?'+':'-'}</button>📁 ${folder.name.toUpperCase()}</div><span onclick="event.stopPropagation(); deleteItem('${folder.id}')" style="color:var(--fail)">✕</span>`;
                 fDiv.onclick = () => toggleFolder(folder.id);
                 fDiv.ondragover = e => { e.preventDefault(); fDiv.style.borderColor = "var(--folder)"; };
                 fDiv.ondragleave = () => fDiv.style.borderColor = "";
@@ -179,7 +175,7 @@
         }
 
         async function moveItem(id, parentId) { state.items[id].parentId = parentId; await save(); }
-        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete state.items[id]; Object.values(state.items).forEach(i => { if(i.parentId === id) i.parentId = null; }); save(); if(state.id === id) showList(); } }
+        function deleteItem(id) { if(confirm("¿Borrar?")) { delete state.items[id]; Object.values(state.items).forEach(i => { if(i.parentId === id) i.parentId = null; }); save(); if(state.id === id) showList(); } }
 
         function openDash() { document.getElementById('view-list').style.display = 'none'; document.getElementById('view-details').style.display = 'block'; state.editing = false; syncView(); }
 
@@ -189,7 +185,7 @@
             const canEdit = (state.role === 'GM' || item.owner === state.userId);
             document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'block' : 'none';
             document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('btn-mode').innerText = state.editing ? "💾 GUARDAR" : "✍️ EDITAR";
+            document.getElementById('btn-mode').innerText = state.editing ? "💾 GUARDAR DASH" : "✍️ EDITAR DASH";
             if(document.activeElement !== document.getElementById('editor')) document.getElementById('editor').value = item.content;
             renderPreview(item.content);
         }
@@ -205,13 +201,30 @@
                     const clean = c.trim().replace(/\n\s*\n/g, '<br><div style="margin-top:8px;"></div>').replace(/\n/g, '<br>');
                     return `<button class="note-btn" onclick="showNote('${t}', '${clean.replace(/'/g, "\\'")}')">📌 ${t}</button>`;
                 })
-                .replace(/\[cb\]\s*(\d*d\d+[\+\-\*\/A-Z0-9]*)\s*(.*?)(?:\n|$)/gi, (m, formula, label) => {
-                    return `<div class="cb-container"><input type="checkbox" class="cb-plus" onclick="if(this.checked) roll('${formula}'); this.checked=false;"><div><b>${label || formula}</b> <small style="opacity:0.5; margin-left:8px;">(${formula})</small></div></div>`;
+                .replace(/\[cb\]\s*(.*?)(?:\n|$)/gi, (m, content) => {
+                    // Renderizamos contenido interno (brillos, etc) para visualización
+                    const visual = content.replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow:0 0 10px $1; color:$1; font-weight:bold;">$2</span>');
+                    return `<div class="cb-container"><input type="checkbox" class="cb-plus" onclick="handleTransfer('${content.replace(/'/g,"\\'")}', this)"> <div class="cb-content">${visual}</div></div>`;
                 })
                 .replace(/<g=(.*?)>(.*?)<\/g>/gs, '<span style="text-shadow:0 0 10px $1; color:$1; font-weight:bold;">$2</span>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span style="color:var(--p);cursor:pointer;font-weight:bold;text-decoration:underline;" onclick="roll('${f}')">${f}</span>`);
 
             document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+        }
+
+        async function handleTransfer(textToCopy, cb) {
+            if(!cb.checked) return;
+            // Buscamos el Dash del que ha marcado la casilla
+            const myDash = Object.values(state.items).find(i => i.owner === state.userId);
+            if(myDash) {
+                myDash.content += "\n" + textToCopy;
+                await save();
+                cb.parentElement.style.opacity = "0.4";
+                cb.parentElement.style.borderLeftColor = "#555";
+            } else { 
+                alert("Debes asignarte un Dash (Icono 👤) para recibir la información."); 
+                cb.checked = false; 
+            }
         }
 
         async function roll(formula) {
@@ -227,7 +240,6 @@
                 sum += r; 
             }
             let res; try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch { res = sum; }
-            
             const ov = document.getElementById('dice-overlay');
             ov.innerHTML = `<div style="font-size:12px;opacity:0.6;">${formula}</div><div style="font-size:1.6em;margin:15px 0;">[ ${rolls.join(', ')} ]</div><div style="font-size:42px;color:var(--accent);font-weight:bold;">${res}</div>`;
             ov.style.display = 'block';
@@ -244,7 +256,7 @@
         }
 
         function renderLog(logs) {
-            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--accent)">${l.r}</span> <small style="color:#444">[${l.det.join(',')}]</small></div>`).join('');
+            document.getElementById('log-content').innerHTML = logs.map(l => `<div class="log-entry"><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--accent)">${l.r}</span> <small style="color:#555">[${l.det.join(',')}]</small></div>`).join('');
         }
 
         function toggleMode() { state.editing = !state.editing; syncView(); }
@@ -252,12 +264,12 @@
         function showList() { state.id = null; document.getElementById('view-list').style.display = 'block'; document.getElementById('view-details').style.display = 'none'; }
         
         function showNote(t, c) { 
-            document.getElementById('modal-content').innerHTML = `<h3 style="color:var(--accent); margin-top:0;">${t}</h3><div style="text-align:left; color:#ccc;">${c}</div><button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>`; 
+            document.getElementById('modal-content').innerHTML = `<h3 style="color:var(--accent); margin-top:0;">${t}</h3><div style="text-align:left; color:#ccc; line-height:1.6;">${c}</div><button onclick="document.getElementById('global-overlay').style.display='none'" class="tool" style="width:100%; margin-top:20px; background:var(--p); color:black;">CERRAR</button>`; 
             document.getElementById('global-overlay').style.display = 'flex'; 
         }
         
         async function openOwnerMenu() {
-            let h = `<h3>Dueño</h3>`;
+            let h = `<h3>Asignar Dueño</h3>`;
             try {
                 const players = await OBR.party.getPlayers();
                 players.forEach(p => h += `<button onclick="setOwner('${p.id}')" style="width:100%; padding:10px; margin:4px 0; background:#333; color:white; border:none; border-radius:6px;">${p.name}</button>`);
