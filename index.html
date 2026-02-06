@@ -2,202 +2,152 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #03dac6; --crit: #00ff00; --fumble: #ff4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        :root { --p: #bb86fc; --bg: #121212; --c: #1e1e1e; --t: #e0e0e0; --crit: #00ff00; --fail: #ff4444; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 15px; }
         
-        /* Barra de Herramientas */
-        .toolbar { display: flex; gap: 5px; background: #2c2c2c; padding: 5px; border-radius: 6px 6px 0 0; border: 1px solid #444; flex-wrap: wrap; }
-        .tool-btn { background: #444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .tool-btn:hover { background: var(--primary); color: black; }
+        .toolbar { display: flex; gap: 5px; background: #2c2c2c; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #444; }
+        .btn { background: #444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: var(--p); color: black; }
 
-        textarea { background: #1a1a1a; border: 1px solid #444; border-top: none; color: white; padding: 10px; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; font-family: monospace; resize: vertical; }
+        textarea { background: #1a1a1a; border: 1px solid #444; border-top: none; color: white; padding: 10px; width: 100%; box-sizing: border-box; font-family: monospace; border-radius: 0 0 6px 6px; }
         
-        /* Estilos de la Lista y Botones */
-        .dash-button { background: var(--card); padding: 15px; margin: 10px 0; border-radius: 8px; display: block; width: 100%; text-align: left; border: 1px solid #333; color: var(--text); font-size: 16px; cursor: pointer; }
-        .dash-button:hover { border-color: var(--primary); }
-
-        /* Dados y Stats */
-        #preview-area { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px dashed #555; margin-top: 10px; line-height: 1.6; }
-        .dice-roll { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; padding: 2px 4px; background: rgba(187,134,252,0.1); border-radius: 4px; }
-        .stat-tag { color: var(--accent); font-weight: bold; }
+        #preview { margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px dashed #444; }
+        .dice-roll { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline; background: rgba(187,134,252,0.1); padding: 2px 4px; border-radius: 4px; }
         
-        /* Caja de Resultado de Dados */
-        .result-box { background: #000; padding: 15px; border: 2px solid var(--primary); margin-top: 15px; border-radius: 8px; animation: slideIn 0.2s; }
-        .dice-faces { font-size: 1.2em; letter-spacing: 2px; margin: 5px 0; }
-        .crit { color: var(--crit); font-weight: bold; text-shadow: 0 0 5px var(--crit); }
-        .fumble { color: var(--fumble); font-weight: bold; text-shadow: 0 0 5px var(--fumble); }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .result-box { background: #000; padding: 15px; border: 2px solid var(--p); margin-top: 15px; border-radius: 8px; }
+        .c-max { color: var(--crit); font-weight: bold; }
+        .c-min { color: var(--fail); font-weight: bold; }
+        .stat-tag { color: #03dac6; font-weight: bold; }
+        .bonus-tag { color: #ffab40; font-style: italic; }
     </style>
 </head>
 <body>
     <div id="view-list">
-        <h2 style="color:var(--primary)">Mis Dashes</h2>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <input type="text" id="dashName" placeholder="Nombre..." style="background:#2c2c2c; border:1px solid #444; color:white; padding:10px; border-radius:6px; flex-grow:1;">
-            <button onclick="createDash()" style="background:var(--primary); border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer;">+ CREAR</button>
-        </div>
+        <h2>Mis Dashes</h2>
+        <input type="text" id="dashName" placeholder="Nombre...">
+        <button onclick="createDash()" class="btn">CREAR</button>
         <div id="list-container"></div>
     </div>
 
     <div id="view-details" style="display:none;">
-        <div style="display:flex; justify-content: space-between; margin-bottom:10px;">
-            <button onclick="showList()" style="background:#444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">⬅ Volver</button>
-            <h3 id="current-title" style="margin:0; color:var(--primary);"></h3>
-            <div></div>
-        </div>
-
+        <button onclick="showList()" class="btn">⬅ Volver</button>
+        <h3 id="dash-title"></h3>
         <div class="toolbar">
-            <button class="tool-btn" onclick="insertText('**','**')">B</button>
-            <button class="tool-btn" onclick="insertText('*','*')">I</button>
-            <button class="tool-btn" onclick="insertText('__','__')">U</button>
-            <button class="tool-btn" onclick="insertText('# ','')">H1</button>
-            <button class="tool-btn" onclick="insertText('STAT=0','')">Variable</button>
-            <button class="tool-btn" onclick="insertText('1d20+','')">Dado</button>
+            <button class="btn" onclick="ins('**','**')">B</button>
+            <button class="btn" onclick="ins('# ','')">H1</button>
+            <button class="btn" onclick="ins('FUE=10','')">Base</button>
+            <button class="btn" onclick="ins('+5FUE','')">Bonus</button>
         </div>
-        <textarea id="editor" rows="10" oninput="handleUpdate()"></textarea>
-        
-        <div id="preview-area"></div>
+        <textarea id="editor" rows="10" oninput="update()"></textarea>
+        <div id="preview"></div>
         <div id="dice-output"></div>
     </div>
 
     <script>
-        let state = { dashes: {}, currentId: null, stats: {} };
-        const STORAGE_KEY = "dash_plus_v2";
+        let state = { dashes: {}, id: null, stats: {} };
+        const KEY = "com.dashisboard.data";
 
-        async function init() {
-            if (typeof OBR !== "undefined" && window.location.hostname.includes("owlbear")) {
-                OBR.onReady(async () => {
-                    const meta = await OBR.scene.getMetadata();
-                    state.dashes = meta["com.dash.data"] || {};
-                    renderList();
-                });
-            } else {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) state.dashes = JSON.parse(saved);
-                renderList();
-            }
-        }
+        OBR.onReady(async () => {
+            const m = await OBR.scene.getMetadata();
+            state.dashes = m[KEY] || {};
+            renderList();
+        });
 
-        function insertText(before, after) {
-            const el = document.getElementById('editor');
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-            const text = el.value;
-            el.value = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
-            handleUpdate();
-        }
+        async function save() { await OBR.scene.setMetadata({ [KEY]: state.dashes }); }
 
         function createDash() {
-            const name = document.getElementById('dashName').value;
-            if(!name) return;
-            const id = "d" + Date.now();
-            state.dashes[id] = { name, content: "FUE=10\nINT=5\n\nAtaque: 1d20+FUE\nHechizo: 2d9+(INT*2)" };
-            document.getElementById('dashName').value = '';
-            save();
+            const n = document.getElementById('dashName').value;
+            if(!n) return;
+            const id = "d"+Date.now();
+            state.dashes[id] = { name: n, content: "FUE=10\nCasco: +5FUE\nAtaque: 1d20+FUE" };
+            save(); renderList();
         }
 
         function renderList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = '';
+            const c = document.getElementById('list-container');
+            c.innerHTML = '';
             Object.keys(state.dashes).forEach(id => {
-                const btn = document.createElement('button');
-                btn.className = 'dash-button';
-                btn.innerText = "📂 " + state.dashes[id].name;
-                btn.onclick = () => openDash(id);
-                container.appendChild(btn);
+                const d = document.createElement('div');
+                d.style.padding = "10px"; d.style.cursor = "pointer"; d.innerText = "📂 " + state.dashes[id].name;
+                d.onclick = () => { state.id = id; open(); };
+                c.appendChild(d);
             });
         }
 
-        function openDash(id) {
-            state.currentId = id;
+        function open() {
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-details').style.display = 'block';
-            document.getElementById('current-title').innerText = state.dashes[id].name;
-            document.getElementById('editor').value = state.dashes[id].content;
-            processContent(state.dashes[id].content);
+            const d = state.dashes[state.id];
+            document.getElementById('dash-title').innerText = d.name;
+            document.getElementById('editor').value = d.content;
+            update();
         }
 
-        function handleUpdate() {
-            const content = document.getElementById('editor').value;
-            state.dashes[state.currentId].content = content;
-            processContent(content);
-            save();
-        }
-
-        async function save() {
-            if (typeof OBR !== "undefined" && OBR.isReady) {
-                await OBR.scene.setMetadata({ "com.dash.data": state.dashes });
-            } else {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state.dashes));
-                renderList();
-            }
-        }
-
-        function processContent(text) {
+        function update() {
+            const txt = document.getElementById('editor').value;
+            state.dashes[state.id].content = txt;
+            
+            // Lógica de Variables y Bonus
             state.stats = {};
-            // Captura variables
-            text.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, name, val) => {
-                state.stats[name.toUpperCase()] = parseInt(val);
+            // 1. Valores base (FUE=10)
+            txt.replace(/([A-Z]+)\s*=\s*(\d+)/gi, (m, n, v) => { state.stats[n.toUpperCase()] = parseInt(v); });
+            // 2. Bonus (+5FUE)
+            txt.replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, op, v, n) => {
+                const name = n.toUpperCase();
+                const val = parseInt(v) * (op === '-' ? -1 : 1);
+                state.stats[name] = (state.stats[name] || 0) + val;
             });
 
-            // Renderiza preview
-            let html = text
+            let html = txt
                 .replace(/([A-Z]+)\s*=\s*(\d+)/gi, '<span class="stat-tag">$1=$2</span>')
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/#(.*?)(\n|$)/g, '<h2>$1</h2>')
+                .replace(/([\+\-]\d+[A-Z]+)/gi, '<span class="bonus-tag">$1</span>')
                 .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, (f) => `<span class="dice-roll" onclick="roll('${f}')">${f}</span>`);
             
-            document.getElementById('preview-area').innerHTML = html.replace(/\n/g, '<br>');
+            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+            save();
         }
 
         function roll(formula) {
             let f = formula.toUpperCase();
-            // Reemplazar variables FUE, INT, etc.
             Object.keys(state.stats).forEach(s => {
                 f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), state.stats[s]);
             });
 
-            const diceMatch = f.match(/(\d*)D(\d+)/i);
-            if (!diceMatch) return;
-
-            const n = parseInt(diceMatch[1]) || 1;
-            const sides = parseInt(diceMatch[2]);
-            let rolls = [];
-            let diceSum = 0;
-
+            const dm = f.match(/(\d*)D(\d+)/i);
+            if (!dm) return;
+            const n = parseInt(dm[1]) || 1, s = parseInt(dm[2]);
+            let rs = [], sum = 0;
             for(let i=0; i<n; i++) {
-                const r = Math.floor(Math.random() * sides) + 1;
-                diceSum += r;
-                let style = r === sides ? 'crit' : (r === 1 ? 'fumble' : '');
-                rolls.push(`<span class="${style}">${r}</span>`);
+                const r = Math.floor(Math.random()*s)+1;
+                sum += r;
+                rs.push(`<span class="${r===s?'c-max':(r===1?'c-min':'')}">${r}</span>`);
             }
 
-            let final;
-            let mathPart = f.replace(diceMatch[0], "");
-            try {
-                // El eval ahora soporta paréntesis porque mathPart los incluye
-                final = eval(diceSum + mathPart.replace(/[^0-9\+\-\*\/\(\)]/g, ''));
-            } catch { final = diceSum; }
+            let res;
+            try { res = eval(sum + f.replace(dm[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '')); } 
+            catch { res = sum; }
 
             document.getElementById('dice-output').innerHTML = `
                 <div class="result-box" onclick="this.innerHTML=''">
-                    <div style="color:var(--primary); font-size:12px;">Fórmula: ${formula}</div>
-                    <div class="dice-faces">[ ${rolls.join(', ')} ] ${mathPart}</div>
-                    <div style="font-size:24px; font-weight:bold;">TOTAL: ${final}</div>
-                    <div style="font-size:10px; color:#555; margin-top:5px;">(Clic para cerrar)</div>
+                    <div style="font-size:12px; opacity:0.6;">${formula} (Final: ${f})</div>
+                    <div style="font-size:1.2em;">[ ${rs.join(', ')} ]</div>
+                    <div style="font-size:24px; font-weight:bold;">TOTAL: ${res}</div>
                 </div>`;
         }
 
+        function ins(a, b) {
+            const e = document.getElementById('editor');
+            const start = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, start) + a + e.value.substring(start, end) + b + e.value.substring(end);
+            update();
+        }
+
         function showList() {
-            state.currentId = null;
             document.getElementById('view-list').style.display = 'block';
             document.getElementById('view-details').style.display = 'none';
         }
-
-        init();
     </script>
 </body>
 </html>
