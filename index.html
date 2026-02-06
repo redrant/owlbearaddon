@@ -11,63 +11,69 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); }
-        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
+        /* UI Estándar */
+        .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
+        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 1px; }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
         #view-details { display: none; }
 
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; }
-        .folder { border-left: 5px solid var(--var); }
+        /* Sistema de Carpetas y Drag */
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; border: 2px dashed transparent; }
+        .items-area.drag-over { border-color: var(--p); background: rgba(187, 134, 252, 0.05); }
+        
+        .card { padding: 12px; background: var(--surf); border-radius: 8px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .folder { border-left: 5px solid var(--var); font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
-        .f-content { display: none; flex-direction: column; gap: 4px; padding-left: 15px; }
+        .f-content { display: none; flex-direction: column; gap: 4px; padding-left: 15px; margin-bottom: 5px; }
         .f-content.open { display: flex; }
 
-        /* Componentes del Preview */
-        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 10px; border-radius: 8px; margin: 5px 0; border: 1px solid rgba(3,218,198,0.2); }
-        .cb-input { width: 18px; height: 18px; margin-right: 10px; accent-color: var(--accent); cursor: pointer; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); }
-        .var-tag { color: var(--var); font-weight: bold; background: rgba(255,171,64,0.1); padding: 0 4px; border-radius: 4px; }
+        /* Preview / Juego */
+        .cb-row { display: flex; align-items: center; background: rgba(3,218,198,0.05); padding: 10px; border-radius: 8px; margin: 5px 0; border: 1px solid rgba(3,218,198,0.1); }
+        .cb-input { width: 18px; height: 18px; margin-right: 12px; accent-color: var(--accent); }
+        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--p); padding: 0 3px; }
+        .var-tag { color: var(--var); font-weight: bold; background: rgba(255,171,64,0.1); padding: 0 4px; border-radius: 4px; font-family: monospace; }
         .note-btn { background: rgba(3,218,198,0.1); color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 2px; }
 
         /* Editor */
-        .toolbar { display: flex; gap: 4px; background: #222; padding: 6px; border-radius: 8px 8px 0 0; border: 1px solid #444; }
-        .tool { background: #333; color: white; border: 1px solid #444; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        textarea { flex: 1; background: #080808; color: #ccc; padding: 12px; border: 1px solid #444; border-top: none; font-family: monospace; resize: none; outline: none; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; }
+        .toolbar { display: flex; gap: 5px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; }
+        .tool { background: #333; color: white; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        textarea { flex: 1; background: #080808; color: #ccc; padding: 12px; border: 1px solid #444; border-top: none; font-family: 'Consolas', monospace; resize: none; outline: none; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; white-space: pre-wrap; }
 
-        /* Animación Slot */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; }
-        .slot-box { font-size: 70px; font-weight: bold; margin: 20px 0; height: 80px; display: flex; justify-content: center; align-items: center; }
-        .crit { color: var(--crit); text-shadow: 0 0 20px var(--crit); }
-        .fail { color: var(--fail); text-shadow: 0 0 20px var(--fail); }
+        /* Slot Machine Overlay */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #1a1a1d; border: 2px solid var(--p); padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; }
+        .slot-val { font-size: 80px; font-weight: bold; margin: 15px 0; height: 100px; display: flex; justify-content: center; align-items: center; color: white; }
+        .crit-anim { color: var(--crit); text-shadow: 0 0 25px var(--crit); animation: shake 0.2s infinite; }
+        .fail-anim { color: var(--fail); text-shadow: 0 0 25px var(--fail); }
+        @keyframes shake { 0%{transform:rotate(1deg)} 50%{transform:rotate(-1deg)} 100%{transform:rotate(1deg)} }
 
-        .log { height: 100px; background: #000; padding: 8px; font-size: 11px; border-radius: 8px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        .log { height: 120px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; overflow-y: auto; margin-top: 15px; border: 1px solid #333; }
     </style>
 </head>
-<body>
+<body ondragover="event.preventDefault()">
 
-    <div class="header"><div class="sig">MY DASHES v5.8 - ENGINE FIXED</div></div>
+    <div class="header"><div class="sig">MY DASHES v6.0 - MASTER ENGINE</div></div>
 
     <div id="view-list">
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:6px;">
-            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
-            <button onclick="addItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#222; border:1px solid #444; color:white; border-radius:8px;">
+            <button onclick="addItem('dash')" class="tool" style="background:var(--p); color:black;">DASH</button>
+            <button onclick="addItem('folder')" class="tool" style="background:var(--var); color:black;">FOLDER</button>
         </div>
-        <div id="items-container" class="items-area"></div>
+        <div id="items-container" class="items-area" ondrop="dropOnRoot(event)" ondragover="allowDrop(event)"></div>
         <div class="log" id="log-content"></div>
     </div>
 
     <div id="view-details">
         <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:10px;">
-            <button onclick="goBack()" class="tool">⬅ ATRÁS</button>
-            <b id="det-title" style="color:var(--p)"></b>
-            <button onclick="openOwnerMenu()" class="tool">👤</button>
+            <button onclick="goBack()" class="tool">⬅ VOLVER</button>
+            <b id="det-title" style="color:var(--p); letter-spacing:1px;"></b>
+            <button onclick="deleteItem()" class="tool" style="background:var(--fail);">🗑️</button>
         </div>
-        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:12px; background:var(--p); border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
+        
+        <button onclick="toggleMode()" id="btn-mode" style="width:100%; padding:14px; background:var(--p); border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom:10px;">MODO JUEGO</button>
         
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1;">
             <div class="toolbar">
@@ -75,7 +81,6 @@
                 <button class="tool" onclick="promptGlow()">GLOW</button>
                 <button class="tool" onclick="ins('[cb] ','')">CASILLA</button>
                 <button class="tool" onclick="promptNote()">NOTA</button>
-                <button onclick="deleteItem()" class="tool" style="background:var(--fail); margin-left:auto;">🗑️</button>
             </div>
             <textarea id="editor" oninput="updateContent()"></textarea>
         </div>
@@ -84,19 +89,22 @@
 
     <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-formula" style="opacity:0.5; font-size:14px;"></div>
-            <div id="d-slot" class="slot-box">0</div>
-            <div id="d-det" style="font-size:14px; color:#666;"></div>
+            <div id="d-form" style="opacity:0.5; font-size:14px; font-weight:bold;"></div>
+            <div id="d-slot" class="slot-val">0</div>
+            <div id="d-res" style="font-size:14px; color:#777;"></div>
         </div>
     </div>
 
     <div id="msg-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()"><h3 id="msg-t"></h3><div id="msg-b" style="text-align:left;"></div></div>
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2 id="msg-t" style="color:var(--accent); margin-top:0;"></h2>
+            <div id="msg-b" style="text-align:left; font-size:16px;"></div>
+        </div>
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: true, folders: {} };
-        const DB = "MD_DATA_58", LG = "MD_LOG_58";
+        let state = { items: {}, log: [], id: null, edit: true, folders: {}, dragId: null };
+        const DB = "MD_V6_DB", LG = "MD_V6_LG";
 
         async function init() {
             try {
@@ -121,20 +129,36 @@
             save();
         }
 
+        // DRAG & DROP LOGIC
+        function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function dropOnRoot(e) { 
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            if(state.dragId) { state.items[state.dragId].parent = null; save(); }
+        }
+
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
             
+            // Render Folders
             vals.filter(f => f.type === 'folder').forEach(f => {
-                const d = document.createElement('div');
-                d.className = "card folder"; d.innerHTML = `<span>📁 ${f.name}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
-                d.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
-                cont.appendChild(d);
+                const div = document.createElement('div');
+                div.className = "card folder"; div.draggable = true;
+                div.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.folders[f.id] ? '▲' : '▼'}</span>`;
+                div.onclick = () => { state.folders[f.id] = !state.folders[f.id]; render(); };
+                div.ondragstart = () => state.dragId = f.id;
+                div.ondragover = e => { e.preventDefault(); e.currentTarget.style.background = "rgba(255,171,64,0.1)"; };
+                div.ondragleave = e => e.currentTarget.style.background = "";
+                div.ondrop = (e) => { e.stopPropagation(); state.items[state.dragId].parent = f.id; save(); };
+                cont.appendChild(div);
+
                 const sub = document.createElement('div');
                 sub.className = "f-content" + (state.folders[f.id] ? " open" : "");
                 vals.filter(i => i.parent === f.id).forEach(i => sub.appendChild(createCard(i)));
                 cont.appendChild(sub);
             });
+
+            // Render Root Dashes
             vals.filter(i => i.type === 'dash' && !i.parent).forEach(i => cont.appendChild(createCard(i)));
             
             document.getElementById('log-content').innerHTML = state.log.map(l => `<div><b>${l.f}:</b> ${l.r}</div>`).join('');
@@ -143,16 +167,17 @@
 
         function createCard(it) {
             const d = document.createElement('div'); d.className = "card dash";
-            d.innerHTML = `<span>📄 ${it.name}</span>`;
+            d.draggable = true; d.innerHTML = `<span>📄 ${it.name}</span>`;
             d.onclick = (e) => { e.stopPropagation(); state.id = it.id; open(); };
+            d.ondragstart = () => state.dragId = it.id;
             return d;
         }
 
         function open() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; state.edit = false; sync(); }
 
         function sync() {
-            const it = state.items[state.id];
-            document.getElementById('det-title').innerText = it.name;
+            const it = state.items[state.id]; if(!it) return;
+            document.getElementById('det-title').innerText = it.name.toUpperCase();
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content;
@@ -161,7 +186,8 @@
 
         function renderPreview(txt) {
             const stats = {};
-            txt.replace(/([A-Z]+)\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            // RECOLECTOR DE VARIABLES (FUE=10)
+            txt.replace(/([A-Z]{2,})\s*=\s*([\+\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
             
             let html = txt
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -170,47 +196,63 @@
                 .replace(/\[cb\] (.*)/g, '<div class="cb-row"><input type="checkbox" class="cb-input"><span>$1</span></div>')
                 .replace(/\b([A-Z]{2,})\b/g, m => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
 
+            // MOTOR DE DADOS
             html = html.replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => {
                 if(!/d/i.test(f)) return f;
                 return `<span class="roll-link" onclick="runRoll('${f}',${JSON.stringify(stats)})">${f}</span>`;
             });
 
-            document.getElementById('preview').innerHTML = html.replace(/\n/g, '<br>');
+            document.getElementById('preview').innerHTML = html;
         }
 
         function runRoll(formula, stats) {
             let f = formula.toUpperCase();
-            let rawF = f;
-            for(let s in stats) f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
+            let original = formula;
             
+            // 1. Reemplazar Variables por números
+            for(let s in stats) {
+                f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
+            }
+            
+            // 2. Extraer el dado (NdS)
             const match = f.match(/(\d*)D(\d+)/i);
             const num = parseInt(match[1]) || 1;
             const sides = parseInt(match[2]);
+            
             let rolls = [], sum = 0;
-            for(let i=0; i<num; i++) { const r = Math.floor(Math.random()*sides)+1; sum += r; rolls.push(r); }
+            for(let i=0; i<num; i++) {
+                const r = Math.floor(Math.random()*sides)+1;
+                sum += r; rolls.push(r);
+            }
 
-            let total;
-            try { total = eval(f.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)]/g, '')); } catch(e) { total = sum; }
+            // 3. Evaluar resto de la matemática
+            let finalTotal;
+            try {
+                const formulaLimpia = f.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                finalTotal = Math.floor(eval(formulaLimpia));
+            } catch(e) { finalTotal = sum; }
 
+            // 4. Animación Slot (1.5s)
             const ov = document.getElementById('dice-overlay');
             const slot = document.getElementById('d-slot');
             ov.style.display = 'flex';
-            document.getElementById('d-formula').innerText = formula;
+            document.getElementById('d-form').innerText = original;
             
-            // Animación Slot: 1.5s mostrando caras aleatorias
-            let count = 0;
-            const anim = setInterval(() => {
+            let c = 0;
+            const interval = setInterval(() => {
                 slot.innerText = Math.floor(Math.random() * (sides * num)) + 1;
-                if(count++ > 20) {
-                    clearInterval(anim);
-                    slot.innerText = total;
-                    slot.className = "slot-box " + (sum === (sides*num) ? 'crit' : (sum === num ? 'fail' : ''));
-                    document.getElementById('d-det').innerText = `Caras: [${rolls.join('+')}]`;
+                slot.className = "slot-val";
+                if(c++ > 18) {
+                    clearInterval(interval);
+                    slot.innerText = finalTotal;
+                    if(sum === (sides*num)) slot.className = "slot-val crit-anim";
+                    if(sum === num) slot.className = "slot-val fail-anim";
+                    document.getElementById('d-res').innerText = `Dados: [${rolls.join('+')}]`;
                 }
-            }, 70);
+            }, 75);
 
-            state.log.unshift({ f: formula, r: total });
-            if(state.log.length > 10) state.log.pop();
+            state.log.unshift({ f: original, r: finalTotal });
+            if(state.log.length > 15) state.log.pop();
             save();
         }
 
@@ -218,10 +260,15 @@
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; save(); }
         function showNote(t, b) { document.getElementById('msg-t').innerText = t; document.getElementById('msg-b').innerHTML = b; document.getElementById('msg-overlay').style.display = 'flex'; }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
+        
+        function wrap(a, b) { 
+            const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd;
+            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end);
+            updateContent();
+        }
         function ins(a, b) { const e = document.getElementById('editor'); e.value += a + b; updateContent(); }
-        function promptNote() { const t = prompt("T:"); const c = prompt("C:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
-        function promptGlow() { const c = prompt("Color:", "cyan"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function promptNote() { const t = prompt("Título:"); const c = prompt("Nota:"); if(t&&c) ins(`[note=${t}]${c}[/note]`, ""); }
+        function promptGlow() { const c = prompt("Color:", "violet"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
 
         init();
