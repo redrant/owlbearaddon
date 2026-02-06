@@ -54,7 +54,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">MY DASH PLATINUM - TRUE LOG</div></div>
+    <div class="header"><div class="sig">MY DASH PLATINUM - SYNC</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -102,15 +102,16 @@
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
         <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
             <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6;"></div>
+            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 50vh; overflow-y: auto;"></div>
             <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
         </div>
     </div>
 
     <script>
-        const M_KEY = "PLATINUM_V6_FINAL";
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Jugador Web', openFolders: {}, isOBR: false };
+        const M_KEY = "PLATINUM_V10_FULL_SYNC";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'web', uname: 'Jugador', openFolders: {}, isOBR: false };
 
+        // --- MOTOR DUAL ---
         async function init() {
             try {
                 OBR.onReady(async () => {
@@ -128,8 +129,13 @@
         }
 
         function load(data) {
-            if(data) { state.items = data.items || {}; state.log = data.log || []; state.openFolders = data.openFolders || {}; }
-            render(); if(state.id) syncView();
+            if(data) {
+                state.items = data.items || {};
+                state.log = data.log || [];
+                state.openFolders = data.openFolders || {};
+            }
+            render();
+            if(state.id) syncView();
         }
 
         async function save() {
@@ -138,72 +144,73 @@
             else { localStorage.setItem(M_KEY, JSON.stringify(data)); render(); }
         }
 
-        function newItem(type) {
-            const n = document.getElementById('newName').value || "Nuevo";
-            const id = "id"+Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null, owner: null, ownerName: null };
-            document.getElementById('newName').value = ""; save();
-        }
-
-        function render() {
-            const cont = document.getElementById('items-container'); cont.innerHTML = "";
-            const vals = Object.values(state.items);
-            vals.filter(f => f.type === 'folder').forEach(f => {
-                const open = state.openFolders[f.id];
-                const d = document.createElement('div'); d.className = "card folder";
-                d.innerHTML = `<span>${open?'📂':'📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</span>`;
-                d.onclick = () => { state.openFolders[f.id] = !open; save(); };
-                cont.appendChild(d);
-                if(open) vals.filter(x => x.parent === f.id).forEach(x => { const c = createCard(x); c.style.marginLeft = "20px"; cont.appendChild(c); });
-            });
-            vals.filter(i => i.type === 'dash' && !i.parent).forEach(i => cont.appendChild(createCard(i)));
-            
-            document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small style="opacity:0.5">${l.det}</small></div>`
-            ).join('');
-        }
-
-        function createCard(it) {
-            const d = document.createElement('div'); d.className = "card dash";
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.ownerName ? `<small style="color:var(--p)">[${it.ownerName}]</small>` : ''}`;
-            d.onclick = () => { state.id = it.id; openDetails(); };
-            return d;
-        }
-
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
-
-        function syncView() {
-            const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
-            const obtn = document.getElementById('own-btn');
-            const tBar = document.getElementById('tab-bar');
-
-            if(it.owner === state.uid) {
-                obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; tBar.style.display = "flex";
-            } else {
-                obtn.innerText = it.owner ? it.ownerName : "OWNEAR";
-                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
-                tBar.style.display = it.owner ? "none" : "flex";
-                if(it.owner) state.edit = false;
-            }
-            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
-            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
-        }
-
+        // --- LOGICA DE DADOS ORIGINAL RESTAURADA ---
         function calculateMemory(txt) {
             const mem = {};
-            txt.split('\n').forEach(l => { const m = l.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i); if(m) mem[m[1].toUpperCase()] = parseInt(m[2]); });
+            txt.split('\n').forEach(l => {
+                const m = l.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
+                if(m) mem[m[1].toUpperCase()] = parseInt(m[2]);
+            });
             return mem;
         }
 
+        async function runRoll(formula) {
+            const it = state.items[state.id];
+            const mem = calculateMemory(it.content);
+            let logic = formula.toUpperCase();
+            
+            Object.keys(mem).forEach(k => { logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), mem[k]); });
+
+            const match = logic.match(/(\d*)D(\d+)/i);
+            if(!match) return;
+
+            const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
+            const rolls = [];
+            for(let i=0; i<n; i++) rolls.push(Math.floor(Math.random()*s)+1);
+
+            // UI Animación Original
+            document.getElementById('dice-overlay').style.display = 'flex';
+            document.getElementById('d-f').innerText = formula;
+            const container = document.getElementById('dice-container');
+            const totalVal = document.getElementById('total-val');
+            container.innerHTML = ""; totalVal.classList.remove('show');
+            document.getElementById('d-res').innerText = "...";
+
+            rolls.forEach(r => {
+                const d = document.createElement('div'); d.className = "die-num"; d.innerText = r;
+                if(r === s) d.style.color = "var(--crit)";
+                if(r === 1) d.style.color = "var(--fail)";
+                container.appendChild(d);
+            });
+
+            setTimeout(() => {
+                const sum = rolls.reduce((a,b)=>a+b, 0);
+                let final;
+                // Reparación del error +++: Limpiamos la cadena antes de eval
+                const evalStr = logic.replace(match[0], sum).replace(/\s/g, '').replace(/\+\+/g, '+').replace(/\-\-/g, '-');
+                try { final = eval(evalStr.replace(/[^0-9\+\-\*\/\(\)\.]/g, '')); } catch(e) { final = sum; }
+                
+                totalVal.innerText = final;
+                totalVal.classList.add('show');
+                
+                const breakdown = logic.replace(match[0], '').trim();
+                const detailStr = `[${rolls.join('+')}]${breakdown ? ' ' + (breakdown.startsWith('+') || breakdown.startsWith('-') ? '' : '+') + breakdown : ''}`;
+                document.getElementById('d-res').innerText = detailStr;
+
+                // Log con Usuario de Owlbear
+                state.log.unshift({ u: state.uname, f: formula, r: final, det: detailStr });
+                if(state.log.length > 15) state.log.pop();
+                save();
+            }, 200);
+        }
+
+        // --- RENDERIZADO Y OTROS ---
         function renderPreview(txt) {
             const mem = calculateMemory(txt);
             const lines = txt.split('\n').map(l => {
                 if(l.trim().startsWith('[+]')) {
-                    const c = l.replace('[+]', '').trim();
-                    return `<div class="check-btn" onclick="cloneToMyDash(\`${c.replace(/`/g, "\\`")}\`)">${renderElements(c, mem)}</div>`;
+                    const content = l.replace('[+]', '').trim();
+                    return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, mem)}</div>`;
                 }
                 return renderElements(l, mem);
             });
@@ -219,72 +226,81 @@
                 .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
         }
 
-        async function runRoll(formula) {
-            const it = state.items[state.id];
-            const mem = calculateMemory(it.content);
-            let logic = formula.toUpperCase();
-            Object.keys(mem).forEach(k => logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), mem[k]));
-            
-            const match = logic.match(/(\d*)D(\d+)/i);
-            if(!match) return;
-            const n = parseInt(match[1]) || 1, s = parseInt(match[2]);
-            const rolls = []; for(let i=0; i<n; i++) rolls.push(Math.floor(Math.random()*s)+1);
-            
-            // --- ANIMACIÓN ORIGINAL ---
-            document.getElementById('dice-overlay').style.display = 'flex';
-            document.getElementById('d-f').innerText = formula;
-            const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = ""; totalVal.classList.remove('show');
-            document.getElementById('d-res').innerText = "...";
+        function newItem(type) {
+            const n = document.getElementById('newName').value || "Nuevo";
+            const id = "id"+Date.now();
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Golpe 1d20+FUE', parent: null, owner: null };
+            document.getElementById('newName').value = ""; save();
+        }
 
-            let sum = 0;
-            rolls.forEach(r => {
-                const d = document.createElement('div'); d.className = "die-num"; d.innerText = r;
-                if(r === s) d.style.color = "var(--crit)";
-                if(r === 1) d.style.color = "var(--fail)";
-                container.appendChild(d);
-                sum += r;
+        function render() {
+            const cont = document.getElementById('items-container'); cont.innerHTML = "";
+            const vals = Object.values(state.items);
+            vals.filter(f => f.type === 'folder').forEach(f => {
+                const open = state.openFolders[f.id];
+                const d = document.createElement('div'); d.className = "card folder";
+                d.innerHTML = `<span>${open?'📂':'📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</span>`;
+                d.onclick = () => { state.openFolders[f.id] = !open; save(); };
+                cont.appendChild(d);
+                if(open) vals.filter(x => x.parent === f.id).forEach(x => { 
+                    const c = createCard(x); c.style.marginLeft = "20px"; cont.appendChild(c); 
+                });
             });
-
-            setTimeout(() => {
-                let final;
-                try { final = eval(logic.replace(match[0], sum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '')); } catch(e) { final = sum; }
-                totalVal.innerText = final;
-                totalVal.classList.add('show');
-                const breakdown = logic.replace(match[0], '').trim();
-                const detailStr = `[${rolls.join('+')}]${breakdown ? ' + '+breakdown : ''}`;
-                document.getElementById('d-res').innerText = detailStr;
-                
-                // Guardar en Log Sincronizado
-                state.log.unshift({ u: state.uname, f: formula, r: final, det: detailStr });
-                if(state.log.length > 15) state.log.pop();
-                save();
-            }, 200);
+            vals.filter(i => i.type === 'dash' && !i.parent).forEach(i => cont.appendChild(createCard(i)));
+            document.getElementById('log-content').innerHTML = state.log.map(l => 
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small style="opacity:0.5">${l.det}</small></div>`
+            ).join('');
         }
 
-        function toggleOwnership() { 
-            const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return;
-            it.owner = it.owner ? null : state.uid;
-            it.ownerName = it.owner ? state.uname : null;
-            save(); 
+        function createCard(it) {
+            const d = document.createElement('div'); d.className = "card dash";
+            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? `<small style="color:var(--p)">[OWNER]</small>` : ''}`;
+            d.onclick = () => { state.id = it.id; openDetails(); };
+            return d;
         }
 
+        function syncView() {
+            const it = state.items[state.id]; if(!it) return;
+            document.getElementById('det-title').innerText = it.name.toUpperCase();
+            const obtn = document.getElementById('own-btn');
+            const tBar = document.getElementById('tab-bar');
+
+            if(it.owner === state.uid) {
+                obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; tBar.style.display = "flex";
+            } else {
+                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR";
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
+                tBar.style.display = it.owner ? "none" : "flex";
+                if(it.owner) state.edit = false;
+            }
+            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
+            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
+            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
+        }
+
+        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
+        function switchTab(e) { state.edit = e; syncView(); }
+        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
+        function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
+        function askNote() { 
+            const t=prompt("Título:"); let c=prompt("Contenido (Doble espacio = Salto de línea):"); 
+            if(t && c) ins(`\\n[note=${t}]${c}[/note]`, ""); 
+        }
         function openNote(t, c) { 
             document.getElementById('note-title').innerText = t; 
             document.getElementById('note-body').innerText = decodeURIComponent(c).split('  ').join('\n'); 
             document.getElementById('note-overlay').style.display='flex'; 
         }
-
-        function switchTab(isEdit) { state.edit = isEdit; syncView(); }
-        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
-        function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(i => { if(i.parent===fid) i.parent=null; }); delete state.items[fid]; save(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar?")) { Object.values(state.items).forEach(i => { if(i.parent===fid) i.parent=null; }); delete state.items[fid]; save(); } }
+        function toggleOwnership() { 
+            const it = state.items[state.id];
+            if(it.owner && it.owner !== state.uid) return alert("Ya tiene dueño.");
+            it.owner = it.owner ? null : state.uid; save(); 
+        }
         function cloneToMyDash(t) { 
             const my = Object.values(state.items).find(i => i.owner === state.uid); 
             if(my) { my.content += "\n"+t; save(); alert("¡Clonado!"); } else alert("OWNEA un Dash primero.");
