@@ -8,59 +8,50 @@
         :root { 
             --p: #bb86fc; --bg: #0d0d0f; --surf: #1a1a1d; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --folder: #ff9800;
+            --var-color: #ffab40; /* Color para variables detectadas */
         }
         
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* HEADER */
         .header { padding: 10px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-        .sig { font-size: 16px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 1px; }
+        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); }
 
-        /* VISTAS */
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
         #view-details { display: none; }
 
-        /* CONTROLES */
         .controls { display: flex; gap: 8px; margin-bottom: 15px; }
         input { flex: 1; background: #2a2a2e; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; outline: none; }
-        .btn { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; color: #000; text-transform: uppercase; transition: 0.2s; }
-        .btn-p { background: var(--p); } 
-        .btn-f { background: var(--folder); }
+        .btn { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.2s; }
+        .btn-p { background: var(--p); color: #000; } 
         .btn-ghost { background: transparent; color: var(--t); border: 1px solid #444; }
 
-        /* ITEMS AREA */
         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .card { padding: 14px; background: #252529; border-radius: 10px; border: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .card.folder { border-left: 5px solid var(--folder); }
         .card.dash { border-left: 5px solid var(--p); }
-        .child { margin-left: 20px; display: none; }
-        .is-open { display: flex !important; }
 
         /* EDITOR / PREVIEW */
         .toolbar { display: flex; gap: 4px; background: #222; padding: 8px; border-radius: 8px 8px 0 0; border: 1px solid #444; flex-wrap: wrap; }
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; border-top: none; border-radius: 0 0 8px 8px; font-family: 'Consolas', monospace; resize: none; outline: none; font-size: 14px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg); border: 1px solid #222; border-radius: 10px; line-height: 1.6; display: none; }
 
-        /* RENDER ELEMENTS */
-        .note-btn { background: rgba(3, 218, 198, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; cursor: pointer; margin: 4px 2px; font-weight: bold; display: inline-block; }
-        .cb-row { display: flex; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin: 10px 0; border-left: 4px solid var(--accent); border-top: 1px solid #333; }
-        .cb-input { width: 22px; height: 22px; margin-right: 12px; accent-color: var(--accent); cursor: pointer; margin-top: 2px; }
-        .roll-link { color: var(--p); font-weight: bold; cursor: pointer; text-decoration: underline dotted; padding: 0 2px; display: inline-block; }
-        .roll-link:hover { color: var(--accent); }
+        /* ELEMENTOS RENDERIZADOS */
+        .var-tag { color: var(--var-color); font-weight: bold; font-family: monospace; }
+        .roll-link { color: var(--accent); font-weight: bold; cursor: pointer; border-bottom: 1px dotted var(--accent); padding: 0 2px; }
+        .cb-row { display: flex; align-items: start; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin: 8px 0; border-left: 4px solid var(--accent); }
+        .cb-input { margin-right: 12px; width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 
         /* LOG */
         .log-panel { height: 130px; background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 11px; margin-top: 10px; }
-        .log-row { padding: 4px 0; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center; }
+        .log-row { padding: 4px 0; border-bottom: 1px solid #111; display: flex; justify-content: space-between; }
 
-        /* DADOS MODAL */
+        /* MODAL DADOS */
         #dice-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .dice-modal { background: #1a1a1d; border: 2px solid var(--p); border-radius: 20px; padding: 30px; text-align: center; min-width: 280px; transform: scale(0.7); opacity: 0; transition: all 0.25s cubic-bezier(0.17, 0.89, 0.32, 1.49); }
-        .dice-modal.active { transform: scale(1); opacity: 1; }
-        .dice-res { font-size: 72px; font-weight: bold; display: block; margin: 10px 0; line-height: 1; }
-        .crit { color: var(--crit); text-shadow: 0 0 20px var(--crit); animation: shake 0.4s; }
-        .fail { color: var(--fail); text-shadow: 0 0 20px var(--fail); }
-        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+        .dice-modal { background: #1a1a1d; border: 2px solid var(--p); border-radius: 20px; padding: 30px; text-align: center; min-width: 280px; transform: scale(0.8); transition: 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.49); }
+        .dice-modal.active { transform: scale(1); }
+        .dice-res { font-size: 70px; font-weight: bold; display: block; margin: 10px 0; color: white; }
+        .crit { color: var(--crit) !important; text-shadow: 0 0 20px var(--crit); }
+        .fail { color: var(--fail) !important; text-shadow: 0 0 20px var(--fail); }
 
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; }
         .modal-box { background: #1a1a1d; border: 1px solid #444; padding: 25px; border-radius: 15px; width: 90%; max-width: 380px; }
@@ -69,20 +60,19 @@
 <body>
 
     <div class="header">
-        <div class="sig">MY DASHES - REDRANT v4.0</div>
+        <div class="sig">MY DASHES v4.5 - READY</div>
     </div>
 
     <div id="view-list">
         <div class="controls">
-            <input type="text" id="itemName" placeholder="Nombre...">
-            <button onclick="create('dash')" class="btn btn-p">+DASH</button>
-            <button onclick="create('folder')" class="btn btn-f">+CARPETA</button>
+            <input type="text" id="itemName" placeholder="Nombre del Dash...">
+            <button onclick="addItem()" class="btn btn-p">+ NUEVO</button>
         </div>
         <div id="items-container" class="items-area"></div>
         <div class="log-panel">
             <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
-                <b style="color:var(--p)">HISTORIAL DE TIRADAS</b>
-                <button onclick="clearLog()" id="admin-log" style="background:none; border:none; color:var(--fail); font-size:9px; cursor:pointer; opacity:0.6;">LIMPIAR LOG</button>
+                <b style="color:var(--p)">LOG GLOBAL</b>
+                <button onclick="clearLog()" style="background:none; border:none; color:var(--fail); font-size:9px; cursor:pointer;">LIMPIAR</button>
             </div>
             <div id="log-content"></div>
         </div>
@@ -92,31 +82,29 @@
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:12px;">
             <button onclick="goBack()" class="btn btn-ghost">⬅ VOLVER</button>
             <div id="det-title" style="font-weight:bold; color:var(--p);"></div>
-            <button id="owner-btn" onclick="openOwnerMenu()" class="btn btn-ghost">👤</button>
+            <button onclick="openOwnerMenu()" class="btn btn-ghost">👤</button>
         </div>
         
         <button onclick="toggleVisual()" id="visual-btn" style="width:100%; padding:14px; background:var(--p); color:#000; font-weight:bold; border:none; border-radius:10px; cursor:pointer; margin-bottom:12px;">VISUALIZAR</button>
 
         <div id="editor-ui" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
             <div class="toolbar">
-                <button class="btn btn-ghost" onclick="ins('[cb] ','')">🔘 Casilla+</button>
-                <button class="btn btn-ghost" onclick="ins('[note=Titulo]','Contenido[/note]')">📝 Nota+</button>
-                <button class="btn btn-ghost" onclick="wrap('**','**')"><b>B</b></button>
-                <button class="btn btn-ghost" onclick="wrap('*','*')"><i>I</i></button>
-                <button onclick="deleteItem()" class="btn btn-p" style="background:var(--fail); color:white; margin-left:auto;">🗑️</button>
+                <button class="tool" onclick="ins('[cb] ','')">🔘 Casilla</button>
+                <button class="tool" onclick="wrap('**','**')"><b>B</b></button>
+                <button class="tool" onclick="wrap('*','*')"><i>I</i></button>
+                <button onclick="deleteItem()" class="btn" style="background:var(--fail); color:white; margin-left:auto;">🗑️</button>
             </div>
-            <textarea id="editor" oninput="saveContent()" placeholder="Ejemplo:&#10;FUE=10&#10;+2FUE&#10;Tirada: 1d20+FUE"></textarea>
+            <textarea id="editor" oninput="saveContent()"></textarea>
         </div>
         <div id="preview"></div>
     </div>
 
     <div id="dice-overlay" onclick="closeDice()">
-        <div id="dice-m" class="dice-modal" onclick="event.stopPropagation()">
-            <div id="d-player" style="font-size:10px; color:var(--p); letter-spacing: 2px;">TIRADA</div>
-            <div id="d-formula" style="color:#777; margin:5px 0; font-family:monospace;"></div>
+        <div id="dice-m" class="dice-modal">
+            <div id="d-player" style="font-size:10px; color:var(--p); letter-spacing:2px;">USER</div>
+            <div id="d-formula" style="color:#777; margin:5px 0;"></div>
             <span id="d-res" class="dice-res">0</span>
-            <div id="d-faces" style="color:#555; font-size:15px; margin-top:10px; font-family:monospace;"></div>
-            <button onclick="closeDice()" class="btn btn-ghost" style="margin-top:20px; width:100%;">CERRAR</button>
+            <div id="d-faces" style="color:#555; font-size:14px;"></div>
         </div>
     </div>
 
@@ -125,10 +113,11 @@
     </div>
 
     <script>
-        const DB_KEY = "REDRANT_V4_DATA";
-        const LG_KEY = "REDRANT_V4_LOG";
-        let state = { items: {}, log: [], id: null, editing: true, uid: 'local', uname: 'DM', role: 'GM', open: {} };
+        const DB_KEY = "REDRANT_V45_DATA";
+        const LG_KEY = "REDRANT_V45_LOG";
+        let state = { items: {}, log: [], id: null, editing: true, uid: 'local', uname: 'DM Web', role: 'GM' };
 
+        // --- INICIALIZACIÓN ---
         async function init() {
             try {
                 await OBR.onReady(async () => {
@@ -146,6 +135,7 @@
                     render();
                 });
             } catch(e) {
+                console.log("Modo Web Activo");
                 const saved = localStorage.getItem(DB_KEY);
                 if(saved) state.items = JSON.parse(saved);
                 render();
@@ -153,7 +143,7 @@
         }
 
         async function save() {
-            if(window.OBR && OBR.scene) {
+            if(window.OBR && OBR.scene && OBR.scene.isReady) {
                 await OBR.scene.setMetadata({ [DB_KEY]: state.items, [LG_KEY]: state.log });
             } else {
                 localStorage.setItem(DB_KEY, JSON.stringify(state.items));
@@ -161,10 +151,112 @@
             }
         }
 
-        function create(type) {
-            const n = document.getElementById('itemName').value || "Nuevo " + type;
-            const id = "id_" + Date.now();
-            state.items[id] = { id, type, name: n, content: "", owner: null, parent: null };
+        // --- LÓGICA DE DADOS (CORREGIDA) ---
+        function runRoll(formula, statsJson) {
+            const stats = JSON.parse(statsJson);
+            let f = formula.toUpperCase();
+            
+            // Reemplazar variables con color de depuración
+            for (let s in stats) {
+                f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]);
+            }
+            
+            const match = f.match(/(\d*)D(\d+)/i);
+            if(!match) return;
+
+            const n = parseInt(match[1]) || 1;
+            const sides = parseInt(match[2]);
+            let rolls = [], sum = 0;
+
+            for(let i=0; i<n; i++) {
+                const r = Math.floor(Math.random()*sides)+1;
+                sum += r;
+                rolls.push(r);
+            }
+
+            let total;
+            try {
+                const mathPart = f.replace(match[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '');
+                total = Math.floor(eval(sum + mathPart));
+            } catch(e) { total = sum; }
+
+            // Actualizar Log ANTES de mostrar modal
+            state.log.unshift({ u: state.uname, f: formula, r: total });
+            if(state.log.length > 20) state.log.pop();
+            save();
+
+            // Mostrar Modal
+            const overlay = document.getElementById('dice-overlay');
+            const resEl = document.getElementById('d-res');
+            
+            document.getElementById('d-player').innerText = state.uname.toUpperCase();
+            document.getElementById('d-formula').innerText = formula;
+            resEl.innerText = total;
+            
+            // Estética Críticos/Fallos
+            resEl.className = "dice-res";
+            if(sides === 20) {
+                if(sum === 20) resEl.classList.add('crit');
+                if(sum === 1) resEl.classList.add('fail');
+            }
+
+            document.getElementById('d-faces').innerText = `Caras: [ ${rolls.join(', ')} ]`;
+            overlay.style.display = 'flex';
+            setTimeout(() => document.getElementById('dice-m').classList.add('active'), 10);
+        }
+
+        function closeDice() {
+            document.getElementById('dice-m').classList.remove('active');
+            setTimeout(() => document.getElementById('dice-overlay').style.display = 'none', 200);
+        }
+
+        // --- RENDERIZADO ---
+        function renderPreview(txt) {
+            const stats = {};
+            // Detectar variables y marcarlas
+            txt.replace(/([A-Z]{2,})\s*=\s*([\-\d]+)/gi, (m, k, v) => stats[k.toUpperCase()] = parseInt(v));
+            txt.replace(/([\+\-])(\d+)([A-Z]{2,})/gi, (m, op, v, k) => {
+                const n = k.toUpperCase();
+                stats[n] = (stats[n] || 0) + (parseInt(v) * (op === '-' ? -1 : 1));
+            });
+
+            const preview = document.getElementById('preview');
+            preview.innerHTML = "";
+
+            txt.split('\n').forEach(line => {
+                if(!line.trim()) { preview.appendChild(document.createElement('br')); return; }
+                
+                let div = document.createElement('div');
+                let html = line
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    // Resaltar variables detectadas en el texto
+                    .replace(/\b([A-Z]{2,})\b/g, (m) => stats[m] !== undefined ? `<span class="var-tag">${m}</span>` : m);
+
+                if(line.startsWith('[cb]')) {
+                    div.className = "cb-row";
+                    const content = line.replace('[cb]', '').trim();
+                    div.innerHTML = `<input type="checkbox" class="cb-input" onclick="transfer('${content}', this)"><div>${parseDice(content, stats)}</div>`;
+                } else {
+                    div.innerHTML = parseDice(html, stats);
+                }
+                preview.appendChild(div);
+            });
+        }
+
+        function parseDice(txt, stats) {
+            return txt.replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
+                if(!/\d*d\d+/i.test(f)) return f;
+                // Usamos un disparador directo para evitar problemas de eventos
+                return `<span class="roll-link" onclick="runRoll('${f}', '${JSON.stringify(stats).replace(/"/g, '&quot;')}')">${f}</span>`;
+            });
+        }
+
+        // --- ACCIONES DASH ---
+        function addItem() {
+            const n = document.getElementById('itemName').value || "Nuevo Dash";
+            const id = "d_" + Date.now();
+            state.items[id] = { id, name: n, content: "FUE=10\n1d20+FUE", owner: null };
             document.getElementById('itemName').value = "";
             save();
         }
@@ -172,40 +264,19 @@
         function render() {
             const container = document.getElementById('items-container');
             container.innerHTML = "";
-            const items = Object.values(state.items);
-
-            items.filter(i => i.type === 'folder').forEach(f => {
+            Object.values(state.items).forEach(it => {
                 const div = document.createElement('div');
-                div.className = 'card folder';
-                div.innerHTML = `<span>📁 ${f.name.toUpperCase()}</span> <span>${state.open[f.id] ? '▲' : '▼'}</span>`;
-                div.onclick = () => { state.open[f.id] = !state.open[f.id]; render(); };
-                div.ondragover = e => e.preventDefault();
-                div.ondrop = e => { e.preventDefault(); move(state.dragId, f.id); };
+                div.className = 'card dash';
+                div.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
+                div.onclick = () => { state.id = it.id; openDetails(); };
                 container.appendChild(div);
-                items.filter(c => c.parent === f.id).forEach(child => container.appendChild(makeCard(child, true, state.open[f.id])));
             });
-
-            items.filter(i => i.type === 'dash' && !i.parent).forEach(d => container.appendChild(makeCard(d, false)));
 
             document.getElementById('log-content').innerHTML = state.log.map(l => `
                 <div class="log-row"><span><b>${l.u}:</b> ${l.f}</span> <b style="color:var(--accent)">${l.r}</b></div>
             `).join('');
             if(state.id) syncDetails();
         }
-
-        function makeCard(item, child, visible) {
-            const div = document.createElement('div');
-            div.className = `card dash ${child ? 'child' : ''} ${child && visible ? 'is-open' : ''}`;
-            div.draggable = true;
-            div.innerHTML = `<span>📄 ${item.name}</span> ${item.owner ? '👤' : ''}`;
-            div.onclick = (e) => { e.stopPropagation(); state.id = item.id; openDetails(); };
-            div.ondragstart = () => state.dragId = item.id;
-            div.ondragover = e => e.preventDefault();
-            div.ondrop = e => { e.preventDefault(); move(state.dragId, null); };
-            return div;
-        }
-
-        function move(id, pid) { if(id !== pid) { state.items[id].parent = pid; save(); } }
 
         function openDetails() {
             document.getElementById('view-list').style.display = 'none';
@@ -217,143 +288,38 @@
         function syncDetails() {
             const it = state.items[state.id];
             if(!it) return goBack();
-            const canEdit = !it.owner || it.owner === state.uid || state.role === 'GM' || state.uid === 'local';
-            
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
-            document.getElementById('editor-ui').style.display = (state.editing && canEdit) ? 'flex' : 'none';
+            document.getElementById('det-title').innerText = it.name;
+            document.getElementById('editor-ui').style.display = state.editing ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.editing ? 'none' : 'block';
-            document.getElementById('visual-btn').innerText = state.editing ? "VER DASHBOARD" : "EDITAR DASHBOARD";
-            document.getElementById('visual-btn').style.display = canEdit ? 'block' : 'none';
-
+            document.getElementById('visual-btn').innerText = state.editing ? "VER DASH" : "EDITAR DASH";
             if(!state.editing) renderPreview(it.content);
-            else if(document.activeElement !== document.getElementById('editor')) document.getElementById('editor').value = it.content;
+            else document.getElementById('editor').value = it.content;
         }
 
-        function renderPreview(txt) {
-            const dashStats = {};
-            // Lógica de Variables Aislada del Dash
-            txt.replace(/([A-Z]{2,})\s*=\s*([\-\d]+)/gi, (m, k, v) => dashStats[k.toUpperCase()] = parseInt(v));
-            txt.replace(/([\+\-])(\d+)([A-Z]{2,})/gi, (m, op, v, k) => {
-                const n = k.toUpperCase();
-                dashStats[n] = (dashStats[n] || 0) + (parseInt(v) * (op === '-' ? -1 : 1));
-            });
-
-            const preview = document.getElementById('preview');
-            preview.innerHTML = "";
-
-            // Procesar por líneas para mantener estructura
-            const lines = txt.split('\n');
-            lines.forEach(line => {
-                if(!line.trim()) { preview.appendChild(document.createElement('br')); return; }
-                
-                let div = document.createElement('div');
-                let processed = line
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<button class="note-btn" onclick="showModal('${t}', '${c}')">${t}</button>`);
-
-                // Detectar Casillas
-                if(line.startsWith('[cb]')) {
-                    div.className = "cb-row";
-                    const content = line.replace('[cb]', '').trim();
-                    div.innerHTML = `<input type="checkbox" class="cb-input" onclick="transfer('${content.replace(/'/g,"\\'")}', this)"><div>${renderInline(content, dashStats)}</div>`;
-                } else {
-                    div.innerHTML = renderInline(processed, dashStats);
-                }
-                preview.appendChild(div);
-            });
-        }
-
-        function renderInline(txt, stats) {
-            return txt.replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => {
-                // Solo si contiene una 'd' y números es un dado
-                if(!/\d*d\d+/i.test(f)) return f;
-                return `<span class="roll-link" onclick="executeRoll('${f}', ${JSON.stringify(stats)})">${f}</span>`;
-            });
-        }
-
-        async function executeRoll(formula, stats) {
-            let f = formula.toUpperCase();
-            // Inyectar variables del dash
-            for (let s in stats) { f = f.replace(new RegExp(`\\b${s}\\b`, 'g'), stats[s]); }
-            
-            const match = f.match(/(\d*)D(\d+)/i);
-            if(!match) return;
-            const num = parseInt(match[1]) || 1, sides = parseInt(match[2]);
-            let rolls = [], sum = 0;
-
-            for(let i=0; i<num; i++) {
-                const r = Math.floor(Math.random()*sides)+1;
-                sum += r;
-                let color = "inherit";
-                if(r === sides) color = "var(--crit)";
-                if(r === 1) color = "var(--fail)";
-                rolls.push(`<span style="color:${color}">${r}</span>`);
-            }
-
-            let total;
-            try { 
-                const mathPart = f.replace(match[0], "").replace(/[^0-9\+\-\*\/\(\)]/g, '');
-                total = Math.floor(eval(sum + mathPart));
-            } catch(e) { total = sum; }
-
-            // UI Modal Fluido
-            const overlay = document.getElementById('dice-overlay');
-            const modal = document.getElementById('dice-m');
-            overlay.style.display = 'flex';
-            
-            document.getElementById('d-player').innerText = state.uname.toUpperCase();
-            document.getElementById('d-formula').innerText = formula;
-            const resEl = document.getElementById('d-res');
-            resEl.innerText = total;
-            resEl.className = `dice-res ${total >= (sides*num)*0.9 ? 'crit' : (total <= num ? 'fail' : '')}`;
-            if(sides === 20 && sum === 20) resEl.classList.add('crit');
-            if(sides === 20 && sum === 1) resEl.classList.add('fail');
-            
-            document.getElementById('d-faces').innerHTML = `CARAS: [ ${rolls.join(', ')} ]`;
-            
-            setTimeout(() => modal.classList.add('active'), 10);
-
-            // Log
-            state.log.unshift({ u: state.uname, f: formula, r: total });
-            if(state.log.length > 20) state.log.pop();
-            save();
-        }
-
-        async function transfer(text, cb) {
+        async function transfer(txt, cb) {
             if(!cb.checked) return;
-            const target = Object.values(state.items).find(i => i.owner === state.uid);
-            if(target) {
-                target.content += "\n" + text;
-                await save();
-                cb.disabled = true;
-                cb.parentElement.style.opacity = "0.4";
-            } else {
-                alert("No tienes un Dash asignado como propio. Pide al DM que te asigne uno con el icono 👤");
-                cb.checked = false;
-            }
+            const my = Object.values(state.items).find(i => i.owner === state.uid);
+            if(my) { my.content += "\n" + txt; save(); cb.disabled = true; }
+            else { alert("Asignate un dueño primero con 👤"); cb.checked = false; }
         }
 
         async function openOwnerMenu() {
-            let players = [];
-            try { players = await OBR.party.getPlayers(); } catch(e) {}
-            let h = `<h3>Asignar Propietario</h3><p style="font-size:11px; color:#777;">Solo esta persona podrá editar este Dash.</p>`;
+            let players = [{id:'local', name:'DM Web'}];
+            try { players = await OBR.party.getPlayers(); } catch(e){}
+            let h = `<h3>Dueño del Dash</h3>`;
             players.forEach(p => h += `<button onclick="setOwner('${p.id}')" class="btn btn-p" style="width:100%; margin-bottom:5px;">${p.name}</button>`);
-            h += `<button onclick="setOwner(null)" class="btn btn-ghost" style="width:100%;">Público (Todos editan)</button>`;
             document.getElementById('modal-content').innerHTML = h;
             document.getElementById('gen-overlay').style.display = 'flex';
         }
 
         function setOwner(uid) { state.items[state.id].owner = uid; save(); document.getElementById('gen-overlay').style.display='none'; }
-        function showModal(t, c) { document.getElementById('modal-content').innerHTML = `<h2>${t}</h2><div>${c.replace(/\n/g,'<br>')}</div>`; document.getElementById('gen-overlay').style.display = 'flex'; }
-        function closeDice() { document.getElementById('dice-m').classList.remove('active'); setTimeout(()=>document.getElementById('dice-overlay').style.display='none', 200); }
         function toggleVisual() { state.editing = !state.editing; syncDetails(); }
         function saveContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
-        function ins(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + b + e.value.substring(end); saveContent(); }
+        function ins(a, b) { const e = document.getElementById('editor'); e.value += a + b; saveContent(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); saveContent(); }
-        async function deleteItem() { if(confirm("¿Borrar permanentemente?")) { delete state.items[state.id]; await save(); goBack(); } }
-        async function clearLog() { state.log = []; await save(); }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function clearLog() { state.log = []; save(); }
 
         init();
     </script>
