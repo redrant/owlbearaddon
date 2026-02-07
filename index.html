@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        /* - Todos tus estilos originales aquí */
+        /* Estilos idénticos a tu versión estable */
         :root { 
             --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
@@ -44,7 +44,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">My Dash Platinum v1.1</div></div>
+    <div class="header"><div class="sig">My Star Dash Platinum v1.1</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -56,8 +56,8 @@
         <div class="log" id="log-content"></div>
         
         <div style="display:flex; gap:5px; margin-top:5px; border-top:1px solid #222; padding-top:5px;">
-            <button onclick="exportData()" class="tool" style="font-size:10px; opacity:0.6;">📤 EXPORTAR BACKUP</button>
-            <button onclick="importData()" class="tool" style="font-size:10px; opacity:0.6;">📥 IMPORTAR BACKUP</button>
+            <button onclick="exportData()" class="tool" style="font-size:10px; opacity:0.6;">📤 EXPORTAR</button>
+            <button onclick="importData()" class="tool" style="font-size:10px; opacity:0.6;">📥 IMPORTAR</button>
         </div>
     </div>
 
@@ -103,8 +103,7 @@
     </div>
 
     <script>
-        // MANTENEMOS TU LÓGICA DE ESTADO ORIGINAL
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Jugador', openFolders: {}, dragId: null };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
         async function init() {
@@ -112,13 +111,15 @@
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    // Escuchador de cambios en tiempo real para otros jugadores
+
+                    // SINCRONIZACIÓN EN VIVO: Esto actualiza la pantalla de todos cuando alguien cambia algo
                     OBR.scene.onMetadataChange(m => { 
                         state.items = m[DB] || {}; 
                         state.log = m[LG] || []; 
                         state.openFolders = m[OF] || {}; 
                         render(); 
                     });
+
                     const m = await OBR.scene.getMetadata();
                     state.items = m[DB] || {}; state.log = m[LG] || []; state.openFolders = m[OF] || {}; 
                     render();
@@ -126,15 +127,15 @@
             } catch(e) { render(); }
         }
 
+        // Guardado Online mejorado
         async function save() { 
             if(window.OBR && OBR.isReady) {
-                // Forzamos la actualización en los metadatos de la escena de Owlbear
                 await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); 
             }
             render(); 
         }
 
-        // --- NUEVAS FUNCIONES DE BACKUP ---
+        // --- FUNCIONES DE BACKUP ---
         function exportData() {
             const dataStr = JSON.stringify({ items: state.items, log: state.log, folders: state.openFolders });
             const blob = new Blob([dataStr], { type: "application/json" });
@@ -152,21 +153,17 @@
                     try {
                         const content = JSON.parse(ev.target.result);
                         if(confirm("¿Importar backup? Se borrará lo actual.")) {
-                            state.items = content.items || {};
-                            state.log = content.log || [];
-                            state.openFolders = content.folders || {};
+                            state.items = content.items || {}; state.log = content.log || []; state.openFolders = content.folders || {};
                             await save();
                         }
-                    } catch(err) { alert("Archivo inválido"); }
+                    } catch(err) { alert("Error"); }
                 };
                 reader.readAsText(file);
             };
             input.click();
         }
 
-        // RE-INTEGRACIÓN DE TODA TU LÓGICA ORIGINAL
-        // (Aquí van exactamente tus funciones newItem, render, createCard, calculateMemory, renderPreview, renderElements, runRoll, toggleOwnership, openNote, etc.)
-        
+        // MANTENEMOS TODA TU LÓGICA ESTABLE ORIGINAL ABAJO
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
@@ -259,7 +256,7 @@
                 });
             }
             let final; try { let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, ''); final = Math.floor(eval(mathStr)); } catch(e) { final = currentSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Mods: ${breakdown.join(', ')}`; }, 200);
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; }, 200);
             state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop(); save();
         }
@@ -285,7 +282,7 @@
                 .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
         }
 
-        // Resto de funciones se mantienen idénticas...
+        // Más funciones estables
         function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
         function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
         function syncView() {
