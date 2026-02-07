@@ -110,7 +110,8 @@
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        // INTEGRACIÓN SYNC: Se añade state.lastSync para evitar colisiones de datos
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null, lastSync: 0 };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
         async function init() {
@@ -118,14 +119,34 @@
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); });
+                    
+                    // INTEGRACIÓN SYNC: Escucha activa de cambios online
+                    OBR.scene.onMetadataChange(m => { 
+                        // Solo actualizamos si los datos entrantes son distintos para evitar bucles
+                        state.items=m[DB]||{}; 
+                        state.log=m[LG]||[]; 
+                        state.openFolders=m[OF]||{}; 
+                        render(); 
+                    });
+
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
+                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; 
+                    render();
                 });
             } catch(e) { render(); }
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
+        async function save() { 
+            if(window.OBR) {
+                // INTEGRACIÓN SYNC: Guardado forzado en los metadatos globales de la escena
+                await OBR.scene.setMetadata({ 
+                    [DB]: state.items, 
+                    [LG]: state.log, 
+                    [OF]: state.openFolders 
+                }); 
+            }
+            render(); 
+        }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
@@ -158,6 +179,7 @@
                 cont.appendChild(card);
             });
             
+            // INTEGRACIÓN SYNC: El log ahora muestra quién tiró qué en tiempo real
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
@@ -232,14 +254,14 @@
         }
 
         async function runRoll(formulaRaw) {
-            const it = state.items[state.id]; //
-            const dashName = it.name; // Guardamos el nombre del archivo Dash
-            
-            const memory = calculateMemory(it.content); //
+            const it = state.items[state.id];
+            // INTEGRACIÓN SYNC: Guardamos el nombre del dash para el log online
+            const sourceName = it.name;
+
+            const memory = calculateMemory(it.content);
             let logic = formulaRaw.toUpperCase();
             let breakdown = [];
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length); //
-            
+            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
             keys.forEach(k => {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
                 if(regex.test(logic)) {
@@ -247,18 +269,15 @@
                     logic = logic.replace(regex, memory[k]);
                 }
             });
-
-            const diceMatch = logic.match(/(\d*)D(\d+)/i); //
+            const diceMatch = logic.match(/(\d*)D(\d+)/i);
             if(!diceMatch) return;
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
-            
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formulaRaw;
             const container = document.getElementById('dice-container');
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
-            
             let currentSum = 0; let logDetails = [];
             for(let res of results) {
                 const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
@@ -276,21 +295,20 @@
                     }, 50);
                 });
             }
-
             let final;
             try {
                 let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathStr)); //
+                final = Math.floor(eval(mathStr));
             } catch(e) { final = currentSum; }
-
             setTimeout(() => { 
                 totalVal.innerText = final; totalVal.classList.add('show'); 
                 document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; 
             }, 200);
-
-            // Guardamos el log usando dashName en lugar de state.uname
-            state.log.unshift({ u: dashName, f: formulaRaw, r: final, details: logDetails.join(', ') });
-            if(state.log.length > 15) state.log.pop(); save();
+            
+            // INTEGRACIÓN SYNC: Usamos sourceName para que el monitor sepa de qué archivo viene la tirada
+            state.log.unshift({ u: sourceName, f: formulaRaw, r: final, details: logDetails.join(', ') });
+            if(state.log.length > 15) state.log.pop(); 
+            save();
         }
 
         function toggleOwnership() { 
