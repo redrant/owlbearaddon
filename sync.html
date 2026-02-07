@@ -1,82 +1,51 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        :root { --p: #bb86fc; --bg: #0d0d0f; --accent: #03dac6; }
         body { 
-            background: var(--bg); 
-            color: var(--t); 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            background: #000; color: #444; 
+            font-family: monospace; font-size: 10px; 
+            margin: 0; padding: 10px; 
+            display: flex; flex-direction: column; height: 100vh;
         }
-        .status { font-size: 10px; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; }
-        .log-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .log-card { background: #16161a; border-left: 3px solid var(--p); padding: 8px; border-radius: 4px; animation: fadeIn 0.3s ease; }
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
-        .log-formula { font-size: 11px; color: #666; display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .status { color: #bb86fc; font-weight: bold; margin-bottom: 5px; }
+        .log-mini { color: #666; overflow: hidden; }
     </style>
 </head>
 <body>
-    <div class="status">
-        <span>🛰️ NODO DE DATOS MYDASH</span>
-        <span id="sync-dot">🟢 ONLINE</span>
-    </div>
-    <div id="live-feed" class="log-container">
-        <div style="color:#444; text-align:center; margin-top:20px;">Esperando actividad...</div>
-    </div>
+    <div class="status">● MY DASH SYNC ACTIVE</div>
+    <div id="status-text">Conectando con la escena...</div>
+    <div class="log-mini" id="mini-log"></div>
 
     <script>
-        // Claves idénticas a MyDash para asegurar compatibilidad
-        const DB = "VPLAT_V3_ITEMS";
-        const LG = "VPLAT_V3_LOGS";
+        // MISMAS CLAVES QUE EL INDEX
+        const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
-        OBR.onReady(async () => {
-            const feed = document.getElementById('live-feed');
-            const dot = document.getElementById('sync-dot');
+        async function initSync() {
+            await OBR.onReady(async () => {
+                document.getElementById('status-text').innerText = "Sincronizado con Owlbear Rodeo";
 
-            // FUNCIÓN DE RENDERIZADO DE ACTIVIDAD
-            const updateFeed = (logs) => {
-                if (!logs || logs.length === 0) return;
-                feed.innerHTML = logs.map(l => `
-                    <div class="log-card">
-                        <div class="log-header">
-                            <span style="color:var(--p)">${l.u}</span>
-                            <span style="color:#fff">${l.r}</span>
-                        </div>
-                        <span class="log-formula">${l.f}</span>
-                    </div>
-                `).join('');
-            };
+                // ESCUCHA CAMBIOS
+                OBR.scene.onMetadataChange((m) => {
+                    const logs = m[LG] || [];
+                    if (logs.length > 0) {
+                        const last = logs[0];
+                        document.getElementById('mini-log').innerText = `Última acción: ${last.u} lanzó ${last.f}`;
+                    }
 
-            // ESCUCHA ACTIVA: Este es el motor de sincronización
-            OBR.scene.onMetadataChange((metadata) => {
-                // 1. Si cambian los logs, actualizamos el feed visual
-                if (metadata[LG]) {
-                    updateFeed(metadata[LG]);
-                }
-
-                // 2. Si cambian los ítems (ediciones de los jugadores), 
-                // hacemos que el punto brille para confirmar la recepción
-                dot.style.filter = "brightness(2)";
-                setTimeout(() => { dot.style.filter = "brightness(1)"; }, 300);
-
-                // IMPORTANTE: Al detectar el cambio de metadatos aquí, 
-                // Owlbear se asegura de que la escena esté sincronizada para todos.
-                console.log("Sincronización de escena completada.");
+                    // AUTO-MANTENIMIENTO: 
+                    // Si los logs superan los 20, el sync los recorta para que la partida no pese mucho
+                    if (logs.length > 20) {
+                        const trimmedLogs = logs.slice(0, 15);
+                        OBR.scene.setMetadata({ [LG]: trimmedLogs });
+                        console.log("Sync: Limpieza de logs realizada.");
+                    }
+                });
             });
+        }
 
-            // Carga inicial al abrir el addon
-            const data = await OBR.scene.getMetadata();
-            if (data[LG]) updateFeed(data[LG]);
-        });
+        initSync();
     </script>
 </body>
 </html>
