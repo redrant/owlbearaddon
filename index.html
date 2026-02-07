@@ -111,8 +111,10 @@
     </div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        // ESTADO GLOBAL MEJORADO
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null, isTyping: false };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
+        let saveTimeout;
 
         async function init() {
             try {
@@ -133,32 +135,39 @@
                     state.openFolders = m[OF] || {}; 
                     render();
                 });
-            } catch(e) { console.error("OBR not detected, local mode", e); render(); }
+            } catch(e) { console.error("Local mode", e); render(); }
         }
 
-        async function save() { 
-            if(window.OBR) {
-                await OBR.scene.setMetadata({ 
-                    [DB]: state.items, 
-                    [LG]: state.log, 
-                    [OF]: state.openFolders 
-                });
-            } 
-            render(); 
+        // DEBOUNCE: Evita que Owlbear bloquee la conexión por exceso de mensajes
+        function save() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                if(window.OBR) {
+                    await OBR.scene.setMetadata({ 
+                        [DB]: state.items, 
+                        [LG]: state.log, 
+                        [OF]: state.openFolders 
+                    });
+                }
+                state.isTyping = false;
+                render();
+            }, 500); // Medio segundo de espera tras la última tecla
         }
 
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
             state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null, owner: null, ownerName: null };
-            document.getElementById('newName').value = ""; save();
+            document.getElementById('newName').value = ""; 
+            save();
         }
 
         function render() {
-            const cont = document.getElementById('items-container'); cont.innerHTML = "";
+            const cont = document.getElementById('items-container'); 
+            if(!cont) return;
+            cont.innerHTML = "";
             const vals = Object.values(state.items);
             
-            // Renderizar Carpetas
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
@@ -173,7 +182,6 @@
                 });
             });
 
-            // Renderizar Dashes sueltos
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
                 const card = createCard(d);
                 card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
@@ -183,6 +191,7 @@
             document.getElementById('log-content').innerHTML = state.log.map(l => 
                 `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
+
             if(state.id) syncView();
         }
 
@@ -215,18 +224,20 @@
             const obtn = document.getElementById('own-btn');
             const editBtn = document.getElementById('t-edit');
 
-            // Lógica de Ownership y Permisos
-            if(it.owner === state.uid) { 
+            // LÓGICA DE PROPIEDAD
+            const isOwner = it.owner === state.uid;
+            const hasNoOwner = !it.owner;
+
+            if(isOwner) { 
                 obtn.innerText = "LIBERAR"; 
                 obtn.className = "btn-dice btn-owner-true";
                 editBtn.style.display = "block";
             } else { 
                 obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; 
                 obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false");
-                // Si alguien más es el dueño, ocultar botón editar y forzar preview
                 if(it.owner) {
                     editBtn.style.display = "none";
-                    state.edit = false;
+                    state.edit = false; // Forzar vista si alguien lo posee
                 } else {
                     editBtn.style.display = "block";
                 }
@@ -236,7 +247,10 @@
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             
             if(state.edit) {
-                document.getElementById('editor').value = it.content;
+                // Solo actualizamos el textarea si el usuario NO está escribiendo actualmente
+                if(!state.isTyping) {
+                    document.getElementById('editor').value = it.content;
+                }
                 document.getElementById('t-edit').style.background = "var(--p)";
                 document.getElementById('t-edit').style.color = "black";
                 document.getElementById('t-view').style.background = "transparent";
@@ -250,14 +264,80 @@
             }
         }
 
+        function updateContent() { 
+            state.isTyping = true;
+            state.items[state.id].content = document.getElementById('editor').value; 
+            save(); 
+        }
+
+        async function runRoll(formulaRaw) {
+            const it = state.items[state.id];
+            const memory = calculateMemory(it.content);
+            let logic = formulaRaw.toUpperCase();
+            let breakdown = [];
+            
+            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
+            keys.forEach(k => {
+                const regex = new RegExp(`\\b${k}\\b`, 'g');
+                if(regex.test(logic)) {
+                    breakdown.push(`${k}(${memory[k]})`);
+                    logic = logic.replace(regex, memory[k]);
+                }
+            });
+
+            const diceMatch = logic.match(/(\d*)D(\d+)/i);
+            if(!diceMatch) return;
+            const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
+            const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+            
+            document.getElementById('dice-overlay').style.display = 'flex';
+            const totalVal = document.getElementById('total-val');
+            totalVal.classList.remove('show');
+            
+            let currentSum = 0; let logDetails = [];
+            for(let res of results) {
+                currentSum += res;
+                if(res === s) logDetails.push(`<span style="color:var(--crit)">${res}</span>`);
+                else if(res === 1) logDetails.push(`<span style="color:var(--fail)">${res}</span>`);
+                else logDetails.push(res);
+            }
+
+            let final;
+            try {
+                let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
+                final = Math.floor(eval(mathStr));
+            } catch(e) { final = currentSum; }
+
+            totalVal.innerText = final;
+            totalVal.classList.add('show');
+
+            // ACTUALIZAR NOMBRE ANTES DEL LOG
+            state.uname = await OBR.player.getName();
+            state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
+            if(state.log.length > 15) state.log.pop(); 
+            save();
+        }
+
+        // Sistema de clonación a Dash propio
+        function cloneToMyDash(t) { 
+            const myDash = Object.values(state.items).find(i => i.owner === state.uid && i.type === 'dash'); 
+            if(myDash) { 
+                myDash.content += "\n"+t; 
+                save(); 
+                alert("Añadido a: " + myDash.name); 
+            } else {
+                alert("Primero debes 'OWNEAR' un Dash para recibir datos.");
+            }
+        }
+
+        // ... (Resto de funciones auxiliares como wrap, ins, etc. permanecen igual)
         function calculateMemory(txt) {
             const memory = {};
-            const lines = txt.split('\n');
-            lines.forEach(line => {
+            txt.split('\n').forEach(line => {
                 const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
                 if(base) memory[base[1].toUpperCase()] = parseInt(base[2]);
             });
-            lines.forEach(line => {
+            txt.split('\n').forEach(line => {
                 const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
                 if(plus) {
                     const sign = plus[1], val = parseInt(plus[2]), key = plus[3].toUpperCase();
@@ -295,78 +375,11 @@
                 });
         }
 
-        async function runRoll(formulaRaw) {
-            const it = state.items[state.id];
-            const memory = calculateMemory(it.content);
-            let logic = formulaRaw.toUpperCase();
-            let breakdown = [];
-            
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            keys.forEach(k => {
-                const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) {
-                    breakdown.push(`${k}(${memory[k]})`);
-                    logic = logic.replace(regex, memory[k]);
-                }
-            });
-
-            const diceMatch = logic.match(/(\d*)D(\d+)/i);
-            if(!diceMatch) return;
-            const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
-            const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
-            
-            document.getElementById('dice-overlay').style.display = 'flex';
-            document.getElementById('d-f').innerText = formulaRaw;
-            const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = ""; totalVal.classList.remove('show');
-            
-            let currentSum = 0; let logDetails = [];
-            for(let res of results) {
-                const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
-                await new Promise(r => {
-                    let t = 0;
-                    const iv = setInterval(() => {
-                        die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 7) {
-                            clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span style="color:var(--crit)">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span style="color:var(--fail)">${res}</span>`); }
-                            else logDetails.push(res);
-                            currentSum += res; r();
-                        }
-                    }, 50);
-                });
-            }
-
-            let final;
-            try {
-                let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathStr));
-            } catch(e) { final = currentSum; }
-
-            setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Mod: ${breakdown.join(', ') || '0'}`; 
-            }, 200);
-
-            // Actualizar nombre antes de enviar log
-            state.uname = await OBR.player.getName();
-            state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
-            if(state.log.length > 15) state.log.pop(); save();
-        }
-
         async function toggleOwnership() { 
             const it = state.items[state.id];
             if(it.owner && it.owner !== state.uid) return;
-            
-            if(it.owner) {
-                it.owner = null;
-                it.ownerName = null;
-            } else {
-                it.owner = state.uid;
-                it.ownerName = await OBR.player.getName();
-            }
+            if(it.owner) { it.owner = null; it.ownerName = null; } 
+            else { it.owner = state.uid; it.ownerName = await OBR.player.getName(); }
             save(); 
         }
 
@@ -379,61 +392,18 @@
         function switchTab(isEdit) { 
             const it = state.items[state.id];
             if(isEdit && it.owner && it.owner !== state.uid) return;
-            state.edit = isEdit; 
-            syncView(); 
+            state.edit = isEdit; syncView(); 
         }
-
-        function updateContent() { 
-            state.items[state.id].content = document.getElementById('editor').value; 
-            save(); 
-        }
-
         function wrap(a, b) { 
-            const e = document.getElementById('editor'); 
-            const s = e.selectionStart, end = e.selectionEnd; 
+            const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; 
             e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); 
             updateContent(); 
         }
-
-        function ins(a, b) { 
-            document.getElementById('editor').value += a+b; 
-            updateContent(); 
-        }
-        
-        function askNote() { 
-            const t=prompt("Título:"); 
-            let c=prompt("Contenido (Doble espacio para línea):"); 
-            if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); 
-        }
-
-        function askGlow() { 
-            const c=prompt("Color:"); 
-            if(c) wrap(`<g=${c}>`, `</g>`); 
-        }
-
-        function deleteItem() { 
-            if(confirm("¿Borrar?")) { 
-                delete state.items[state.id]; save(); goBack(); 
-            } 
-        }
-
-        function deleteFolder(fid) { 
-            if(confirm("¿Borrar carpeta?")) { 
-                Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); 
-                delete state.items[fid]; save(); 
-            } 
-        }
-
-        function cloneToMyDash(t) { 
-            const myDash = Object.values(state.items).find(i => i.owner === state.uid && i.type === 'dash'); 
-            if(myDash) { 
-                myDash.content += "\n"+t; 
-                save(); 
-                alert("Añadido a tu Dash: " + myDash.name); 
-            } else {
-                alert("Primero debes ser dueño (OWNEAR) de un Dash para usar esta función.");
-            }
-        }
+        function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
+        function askNote() { const t=prompt("Título:"); let c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
+        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
 
         init();
     </script>
