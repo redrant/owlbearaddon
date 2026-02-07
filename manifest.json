@@ -1,9 +1,9 @@
 {
-  "name": "My Daashss++",
-  "version": "12.13.22",
+  "name": "MyDash+",
+  "version": "1.0",
   "manifest_version": 1,
   "action": {
-    "title": "Dashisboard+",
+    "title": "MyDashPlus",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
     "popover": "/owlbearaddon/index.html",
     "width": 450,
