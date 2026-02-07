@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
     <style>
-        /* Mantenemos tus estilos originales exactos */
+        /* - Todos tus estilos originales aquí */
         :root { 
             --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
@@ -56,8 +56,8 @@
         <div class="log" id="log-content"></div>
         
         <div style="display:flex; gap:5px; margin-top:5px; border-top:1px solid #222; padding-top:5px;">
-            <button onclick="exportData()" class="tool" style="font-size:10px; opacity:0.6;">📤 EXPORTAR</button>
-            <button onclick="importData()" class="tool" style="font-size:10px; opacity:0.6;">📥 IMPORTAR</button>
+            <button onclick="exportData()" class="tool" style="font-size:10px; opacity:0.6;">📤 EXPORTAR BACKUP</button>
+            <button onclick="importData()" class="tool" style="font-size:10px; opacity:0.6;">📥 IMPORTAR BACKUP</button>
         </div>
     </div>
 
@@ -103,7 +103,7 @@
     </div>
 
     <script>
-        // Sincronización y Estado Originales
+        // MANTENEMOS TU LÓGICA DE ESTADO ORIGINAL
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
@@ -112,23 +112,29 @@
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
+                    // Escuchador de cambios en tiempo real para otros jugadores
                     OBR.scene.onMetadataChange(m => { 
-                        state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render(); 
+                        state.items = m[DB] || {}; 
+                        state.log = m[LG] || []; 
+                        state.openFolders = m[OF] || {}; 
+                        render(); 
                     });
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
+                    state.items = m[DB] || {}; state.log = m[LG] || []; state.openFolders = m[OF] || {}; 
+                    render();
                 });
             } catch(e) { render(); }
         }
 
         async function save() { 
             if(window.OBR && OBR.isReady) {
+                // Forzamos la actualización en los metadatos de la escena de Owlbear
                 await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); 
             }
             render(); 
         }
 
-        // --- FUNCIONES DE BACKUP (Añadidas) ---
+        // --- NUEVAS FUNCIONES DE BACKUP ---
         function exportData() {
             const dataStr = JSON.stringify({ items: state.items, log: state.log, folders: state.openFolders });
             const blob = new Blob([dataStr], { type: "application/json" });
@@ -158,16 +164,19 @@
             input.click();
         }
 
-        // Toda tu lógica de Render, Variables y Dados original
+        // RE-INTEGRACIÓN DE TODA TU LÓGICA ORIGINAL
+        // (Aquí van exactamente tus funciones newItem, render, createCard, calculateMemory, renderPreview, renderElements, runRoll, toggleOwnership, openNote, etc.)
+        
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=20\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=20\n-5FUE\n[+] Ataque 1d20+FUE', parent: null, owner: null };
             document.getElementById('newName').value = ""; save();
         }
 
         function render() {
-            const cont = document.getElementById('items-container'); cont.innerHTML = "";
+            const cont = document.getElementById('items-container'); if(!cont) return;
+            cont.innerHTML = "";
             const vals = Object.values(state.items);
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
@@ -250,12 +259,11 @@
                 });
             }
             let final; try { let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, ''); final = Math.floor(eval(mathStr)); } catch(e) { final = currentSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Detalle: [${results.join('+')}] Mods: ${breakdown.join(', ')}`; }, 200);
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Mods: ${breakdown.join(', ')}`; }, 200);
             state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
-        // Los helpers de renderPreview, wrap, ins, delete, etc. se mantienen igual
         function renderPreview(txt) {
             const memory = calculateMemory(txt);
             const processedLines = txt.split('\n').map(line => {
@@ -277,6 +285,9 @@
                 .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
         }
 
+        // Resto de funciones se mantienen idénticas...
+        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
+        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
         function syncView() {
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
@@ -287,9 +298,6 @@
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
         }
-
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
         function switchTab(isEdit) { state.edit = isEdit; syncView(); }
         function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
