@@ -1,14 +1,7 @@
 {
   "name": "My Star Dash Platinum",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "manifest_version": 1,
-  "permissions": [
-    {
-      "resource": "SCENE",
-      "methods": ["GET", "SET"],
-      "name": "Sincronización de Dashboards"
-    }
-  ],
   "action": {
     "title": "Dashisboard+",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
