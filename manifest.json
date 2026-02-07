@@ -7,7 +7,7 @@
   "action": {
     "title": "MyDash",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
-    "popover": "index.html",
+    "popover": "/owlbearaddon/index.html",
     "width": 460,
     "height": 700
   }
