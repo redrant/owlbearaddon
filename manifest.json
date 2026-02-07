@@ -5,7 +5,8 @@
   "permissions": [
     {
       "resource": "SCENE",
-      "methods": ["GET", "SET"]
+      "methods": ["GET", "SET"],
+      "name": "Sincronización de Dashboards"
     }
   ],
   "action": {
