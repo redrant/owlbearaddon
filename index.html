@@ -1,28 +1,247 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>MyDash Platinum</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+    <style>
+        :root { 
+            --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
+            --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
+            --dice-bg: #2d2d3d;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
+        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
+
+        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
+        #view-details { display: none; }
+
+        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; }
+        
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; margin: 2px 0; }
+        .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; margin: 2px 0; }
+        
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
+        
+        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
+        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
+
+        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; border-radius: 10px; }
+        #preview { flex: 1; overflow-y: auto; padding: 15px; line-height: 1.7; display: block; }
+    </style>
 </head>
 <body>
-<header>MyDash Platinum</header>
-<main>
-  <aside id="list"></aside>
-  <section id="details">Selecciona un Dash</section>
-</main>
-<section id="log" class="log"></section>
 
-<div id="note-overlay" class="overlay">
-  <div class="modal">
-    <h3 id="note-title"></h3>
-    <pre id="note-body"></pre>
-    <button onclick="closeNote()">Cerrar</button>
-  </div>
-</div>
+    <div class="header"><div class="sig">MY STAR DASH LIVE</div></div>
 
-<script src="engine.js"></script>
+    <div id="view-list">
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="newItem('dash')" style="background:var(--p); color:black; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">+DASH</button>
+        </div>
+        <div id="items-container" class="items-area"></div>
+        <div class="log" id="log-content"></div>
+    </div>
+
+    <div id="view-details">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button onclick="goBack()" style="background:#333; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">⬅ VOLVER</button>
+            <b id="det-title" style="color:var(--p)"></b>
+            <button id="own-btn" onclick="toggleOwnership()" style="background:var(--dice-bg); color:var(--p); border:1px solid var(--p); padding:8px; border-radius:8px; cursor:pointer;">OWNEAR</button>
+        </div>
+
+        <div style="display:flex; margin-top:10px; gap:5px;">
+            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:8px; border:none; border-radius:5px; cursor:pointer; background:var(--p); font-weight:bold;">VER</button>
+            <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:8px; border:none; border-radius:5px; cursor:pointer; background:#222; color:white;">EDITAR</button>
+        </div>
+
+        <div id="editor-ui" style="display:none; flex-direction:column; flex:1; gap:10px; margin-top:10px;">
+            <div style="display:flex; gap:5px;">
+                <button onclick="wrap('**','**')">B</button>
+                <button onclick="askNote()">Nota+</button>
+                <button onclick="askGlow()">Glow</button>
+                <button onclick="ins('[+] ','')">Casilla+</button>
+            </div>
+            <textarea id="editor" oninput="updateContent()"></textarea>
+        </div>
+        <div id="preview"></div>
+    </div>
+
+    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div id="dice-user" style="color:var(--p); font-weight:bold; margin-bottom:15px;"></div>
+            <div id="dice-anim" style="font-size:60px; font-weight:900;">0</div>
+            <div id="dice-total" style="font-size:20px; color:#666; margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
+            <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
+            <div id="note-body" style="text-align:left; white-space: pre-wrap; max-height: 60vh; overflow-y: auto;"></div>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" style="width:100%; margin-top:20px; background:var(--accent); border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">CERRAR</button>
+        </div>
+    </div>
+
+    <script>
+        const KEY = "MY_DASH_LIVE_V1";
+        let state = { items: {}, log: [], id: null, edit: false, uid: '', uname: '' };
+
+        async function init() {
+            await OBR.onReady(async () => {
+                state.uid = await OBR.player.getId();
+                state.uname = await OBR.player.getName();
+
+                // ESCUCHA EN VIVO: Si alguien cambia algo en Owlbear, se actualiza para todos
+                OBR.scene.onMetadataChange((m) => {
+                    const data = m[KEY] || { items: {}, log: [] };
+                    state.items = data.items;
+                    state.log = data.log;
+                    render();
+                });
+
+                const m = await OBR.scene.getMetadata();
+                const data = m[KEY] || { items: {}, log: [] };
+                state.items = data.items;
+                state.log = data.log;
+                render();
+            });
+        }
+
+        async function save() {
+            await OBR.scene.setMetadata({ [KEY]: { items: state.items, log: state.log } });
+            render();
+        }
+
+        function render() {
+            const cont = document.getElementById('items-container');
+            cont.innerHTML = "";
+            Object.values(state.items).forEach(it => {
+                const card = document.createElement('div');
+                card.className = "card";
+                card.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
+                card.onclick = () => { state.id = it.id; openDetails(); };
+                cont.appendChild(card);
+            });
+
+            document.getElementById('log-content').innerHTML = state.log.map(l => 
+                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:${l.c}">${l.r}</span></div>`
+            ).join('');
+
+            if(state.id) syncView();
+        }
+
+        function openDetails() {
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'flex';
+            syncView();
+        }
+
+        function goBack() {
+            state.id = null;
+            document.getElementById('view-list').style.display = 'flex';
+            document.getElementById('view-details').style.display = 'none';
+        }
+
+        function syncView() {
+            const it = state.items[state.id];
+            if(!it) return;
+            document.getElementById('det-title').innerText = it.name.toUpperCase();
+            
+            const btn = document.getElementById('own-btn');
+            btn.innerText = it.owner === state.uid ? "LIBERAR" : (it.owner ? "OCUPADO" : "OWNEAR");
+            
+            if(!state.edit) renderPreview(it.content);
+        }
+
+        function renderPreview(txt) {
+            const preview = document.getElementById('preview');
+            let html = txt.replace(/\n/g, '<br>')
+                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
+                .replace(/(\d*d\d+[\+\-\d]*)/gi, f => `<div class="block-roll" onclick="runRoll('${f}')">${f}</div>`);
+            
+            html = html.split('<br>').map(line => {
+                if(line.trim().startsWith('[+]')) {
+                    const content = line.replace('[+]', '').trim();
+                    return `<div class="check-btn" onclick="cloneToMyDash('${content}')">${content}</div>`;
+                }
+                return line;
+            }).join('<br>');
+
+            preview.innerHTML = html;
+        }
+
+        async function runRoll(formula) {
+            const it = state.items[state.id];
+            const diceName = it ? it.name : state.uname;
+            document.getElementById('dice-overlay').style.display = 'flex';
+            document.getElementById('dice-user').innerText = diceName;
+            
+            const anim = document.getElementById('dice-anim');
+            let final = Math.floor(Math.random() * 20) + 1; // Simplificado
+            let c = 0;
+            const iv = setInterval(() => {
+                anim.innerText = Math.floor(Math.random() * 20) + 1;
+                if(c++ > 10) {
+                    clearInterval(iv);
+                    anim.innerText = final;
+                    let color = "white";
+                    if(final === 20) color = "var(--crit)";
+                    if(final === 1) color = "var(--fail)";
+                    anim.style.color = color;
+                    
+                    state.log.unshift({ u: diceName, f: formula, r: final, c: color });
+                    if(state.log.length > 15) state.log.pop();
+                    save();
+                }
+            }, 60);
+        }
+
+        function openNote(title, content) {
+            document.getElementById('note-title').innerText = title;
+            // Traduce el truco del doble espacio a saltos reales en el modal
+            document.getElementById('note-body').innerHTML = decodeURIComponent(content).replace(/  /g, '<br>');
+            document.getElementById('note-overlay').style.display = 'flex';
+        }
+
+        function cloneToMyDash(text) {
+            const my = Object.values(state.items).find(i => i.owner === state.uid);
+            if(my) { my.content += "\n" + text; save(); alert("Clonado a tu ficha"); }
+            else alert("Primero debes 'Ownear' un Dash");
+        }
+
+        function switchTab(edit) {
+            state.edit = edit;
+            document.getElementById('editor-ui').style.display = edit ? 'flex' : 'none';
+            document.getElementById('preview').style.display = edit ? 'none' : 'block';
+            if(edit) document.getElementById('editor').value = state.items[state.id].content;
+        }
+
+        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
+        function newItem(type) { 
+            const id = "id" + Date.now();
+            state.items[id] = { id, type, name: document.getElementById('newName').value || "Nuevo", content: "", owner: null };
+            document.getElementById('newName').value = ""; save();
+        }
+        function toggleOwnership() {
+            const it = state.items[state.id];
+            if(it.owner && it.owner !== state.uid) return;
+            it.owner = it.owner ? null : state.uid; save();
+        }
+        function wrap(a, b) { const e = document.getElementById('editor'); e.value = e.value.substring(0, e.selectionStart) + a + e.value.substring(e.selectionStart, e.selectionEnd) + b + e.value.substring(e.selectionEnd); updateContent(); }
+        function ins(a, b) { document.getElementById('editor').value += a; updateContent(); }
+        function askGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
+        function askNote() { const t = prompt("Título:"); const c = prompt("Contenido (usa doble espacio para saltar):"); if(t && c) ins(`[note=${t}]${c}[/note]`); }
+
+        init();
+    </script>
 </body>
 </html>
