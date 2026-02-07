@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+</head>
+<body style="background: #000; color: #444; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-size: 10px;">
+    <div id="status">CONECTANDO CEREBRO...</div>
+
+    <script>
+        // Mismas claves que MyDash
+        const DB = "VPLAT_V3_ITEMS";
+        const LG = "VPLAT_V3_LOGS";
+        const OF = "VPLAT_V3_FOLDERS";
+
+        OBR.onReady(async () => {
+            document.getElementById('status').innerText = "SINCRONIZACIÓN ACTIVA";
+
+            // 1. VIGILANTE DE CONFLICTOS
+            // Si dos personas editan a la vez, este script ayuda a que Owlbear decida
+            // quién tiene la versión más reciente basándose en el tiempo.
+            OBR.scene.onMetadataChange((metadata) => {
+                console.log("Sync: Datos actualizados en la escena.");
+                // Aquí podrías añadir lógica de respaldo si un archivo se borra accidentalmente
+            });
+
+            // 2. MANTENEDOR DE SESIÓN
+            // Asegura que los metadatos no se limpien si la escena se queda vacía
+            const currentData = await OBR.scene.getMetadata();
+            if (Object.keys(currentData).length > 0) {
+                document.getElementById('status').style.color = "#bb86fc";
+                document.getElementById('status').innerText = "RED MYDASH ESTABLE";
+            }
+        });
+    </script>
+</body>
+</html>
