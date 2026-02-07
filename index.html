@@ -1,303 +1,403 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
-    <style>
-        /* - Estilos originales intactos */
-        :root { 
-            --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
-            --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-            --dice-bg: #2d2d3d;
-        }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-        .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
-        #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
-        #view-details { display: none; }
-        .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-        .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
-        .dash { border-left: 5px solid var(--p); }
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.1s; }
-        .block-roll:hover { background: #3d3d4d; border-bottom-color: var(--p); }
-        .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
-        .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-        .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
-        .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; background: rgba(255,68,102,0.1) !important; }
-        .btn-owner-false { border-color: var(--crit) !important; color: var(--crit) !important; background: rgba(0,255,136,0.1) !important; }
-        .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
-        .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
-        .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
-        #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
-        .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-        .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
-        .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
-        .total-box.show { opacity: 1; }
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Star Dash Platinum - Owlbear Addon</title>
+  <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+  <style>
+    :root {
+      --p: #bb86fc;
+      --bg: #0d0d0f;
+      --surf: #16161a;
+      --t: #f0f0f0;
+      --accent: #03dac6;
+      --crit: #00ff88;
+      --fail: #ff4466;
+      --var: #ffab40;
+      --dice-bg: #2d2d3d;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .header { padding: 12px; text-align: center; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
+    .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
+
+    #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
+    #view-details { display: none; }
+
+    .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+    .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
+    .dash { border-left: 5px solid var(--p); }
+
+    .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.1s; }
+    .block-roll:hover { background: #3d3d4d; border-bottom-color: var(--p); }
+    .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
+    .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
+
+    .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
+
+    .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; background: rgba(255,68,102,0.1) !important; }
+    .btn-owner-false { border-color: var(--crit) !important; color: var(--crit) !important; background: rgba(0,255,136,0.1) !important; }
+
+    .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
+    .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
+
+    .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
+    #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
+
+    .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
+    .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
+    .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
+    .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
+    .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
+    .total-box.show { opacity: 1; }
+
+    .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
+  </style>
 </head>
 <body>
 
-    <div class="header"><div class="sig">My Star Dash LIVE</div></div>
+  <div class="header"><div class="sig">My Star Dash Platinum v1 ( Owlbear Online )</div></div>
 
-    <div id="view-list">
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
-            <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
-            <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
-        </div>
-        <div id="items-container" class="items-area"></div>
-        <div class="log" id="log-content"></div>
+  <div id="view-list">
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
+      <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">+DARN DASH</button>
+      <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
+    </div>
+    <div id="items-container" class="items-area" aria-label="Lista de items y carpetas"></div>
+    <div class="log" id="log-content" aria-live="polite" aria-label="Log de acciones"></div>
+  </div>
+
+  <div id="view-details" aria-label="Detalle y edición">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
+      <b id="det-title" style="color:var(--p)"></b>
+      <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">OCUPAR</button>
     </div>
 
-    <div id="view-details">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
-            <b id="det-title" style="color:var(--p)"></b>
-            <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
-        </div>
+    <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
+      <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
+      <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
+    </div>
 
-        <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
-            <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
-            <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
-        </div>
+    <div id="editor-ui" style="display:none; flex-direction:column; flex:1;">
+      <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
+        <button class="tool" onclick="wrap('**','**')">B</button>
+        <button class="tool" onclick="wrap('*','*')">I</button>
+        <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
+        <button class="tool" onclick="askNote()">Nota+</button>
+        <button class="tool" onclick="askGlow()">Glow</button>
+        <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
+      </div>
+      <textarea id="editor" oninput="updateContent()"></textarea>
+    </div>
+    <div id="preview"></div>
+  </div>
 
-        <div id="editor-ui" style="display:none; flex-direction:column; flex:1;">
-            <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
-                <button class="tool" onclick="wrap('**','**')">B</button>
-                <button class="tool" onclick="wrap('*','*')">I</button>
-                <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
-                <button class="tool" onclick="askNote()">Nota+</button>
-                <button class="tool" onclick="askGlow()">Glow</button>
-                <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
+  <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div>
+      <div id="dice-container" class="dice-display"></div>
+      <div id="total-val" class="total-box">0</div>
+      <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
+    </div>
+  </div>
+
+  <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
+    <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
+      <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
+      <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
+      <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
+    </div>
+  </div>
+
+  <script>
+    // Estado local y de escena
+    let state = {
+      items: {},      // id -> {id, type, name, content, owner, parent}
+      log: [],          // array de entradas de log
+      openFolders: {},   // id -> boolean (expanded)
+      id: null,           // id actual en view
+      edit: false,
+      uid: 'local',       // id de usuario en sesión
+      uname: 'Player',    // nombre de usuario
+    };
+
+    // Claves del metadato de la escena (ajusta si ya usas otro)
+    const DB = "VPLAT_V3_ITEMS";
+    const LG = "VPLAT_V3_LOGS";
+    const OF = "VPLAT_V3_FOLDERS";
+
+    // Init de Rd Rodeo
+    async function init() {
+      if (!window.OBR) {
+        console.warn("OBR no disponible aún. Cargando fallback.");
+        render();
+        return;
+      }
+      try {
+        await OBR.onReady(async () => {
+          // Id y nombre del usuario
+          state.uid = await OBR.player.getId();
+          state.uname = await OBR.player.getName();
+
+          // Escuchar cambios de metadata para sincronizar en vivo
+          OBR.scene.onMetadataChange(async (m) => {
+            state.items = m[DB] || {};
+            state.log = m[LG] || [];
+            state.openFolders = m[OF] || {};
+            render();
+          });
+
+          // Cargar estado inicial
+          const m = await OBR.scene.getMetadata();
+          state.items = m[DB] || {};
+          state.log = m[LG] || [];
+          state.openFolders = m[OF] || {};
+          render();
+        });
+      } catch (e) {
+        console.error("Error init:", e);
+        render();
+      }
+    }
+
+    // Guardar estado en la escena
+    async function save() {
+      if (!window.OBR) return;
+      await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders });
+      render();
+    }
+
+    // Crear nuevo item
+    function newItem(type) {
+      const n = document.getElementById('newName').value.trim() || (type === 'dash' ? "Nuevo Dash" : "Nueva Carpeta");
+      const id = (type === 'dash' ? 'dash_' : 'fld_') + Date.now();
+      state.items[id] = {
+        id,
+        type,
+        name: n,
+        content: '', // puede contener notas o definición
+        parent: null,
+        owner: null  // id de usuario que posee
+      };
+      document.getElementById('newName').value = "";
+      // Si creas un dash, habilita ownership solo para ese usuario
+      save();
+    }
+
+    // Renderizar UI
+    function render() {
+      // UI de lista
+      const cont = document.getElementById('items-container');
+      if (!cont) return;
+      cont.innerHTML = "";
+
+      const items = Object.values(state.items);
+
+      // Opcional: mostrar por carpetas primero
+      const folders = items.filter(i => i.type === 'folder');
+      const dashes  = items.filter(i => i.type === 'dash');
+      
+      const renderList = (list, cls) => {
+        list.forEach(it => {
+          const el = document.createElement('div');
+          el.className = 'card ' + (it.type === 'folder' ? 'folder' : 'dash');
+          el.style.display = 'flex';
+          el.style.justifyContent = 'space-between';
+          el.style.alignItems = 'center';
+          el.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="width:10px; height:10px; border-radius:50%; background:${it.type==='folder'?'var(--var)':'var(--p)'}"></span>
+              <strong>${escapeHtml(it.name)}</strong>
+              ${it.owner ? `<span class="block-var" title="Propietario">Dueño: ${escapeHtml(it.owner)}</span>` : ''}
             </div>
-            <textarea id="editor" oninput="updateContent()"></textarea>
-        </div>
-        <div id="preview"></div>
-    </div>
+            <div style="display:flex; gap:6px;">
+              <button class="tool" onclick="openDetail('${it.id}')" title="Ver/Editar">Abrir</button>
+            </div>
+          `;
+          cont.appendChild(el);
+        });
+      };
 
-    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()"><div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div><div id="dice-container" class="dice-display"></div><div id="total-val" class="total-box">0</div><div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div></div></div>
-    <div id="note-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);"><h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2><div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div><button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button></div></div>
+      if (folders.length) renderList(folders, 'folder');
+      if (dashes.length) renderList(dashes, 'dash');
 
-    <script>
-        // DB actualizada para iniciar en limpio y evitar conflictos antiguos
-        const DB = "VPLAT_LIVE_ITEMS", LG = "VPLAT_LIVE_LOGS", OF = "VPLAT_LIVE_FOLDERS";
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+      // Log
+      const logEl = document.getElementById('log-content');
+      logEl.innerHTML = state.log.map(e => `[${new Date(e.ts).toLocaleTimeString()}] ${escapeHtml(e.user)}: ${escapeHtml(e.msg)}`).join('<br/>');
+    }
 
-        async function init() {
-            try {
-                // Conexión con Owlbear
-                await OBR.onReady(async () => {
-                    // Obtenemos ID de usuario para saber quién es dueño de qué
-                    state.uid = await OBR.player.getId();
-                    
-                    // ESCUCHA EN VIVO: Esto es lo que hace que sea "directo"
-                    OBR.scene.onMetadataChange(m => { 
-                        state.items = m[DB] || {}; 
-                        state.log = m[LG] || []; 
-                        state.openFolders = m[OF] || {}; 
-                        render(); 
-                    });
+    // Abrir detalle de item
+    function openDetail(id) {
+      state.id = id;
+      const item = state.items[id];
+      if (!item) return;
+      // Habilitar vista de detalle
+      document.getElementById('view-details').style.display = 'block';
+      document.getElementById('view-list').style.display = 'none';
+      document.getElementById('det-title').textContent = item.name;
+      // Ownership button
+      updateOwnershipButton(item);
 
-                    // Carga inicial
-                    const m = await OBR.scene.getMetadata();
-                    state.items = m[DB] || {}; 
-                    state.log = m[LG] || []; 
-                    state.openFolders = m[OF] || {}; 
-                    render();
-                });
-            } catch(e) { console.error("Modo Offline"); render(); }
-        }
+      // Editar/Ver modo
+      switchTab(false);
+      // Cargar contenido en editor si existiera
+      const editor = document.getElementById('editor');
+      if (editor) editor.value = item.content || "";
+    }
 
-        // Esta función envía todo a la nube de Owlbear (Scene Metadata)
-        async function save() { 
-            if(window.OBR && OBR.isReady) {
-                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); 
-            }
-            render(); 
-        }
+    // Volver
+    function goBack() {
+      document.getElementById('view-details').style.display = 'none';
+      document.getElementById('view-list').style.display = 'flex';
+      state.id = null;
+    }
 
-        // --- SISTEMA DE DADOS MODIFICADO PARA USAR NOMBRE DEL DASH ---
-        async function runRoll(formulaRaw) {
-            const it = state.items[state.id];
-            
-            // AQUÍ ESTÁ EL CAMBIO: Usamos el nombre del Dash, no el del usuario
-            const dashName = it.name || "Sin Nombre"; 
+    // Ownership toggle
+    function toggleOwnership() {
+      const id = state.id;
+      const item = state.items[id];
+      if (!item) return;
+      // Si ya tiene owner y es el usuario actual, permitir liberar solo a quien lo posee
+      const canToggle = !item.owner || item.owner === state.uid;
+      if (!canToggle) return;
 
-            const memory = calculateMemory(it.content);
-            let logic = formulaRaw.toUpperCase();
-            let breakdown = [];
-            const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
-            keys.forEach(k => {
-                const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) { breakdown.push(`${k}(${memory[k]})`); logic = logic.replace(regex, memory[k]); }
-            });
+      // Si nadie tiene owner, se asigna a el usuario actual
+      item.owner = item.owner ? null : state.uid; // asigna o libera
+      // Mensaje de log
+      const action = item.owner ? 'posee' : 'libera';
+      addLog(`${state.uname} ${action} "${item.name}"`);
+      save();
+      updateOwnershipButton(item);
+    }
 
-            const diceMatch = logic.match(/(\d*)D(\d+)/i);
-            if(!diceMatch) return;
-            const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
-            const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
-            
-            // Animación visual (Solo la ve quien tira, pero el resultado se comparte)
-            document.getElementById('dice-overlay').style.display = 'flex';
-            document.getElementById('d-f').innerText = `${dashName}: ${formulaRaw}`; // Mostrar quién tira en el modal
-            const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = ""; totalVal.classList.remove('show');
-            let currentSum = 0; let logDetails = [];
+    function updateOwnershipButton(item) {
+      const btn = document.getElementById('own-btn');
+      if (!btn) return;
+      const owner = item.owner;
+      if (!owner) {
+        btn.textContent = 'OWNEAR';
+        btn.className = 'btn-dice';
+      } else if (owner === state.uid) {
+        btn.textContent = 'LIBERAR';
+        btn.className = 'btn-dice btn-owner-true';
+      } else {
+        btn.textContent = `Visualizar (dueño: ${owner})`;
+        btn.disabled = true;
+        btn.className = 'btn-dice btn-owner-false';
+      }
+    }
 
-            for(let res of results) {
-                const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
-                await new Promise(r => {
-                    let t = 0;
-                    const iv = setInterval(() => {
-                        die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 7) {
-                            clearInterval(iv); die.innerText = res;
-                            if(res === s) { die.style.color = "var(--crit)"; logDetails.push(`<span style="color:var(--crit)">${res}</span>`); }
-                            else if(res === 1) { die.style.color = "var(--fail)"; logDetails.push(`<span style="color:var(--fail)">${res}</span>`); }
-                            else logDetails.push(res);
-                            currentSum += res; r();
-                        }
-                    }, 50);
-                });
-            }
+    // Editar/Ver tabs
+    function switchTab(editing) {
+      state.edit = editing;
+      const editorUI = document.getElementById('editor-ui');
+      const preview = document.getElementById('preview');
+      if (editing) {
+        editorUI.style.display = 'flex';
+        preview.style.display = 'block';
+      } else {
+        editorUI.style.display = 'none';
+        preview.style.display = 'block';
+      }
+    }
 
-            let final;
-            try { final = Math.floor(eval(logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, ''))); } catch(e) { final = currentSum; }
-            
-            setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `Mods: ${breakdown.join(', ') || '0'}`; 
-            }, 200);
+    // Helpers de edición
+    function wrap(a, b) {
+      const el = document.getElementById('editor');
+      if (!el) return;
+      const s = el.selectionStart, e = el.selectionEnd;
+      const val = el.value;
+      el.value = val.substring(0, s) + a + val.substring(s, e) + b + val.substring(e);
+      el.selectionStart = s + a.length;
+      el.selectionEnd = e + a.length;
+      updateContent();
+    }
 
-            // LOG COMPARTIDO: Aquí guardamos "u: dashName" en lugar de "u: state.uname"
-            state.log.unshift({ 
-                u: dashName, // <--- CAMBIO CLAVE
-                f: formulaRaw, 
-                r: final, 
-                details: logDetails.join(', ') 
-            });
-            
-            if(state.log.length > 20) state.log.pop();
-            save(); // Al guardar, todos los demás jugadores ven el log actualizado al instante
-        }
-        // -------------------------------------------------------------
+    function ins(text) {
+      const el = document.getElementById('editor');
+      if (!el) return;
+      const s = el.selectionStart, e = el.selectionEnd;
+      const val = el.value;
+      el.value = val.substring(0, s) + text + val.substring(e);
+      el.selectionStart = el.selectionEnd = s + text.length;
+      updateContent();
+    }
 
-        // Resto de funciones auxiliares (Renderizado, Cálculos, UI)
-        function newItem(type) { const n = document.getElementById('newName').value || "Nuevo"; const id = "id" + Date.now(); state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null, owner: null }; document.getElementById('newName').value = ""; save(); }
-        
-        function render() {
-            const cont = document.getElementById('items-container'); cont.innerHTML = "";
-            const vals = Object.values(state.items);
-            
-            // Render Carpetas
-            vals.filter(f => f.type === 'folder').forEach(f => {
-                const isOpen = state.openFolders[f.id];
-                const fd = document.createElement('div');
-                fd.className = "card folder"; 
-                fd.innerHTML = `<span>${isOpen ? '📂' : '📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
-                fd.onclick = () => { state.openFolders[f.id] = !isOpen; save(); };
-                fd.ondragover = e => e.preventDefault();
-                fd.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = f.id; save(); } };
-                cont.appendChild(fd);
-                if(isOpen) vals.filter(d => d.parent === f.id).forEach(d => {
-                    const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
-                });
-            });
+    function askNote() { const el = document.getElementById('note-overlay'); el.style.display = 'flex'; }
+    function askGlow() { /* implementación de efecto visual opcional */ }
 
-            // Render Dashes sueltos
-            vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
-                const card = createCard(d);
-                card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
-                cont.appendChild(card);
-            });
-            
-            // Render LOG (Muestra el nombre guardado en 'u', que ahora es el Dash)
-            document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
-            ).join('');
-            
-            if(state.id) syncView();
-        }
+    function deleteItem() {
+      const id = state.id;
+      if (!id || !state.items[id]) return;
+      const name = state.items[id].name;
+      delete state.items[id];
+      addLog(`Eliminado "${name}"`);
+      state.id = null;
+      document.getElementById('view-details').style.display = 'none';
+      document.getElementById('view-list').style.display = 'flex';
+      save();
+    }
 
-        function createCard(it) {
-            const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
-            // Indicador visual si está owneado
-            const ownerIcon = it.owner ? (it.owner === state.uid ? '<span style="color:var(--p)">👤</span>' : '<span style="color:var(--fail)">🔒</span>') : '';
-            d.innerHTML = `<span>📄 ${it.name}</span> ${ownerIcon}`;
-            d.onclick = () => { state.id = it.id; openDetails(); };
-            d.ondragstart = () => state.dragId = it.id;
-            return d;
-        }
+    function updateContent() {
+      const id = state.id;
+      if (!id) return;
+      state.items[id].content = document.getElementById('editor').value;
+      save();
+    }
 
-        // Funciones de UI y Lógica Interna
-        function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
-        function goBack() { state.id = null; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
+    function addLog(message) {
+      state.log.unshift({ ts: Date.now(), user: state.uname, msg: message });
+      // Limitar log a, por ejemplo, 200 entradas
+      if (state.log.length > 200) state.log = state.log.slice(0, 200);
+      save();
+    }
 
-        function syncView() {
-            const it = state.items[state.id]; if(!it) return;
-            document.getElementById('det-title').innerText = it.name.toUpperCase();
-            const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
-            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
-            
-            // Si está ocupado por otro, forzar modo solo lectura visual
-            const isLocked = it.owner && it.owner !== state.uid;
-            document.getElementById('t-edit').style.display = isLocked ? 'none' : 'block'; // Ocultar pestaña editar si no es tuyo
-            
-            document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
-            document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            if(state.edit) document.getElementById('editor').value = it.content; else renderPreview(it.content);
-        }
+    // Escape básico para render
+    function escapeHtml(s) {
+      return String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    }
 
-        function calculateMemory(txt) {
-            const memory = {};
-            const lines = txt.split('\n');
-            lines.forEach(line => { const base = line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i); if(base) memory[base[1].toUpperCase()] = parseInt(base[2]); });
-            lines.forEach(line => { const plus = line.match(/([\+\-])(\d+)([A-Z0-9_]+)/i); if(plus && memory[plus[3].toUpperCase()]!==undefined) memory[plus[3].toUpperCase()] += (plus[1] === '+' ? 1 : -1) * parseInt(plus[2]); });
-            return memory;
-        }
+    // Iniciador de vida real
+    window.addEventListener('DOMContentLoaded', () => {
+      // Botones de interacción rápida en la vista lista
+      document.getElementById('log-content').innerHTML = '';
+      init();
 
-        function renderPreview(txt) {
-            const memory = calculateMemory(txt);
-            document.getElementById('preview').innerHTML = txt.split('\n').map(line => {
-                if (line.trim().startsWith('[+]')) return `<div class="check-btn" onclick="cloneToMyDash(\`${line.replace('[+]', '').trim().replace(/`/g, "\\`")}\`)">${renderElements(line.replace('[+]', '').trim(), memory)}</div>`;
-                return renderElements(line, memory);
-            }).join('<br>');
-        }
+      // Encuestas simples de dados para demo (podrías conectarlo a un sistema de tiradas más completo)
+      // Ejemplo: disparar un dado y registrar en log
+      window.rollDice = function(sides = 6, count = 1) {
+        const results = [];
+        for (let i = 0; i < count; i++) results.push(Math.floor(Math.random() * sides) + 1);
+        const user = state.uname || 'Unknown';
+        addLog(`Tirada(${count}d${sides}) de ${user}: [${results.join(', ')}]`);
+        // Mostrar en overlay opcional
+        showDice(results);
+        return results;
+      };
+    });
 
-        function renderElements(txt, memory) {
-            return txt
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
-                .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
-                .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, f => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
-        }
+    // Mostrar dados en overlay
+    function showDice(results) {
+      const overlay = document.getElementById('dice-overlay');
+      const container = document.getElementById('dice-container');
+      const dTotal = document.getElementById('total-val');
+      const dRes = document.getElementById('d-res');
+      container.innerHTML = '';
+      let total = 0;
+      results.forEach(v => { total += v; const d = document.createElement('div'); d.className = 'die-num'; d.textContent = v; container.appendChild(d); });
+      dTotal.textContent = total;
+      dTotal.classList.add('show');
+      dRes.textContent = 'Resultado total: ' + total;
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.style.display = 'none', 2500);
+    }
 
-        function toggleOwnership() { const it = state.items[state.id]; if(it.owner && it.owner !== state.uid) return; it.owner = it.owner ? null : state.uid; save(); }
-        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); document.getElementById('note-overlay').style.display='flex'; }
-        function switchTab(isEdit) { state.edit = isEdit; syncView(); }
-        function updateContent() { state.items[state.id].content = document.getElementById('editor').value; save(); }
-        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); updateContent(); }
-        function ins(a, b) { document.getElementById('editor').value += a+b; updateContent(); }
-        function askNote() { const t=prompt("Título:"); let c=prompt("Contenido:"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
-        function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
-        function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
-        function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-        function cloneToMyDash(t) { const my = Object.values(state.items).find(i => i.owner === state.uid); if(my) { my.content += "\n"+t; save(); alert("Clonado"); } }
-
-        init();
-    </script>
+  </script>
 </body>
 </html>
