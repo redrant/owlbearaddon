@@ -1,0 +1,12 @@
+{
+  "name": "MyDash Platinum",
+  "version": "2.0.0",
+  "manifest_version": 1,
+  "action": {
+    "title": "MyDash",
+    "icon": "https://www.owlbear.rodeo/favicon.ico",
+    "popover": "/index.html",
+    "width": 460,
+    "height": 700
+  }
+}

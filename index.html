@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MyDash Platinum</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>MyDash Platinum</header>
+<main>
+  <aside id="list"></aside>
+  <section id="details">Selecciona un Dash</section>
+</main>
+<section id="log" class="log"></section>
+
+<div id="note-overlay" class="overlay">
+  <div class="modal">
+    <h3 id="note-title"></h3>
+    <pre id="note-body"></pre>
+    <button onclick="closeNote()">Cerrar</button>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+</body>
+</html>
