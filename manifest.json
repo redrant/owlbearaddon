@@ -1,11 +1,13 @@
 {
   "name": "MyDash Platinum",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "manifest_version": 1,
+  "author": "Redrant",
+  "description": "Dashboards inteligentes compartidos con ownership, notas y dados",
   "action": {
     "title": "MyDash",
     "icon": "https://www.owlbear.rodeo/favicon.ico",
-    "popover": "/index.html",
+    "popover": "index.html",
     "width": 460,
     "height": 700
   }
