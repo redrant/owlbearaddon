@@ -30,8 +30,6 @@
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
         .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-        .btn-dice:active { transform: translateY(2px); border-bottom-width: 1px; }
-
         .btn-save { background: var(--crit); color: black; border-bottom-color: #008844; margin-left: 10px; display: none; }
 
         .btn-owner-true { border-color: var(--fail) !important; color: var(--fail) !important; background: rgba(255,68,102,0.1) !important; }
@@ -56,7 +54,7 @@
 </head>
 <body>
 
-    <div class="header"><div class="sig">My Star Dash Platinum v1</div></div>
+    <div class="header"><div class="sig">My Star Dash Platinum Online</div></div>
 
     <div id="view-list">
         <div style="display:flex; gap:8px;">
@@ -97,25 +95,11 @@
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()">
-            <div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div>
-            <div id="dice-container" class="dice-display"></div>
-            <div id="total-val" class="total-box">0</div>
-            <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
-        </div>
-    </div>
-
-    <div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-        <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
-            <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-            <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
-            <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
-        </div>
-    </div>
+    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()"><div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div><div id="dice-container" class="dice-display"></div><div id="total-val" class="total-box">0</div><div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div></div></div>
+    <div id="note-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);"><h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2><div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div><button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button></div></div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null };
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null, isModified: false };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
         async function init() {
@@ -123,12 +107,12 @@
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    // Escucha cambios: Si no estoy editando, renderizo lo nuevo que llegue
                     OBR.scene.onMetadataChange(m => { 
                         state.items=m[DB]||{}; 
                         state.log=m[LG]||[]; 
                         state.openFolders=m[OF]||{}; 
-                        if(!state.edit) render(); 
+                        // Bloqueo de render si estoy editando para no perder texto
+                        if(!state.isModified) render(); 
                     });
                     const m = await OBR.scene.getMetadata();
                     state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
@@ -136,26 +120,15 @@
             } catch(e) { render(); }
         }
 
-        // Función de guardado atómica
-        async function save() { 
-            if(window.OBR) {
-                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders });
-            }
-            render(); 
-        }
+        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
 
-        // --- SISTEMA DE GUARDADO MANUAL ---
-        function showSaveBtn() {
-            document.getElementById('save-btn').style.display = 'flex';
-        }
-
+        function showSaveBtn() { state.isModified = true; document.getElementById('save-btn').style.display = 'flex'; }
         async function manualSave() {
             if(!state.id) return;
-            const newContent = document.getElementById('editor').value;
-            state.items[state.id].content = newContent;
+            state.items[state.id].content = document.getElementById('editor').value;
+            state.isModified = false;
             document.getElementById('save-btn').style.display = 'none';
             await save();
-            alert("¡Cambios guardados en la nube!");
         }
 
         function newItem(type) {
@@ -168,7 +141,6 @@
         function render() {
             const cont = document.getElementById('items-container'); cont.innerHTML = "";
             const vals = Object.values(state.items);
-            
             vals.filter(f => f.type === 'folder').forEach(f => {
                 const isOpen = state.openFolders[f.id];
                 const fd = document.createElement('div');
@@ -182,15 +154,15 @@
                     const child = createCard(d); child.style.marginLeft = "20px"; child.style.width = "calc(100% - 20px)"; cont.appendChild(child);
                 });
             });
-
             vals.filter(it => it.type === 'dash' && !it.parent).forEach(d => {
                 const card = createCard(d);
                 card.ondrop = (e) => { e.stopPropagation(); if(state.dragId) { state.items[state.dragId].parent = null; save(); } };
                 cont.appendChild(card);
             });
             
+            // LOG CON NOMBRE DEL DASH (l.file)
             document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div><b>${l.u}:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
+                `<div><b>[${l.file}]:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
             if(state.id) syncView();
         }
@@ -205,13 +177,11 @@
 
         function openDetails() { document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
         function goBack() { 
-            if(document.getElementById('save-btn').style.display === 'flex') {
-                if(!confirm("Tienes cambios sin guardar. ¿Salir igual?")) return;
-            }
-            state.id = null; 
-            document.getElementById('save-btn').style.display = 'none';
+            if(state.isModified && !confirm("Cambios sin guardar. ¿Salir?")) return;
+            state.id = null; state.isModified = false;
             document.getElementById('view-list').style.display='flex'; 
             document.getElementById('view-details').style.display='none'; 
+            document.getElementById('save-btn').style.display = 'none';
         }
 
         function syncView() {
@@ -222,11 +192,8 @@
             else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
-            
-            if(!state.edit) renderPreview(it.content);
-            else if(document.getElementById('save-btn').style.display !== 'flex') {
-                document.getElementById('editor').value = it.content;
-            }
+            if(state.edit) { if(!state.isModified) document.getElementById('editor').value = it.content; } 
+            else renderPreview(it.content);
         }
 
         function calculateMemory(txt) {
@@ -248,8 +215,7 @@
 
         function renderPreview(txt) {
             const memory = calculateMemory(txt);
-            const lines = txt.split('\n');
-            const processedLines = lines.map(line => {
+            const processedLines = txt.split('\n').map(line => {
                 if (line.trim().startsWith('[+]')) {
                     const content = line.replace('[+]', '').trim();
                     return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
@@ -264,14 +230,10 @@
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => {
-                    return `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`;
-                })
+                .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
                 .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
                 .replace(/([\+\-]\d+[A-Z0-9_]+)/gi, '<span class="block-var">$1</span>')
-                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (formula) => {
-                    return `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${formula}\`)">${formula}</div>`;
-                });
+                .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, (f) => `<div class="block-roll" onclick="event.stopPropagation(); runRoll(\`${f}\`)">${f}</div>`);
         }
 
         async function runRoll(formulaRaw) {
@@ -282,20 +244,19 @@
             const keys = Object.keys(memory).sort((a,b) => b.length - a.length);
             keys.forEach(k => {
                 const regex = new RegExp(`\\b${k}\\b`, 'g');
-                if(regex.test(logic)) {
-                    breakdown.push(`${k}(${memory[k]})`);
-                    logic = logic.replace(regex, memory[k]);
-                }
+                if(regex.test(logic)) { breakdown.push(`${k}(${memory[k]})`); logic = logic.replace(regex, memory[k]); }
             });
             const diceMatch = logic.match(/(\d*)D(\d+)/i);
             if(!diceMatch) return;
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
+            
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formulaRaw;
             const container = document.getElementById('dice-container');
             const totalVal = document.getElementById('total-val');
             container.innerHTML = ""; totalVal.classList.remove('show');
+            
             let currentSum = 0; let logDetails = [];
             for(let res of results) {
                 const die = document.createElement('div'); die.className = "die-num"; die.innerText = "?"; container.appendChild(die);
@@ -313,49 +274,20 @@
                     }, 50);
                 });
             }
-            let final;
-            try {
-                let mathStr = logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, '');
-                final = Math.floor(eval(mathStr));
-            } catch(e) { final = currentSum; }
-            setTimeout(() => { 
-                totalVal.innerText = final; totalVal.classList.add('show'); 
-                document.getElementById('d-res').innerText = `Dados: [${results.join('+')}] | Modificadores: ${breakdown.join(', ') || '0'}`; 
-            }, 200);
-            state.log.unshift({ u: state.uname, f: formulaRaw, r: final, details: logDetails.join(', ') });
+            let final; try { final = Math.floor(eval(logic.replace(diceMatch[0], currentSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, ''))); } catch(e) { final = currentSum; }
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `Detalle: [${results.join('+')}] | Mods: ${breakdown.join(', ') || '0'}`; }, 200);
+            
+            // GUARDAMOS NOMBRE DEL DASH EN EL LOG
+            state.log.unshift({ file: it.name, f: formulaRaw, r: final, details: logDetails.join(', ') });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
-        function toggleOwnership() { 
-            const it = state.items[state.id];
-            if(it.owner && it.owner !== state.uid) return;
-            it.owner = it.owner ? null : state.uid; save(); 
-        }
-
-        function openNote(t, c) { 
-            document.getElementById('note-title').innerText = t; 
-            document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); 
-            document.getElementById('note-overlay').style.display='flex'; 
-        }
-
+        function toggleOwnership() { const it = state.items[state.id]; if(it.owner && it.owner !== state.uid) return; it.owner = it.owner ? null : state.uid; save(); }
+        function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); document.getElementById('note-overlay').style.display='flex'; }
         function switchTab(isEdit) { state.edit = isEdit; syncView(); }
-        
-        function wrap(a, b) { 
-            const e = document.getElementById('editor'); 
-            const s = e.selectionStart, end = e.selectionEnd; 
-            e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); 
-            showSaveBtn();
-        }
+        function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); showSaveBtn(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; showSaveBtn(); }
-        
-        function askNote() { 
-            const t=prompt("Título:"); 
-            let c=prompt("Contenido (Usa doble espacio para saltar de línea):"); 
-            if(t && c) {
-                ins(`\n[note=${t}]${c}[/note]`, ""); 
-            }
-        }
-
+        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = salto):"); if(t && c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
