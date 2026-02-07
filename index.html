@@ -13,10 +13,10 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER CON FLECHITA */
+        /* HEADER ORIGINAL CON FLECHITA */
         .header { padding: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-        .sync-arrow { color: var(--p); cursor: pointer; font-size: 18px; transition: 0.3s; text-shadow: 0 0 8px var(--p); }
-        .sync-arrow:hover { transform: scale(1.2); filter: brightness(1.2); }
+        .sync-arrow { color: var(--p); cursor: pointer; font-size: 18px; text-shadow: 0 0 8px var(--p); transition: 0.3s; }
+        .sync-arrow:hover { transform: scale(1.3); }
         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
 
         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
@@ -27,7 +27,7 @@
         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
         .dash { border-left: 5px solid var(--p); }
 
-        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.1s; }
+        .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
         
@@ -41,19 +41,20 @@
         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
 
+        /* MODALES ANIMADOS ORIGINALES */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
         .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
         .total-box.show { opacity: 1; }
         
-        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; }
+        .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <span class="sync-arrow" onclick="save()" title="Sincronizar todo">➤</span>
+        <span class="sync-arrow" onclick="forceSync()" title="Sincronizar todo con los demás">➤</span>
         <div class="sig">MY STAR DASH PLATINUM</div>
     </div>
 
@@ -65,8 +66,8 @@
         </div>
         <div id="items-container" class="items-area"></div>
         <div style="display:flex; gap:5px; margin-bottom:5px;">
-            <button onclick="exportJSON()" class="tool" style="flex:1; background:#444;">⬇ EXPORTAR</button>
-            <button onclick="document.getElementById('importFile').click()" class="tool" style="flex:1; background:#444;">⬆ IMPORTAR</button>
+            <button onclick="exportJSON()" class="tool" style="flex:1; background:#222; border: 1px solid #444;">⬇ EXPORTAR .JSON</button>
+            <button onclick="document.getElementById('importFile').click()" class="tool" style="flex:1; background:#222; border: 1px solid #444;">⬆ IMPORTAR .JSON</button>
             <input type="file" id="importFile" style="display:none" onchange="importJSON(this)">
         </div>
         <div class="log" id="log-content"></div>
@@ -76,10 +77,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
             <b id="det-title" style="color:var(--p)"></b>
-            <div style="display:flex; gap:5px;">
-                <button id="save-btn" onclick="manualSave()" class="btn-dice btn-save">GUARDAR</button>
-                <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
-            </div>
+            <button id="save-btn" onclick="manualSave()" class="btn-dice btn-save">GUARDAR</button>
         </div>
 
         <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
@@ -101,17 +99,16 @@
         <div id="preview"></div>
     </div>
 
-    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()"><div id="d-f" style="color:#555; font-size:12px;"></div><div id="dice-container" style="display:flex; justify-content:center; gap:10px; margin:20px 0;"></div><div id="total-val" class="total-box">0</div><div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px;"></div></div></div>
+    <div id="dice-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()"><div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div><div id="dice-container" style="display:flex; justify-content:center; gap:10px; margin:20px 0;"></div><div id="total-val" class="total-box">0</div><div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px;"></div></div></div>
     <div id="note-overlay" class="overlay" onclick="this.style.display='none'"><div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);"><h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2><div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto;"></div><button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px;">CERRAR</button></div></div>
 
     <script>
-        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, isModified: false, dragId: null };
-        const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
+        let state = { items: {}, log: [], id: null, edit: false, uid: 'local', openFolders: {}, isModified: false, dragId: null };
+        const DB = "VPLAT_VFINAL_ITEMS", LG = "VPLAT_VFINAL_LOGS", OF = "VPLAT_VFINAL_FOLDERS";
 
         async function init() {
             await OBR.onReady(async () => {
                 state.uid = await OBR.player.getId();
-                state.uname = await OBR.player.getName();
                 OBR.scene.onMetadataChange(m => {
                     state.items = m[DB] || {};
                     state.log = m[LG] || [];
@@ -124,7 +121,7 @@
         }
 
         async function save() { await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
-        
+        function forceSync() { save(); alert("Sincronización enviada a todos los jugadores."); }
         function showSaveBtn() { state.isModified = true; document.getElementById('save-btn').style.display = 'flex'; }
         
         async function manualSave() {
@@ -138,7 +135,7 @@
         function newItem(type) {
             const n = document.getElementById('newName').value || "Nuevo";
             const id = "id" + Date.now();
-            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null, owner: null };
+            state.items[id] = { id, type, name: n, content: 'FUE=10\n[+] Ataque 1d20+FUE', parent: null };
             document.getElementById('newName').value = ""; save();
         }
 
@@ -167,14 +164,14 @@
             });
             
             document.getElementById('log-content').innerHTML = state.log.map(l => 
-                `<div style="margin-bottom:2px;"><b>[${l.file}]:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.details})</small></div>`
+                `<div><b>[${l.file}]:</b> ${l.f} ➔ <span style="color:var(--p)">${l.r}</span> <small>(${l.details})</small></div>`
             ).join('');
             if(state.id) syncView();
         }
 
         function createCard(it) {
             const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
-            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '👤' : ''}`;
+            d.innerHTML = `<span>📄 ${it.name}</span>`;
             d.onclick = () => { state.id = it.id; openDetails(); };
             d.ondragstart = () => state.dragId = it.id;
             return d;
@@ -189,18 +186,12 @@
             else renderPreview(it.content);
         }
 
+        // LÓGICA DE VARIABLES Y DADOS PLATINUM
         function calculateMemory(txt) {
             const mem = {};
             txt.split('\n').forEach(l => {
                 const b = l.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i);
                 if(b) mem[b[1].toUpperCase()] = parseInt(b[2]);
-            });
-            txt.split('\n').forEach(l => {
-                const p = l.match(/([\+\-])(\d+)([A-Z0-9_]+)/i);
-                if(p) {
-                    const s = p[1], v = parseInt(p[2]), k = p[3].toUpperCase();
-                    if(mem[k] !== undefined) mem[k] += (s === '+' ? 1 : -1) * v;
-                }
             });
             return mem;
         }
@@ -222,78 +213,70 @@
                     .replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, c) => `<div class="block-note" onclick="event.stopPropagation(); openNote('${t}', '${encodeURIComponent(c)}')">${t}</div>`)
-                    .replace(/([A-Z0-9_]+\s*=\s*[\+\-]?\d+)/gi, '<span class="block-var">$1</span>')
                     .replace(/(\d*d\d+[\+\-\*\/\(\)A-Z0-9_]*)/gi, f => `<div class="block-roll" onclick="event.stopPropagation(); runRoll('${f}')">${f}</div>`);
         }
 
         async function runRoll(formulaRaw) {
             const it = state.items[state.id]; const mem = calculateMemory(it.content);
-            let logic = formulaRaw.toUpperCase(); let breakdown = [];
-            Object.keys(mem).sort((a,b)=>b.length-a.length).forEach(k => {
-                const r = new RegExp(`\\b${k}\\b`, 'g');
-                if(r.test(logic)) { breakdown.push(`${k}(${mem[k]})`); logic = logic.replace(r, mem[k]); }
-            });
+            let logic = formulaRaw.toUpperCase();
+            Object.keys(mem).forEach(k => { logic = logic.replace(new RegExp(`\\b${k}\\b`, 'g'), mem[k]); });
             const dm = logic.match(/(\d*)D(\d+)/i); if(!dm) return;
             const n = parseInt(dm[1])||1, s = parseInt(dm[2]);
             const results = []; for(let i=0; i<n; i++) results.push(Math.floor(Math.random()*s)+1);
             
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('d-f').innerText = formulaRaw;
-            const container = document.getElementById('dice-container');
-            const totalVal = document.getElementById('total-val');
-            container.innerHTML = ""; totalVal.classList.remove('show');
+            const container = document.getElementById('dice-container'); container.innerHTML = "";
+            const totalVal = document.getElementById('total-val'); totalVal.classList.remove('show');
             
             let curSum = 0; let logDet = [];
             for(let r of results) {
                 const die = document.createElement('div'); die.className="die-num"; die.innerText="?"; container.appendChild(die);
-                await new Promise(resolve => {
+                await new Promise(res => {
                     let t=0; const iv = setInterval(()=>{
                         die.innerText = Math.floor(Math.random()*s)+1;
                         if(t++>7){
                             clearInterval(iv); die.innerText=r;
-                            if(r===s) { die.style.color="var(--crit)"; logDet.push(`<span style="color:var(--crit)">${r}</span>`); }
-                            else if(r===1) { die.style.color="var(--fail)"; logDet.push(`<span style="color:var(--fail)">${r}</span>`); }
-                            else logDet.push(r);
-                            curSum += r; resolve();
+                            if(r===s) die.style.color="var(--crit)";
+                            if(r===1) die.style.color="var(--fail)";
+                            curSum += r; logDet.push(r); res();
                         }
                     }, 50);
                 });
             }
-            let final; try { final = Math.floor(eval(logic.replace(dm[0], curSum).replace(/[^0-9\+\-\*\/\(\)\.]/g, ''))); } catch(e) { final = curSum; }
-            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); document.getElementById('d-res').innerText = `[${results.join('+')}] | Mods: ${breakdown.join(', ')}`; }, 200);
+            let final = curSum; try { final = Math.floor(eval(logic.replace(dm[0], curSum))); } catch(e){}
+            setTimeout(() => { totalVal.innerText = final; totalVal.classList.add('show'); }, 200);
             
-            state.log.unshift({ file: it.name, f: formulaRaw, r: final, details: logDet.join(', ') });
+            state.log.unshift({ file: it.name, f: formulaRaw, r: final, details: logDet.join('+') });
             if(state.log.length > 15) state.log.pop(); save();
         }
 
-        // IMPORT / EXPORT
+        // FUNCIONES DE EXPORTACIÓN
         function exportJSON() {
-            const data = JSON.stringify({ items: state.items, folders: state.openFolders });
+            const data = JSON.stringify({ items: state.items, folders: state.openFolders, log: state.log });
             const blob = new Blob([data], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `backup_dash_${Date.now()}.json`; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = `platinum_backup.json`; a.click();
         }
 
         function importJSON(input) {
             const reader = new FileReader();
             reader.onload = e => {
-                const data = JSON.parse(e.target.result);
-                state.items = data.items; state.openFolders = data.folders; save();
-                alert("Importado con éxito");
+                const d = JSON.parse(e.target.result);
+                state.items = d.items; state.openFolders = d.folders; state.log = d.log || [];
+                save(); alert("¡Datos importados!");
             };
             reader.readAsText(input.files[0]);
         }
 
         function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); document.getElementById('note-overlay').style.display='flex'; }
-        function goBack() { if(state.isModified && !confirm("No guardaste. ¿Salir?")) return; state.id = null; state.isModified = false; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
+        function goBack() { if(state.isModified && !confirm("Salir sin guardar?")) return; state.id = null; state.isModified = false; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; }
         function switchTab(e) { state.edit = e; syncView(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); showSaveBtn(); }
         function ins(a, b) { document.getElementById('editor').value += a+b; showSaveBtn(); }
-        function askNote() { const t=prompt("Título:"); const c=prompt("Contenido (Doble espacio = salto):"); if(t&&c) ins(`\n[note=${t}]${c}[/note]`, ""); }
+        function askNote() { const t=prompt("T:"); const c=prompt("C:"); if(t&&c) ins(`\n[note=${t}]${c}[/note]`, ""); }
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem(id) { if(confirm("¿Borrar?")) { delete state.items[id || state.id]; save(); if(!id) goBack(); } }
-        function toggleOwnership() { const it = state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
-        function cloneToMyDash(t) { const my = Object.values(state.items).find(i => i.owner === state.uid); if(my) { my.content += "\n"+t; save(); alert("Clonado"); } }
 
         init();
     </script>
