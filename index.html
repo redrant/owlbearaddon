@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dash Plus</title>
+    <title>My Dash - Platinum Ultimate</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -18,50 +18,49 @@
         .auth-card, .note-card { background: var(--surf); padding: 30px; border-radius: 20px; border: 1px solid #222; width: 90%; max-width: 380px; text-align: center; }
         .auth-card input { width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #333; background: #000; color: #fff; margin: 20px 0; outline: none; text-align: center; }
 
-        header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #1f1f22; }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .dm-tools-small { display: none; gap: 5px; }
+        header { padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #1f1f22; height: 50px; }
+        .header-left { display: flex; align-items: center; gap: 10px; overflow-x: auto; flex: 1; }
+        .dm-tools-header { display: none; gap: 4px; align-items: center; padding-left: 10px; border-left: 1px solid #333; }
         
-        .title { font-size: 16px; font-weight: 900; color: var(--p); letter-spacing: 2px; }
-        #user-display { font-size: 11px; opacity: 0.7; cursor: pointer; font-weight: bold; background: #1a1a1c; padding: 4px 10px; border-radius: 20px; }
+        .title { font-size: 14px; font-weight: 900; color: var(--p); letter-spacing: 1px; white-space: nowrap; }
+        #user-display { font-size: 10px; opacity: 0.7; cursor: pointer; font-weight: bold; background: #1a1a1c; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
 
         #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px; gap: 10px; }
         .bar { display: flex; gap: 6px; background: #161618; padding: 8px; border-radius: var(--radius); align-items: center; }
         .bar input { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 10px; border-radius: 8px; outline: none; font-size: 13px; }
         
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
         .item.hidden-item { opacity: 0.3; border-style: dashed; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
-        .del-btn { color: var(--fail); font-size: 12px; opacity: 0.2; padding: 5px; }
+        .del-btn { color: var(--fail); font-size: 11px; opacity: 0.3; padding: 5px; margin-left: 5px; }
         .del-btn:hover { opacity: 1; }
 
-        #dm-global-panel { display: none; background: #1a1a1c; padding: 10px; border-radius: 10px; gap: 8px; border: 1px solid #333; justify-content: center; }
-
         #detail-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
-        .detail-header { padding: 12px 20px; display: flex; gap: 10px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
-        #det-title { flex: 1; text-align: center; font-size: 14px; font-weight: 800; color: var(--p); }
+        .detail-header { padding: 10px 15px; display: flex; gap: 8px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
+        #det-title { flex: 1; text-align: center; font-size: 13px; font-weight: 800; color: var(--p); text-transform: uppercase; }
         #content-area { flex: 1; overflow-y: auto; padding: 20px; font-size: 15px; line-height: 1.6; }
         #editor-area { flex: 1; display: none; padding: 15px; flex-direction: column; gap: 10px; }
         textarea { flex: 1; background: #080809; border: 1px solid #222; color: #bbb; border-radius: 12px; padding: 15px; resize: none; font-size: 13px; outline: none; }
         
-        .btn-p { background: var(--p); color: #000; padding: 8px 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; }
-        .btn-s { background: #222; color: #eee; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .btn-p { background: var(--p); color: #000; padding: 6px 12px; border-radius: 6px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; }
+        .btn-s { background: #222; color: #eee; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         
+        /* BOTONES DE ACCIÓN VISUAL */
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
-        .minus-btn { color: #555; background: #000; padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #222; font-weight: 900; }
+        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
-        .log { height: 130px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 11px; overflow-y: auto; }
+        .log { height: 120px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
 
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .die-box { width: 55px; height: 55px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; margin: 4px; }
-        #total-final { font-size: 70px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.4s; }
+        .die-box { width: 50px; height: 50px; background: #111; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; margin: 4px; }
+        #total-final { font-size: 70px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.3s; }
         #total-final.show { transform: scale(1); }
     </style>
 </head>
@@ -70,7 +69,7 @@
     <div id="auth-screen">
         <div class="auth-card">
             <h1 style="color:var(--p); margin:0;">PLATINUM</h1>
-            <input type="text" id="uname-input" placeholder="Usuario / DM">
+            <input type="text" id="uname-input" placeholder="Nombre / DM">
             <button onclick="login()" class="btn-p" style="width: 100%;">ENTRAR</button>
         </div>
     </div>
@@ -78,14 +77,17 @@
     <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
         <div class="note-card" onclick="event.stopPropagation()">
             <div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom: 15px; font-size:18px;"></div>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 60vh; overflow-y: auto;"></div>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 50vh; overflow-y: auto;"></div>
         </div>
     </div>
 
     <header>
         <div class="header-left">
             <div class="title">My Dash</div>
-            <div id="dm-tools-header" class="dm-tools-small">
+            <div id="dm-master-tools" class="dm-tools-header">
+                <button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+PTS</button>
+                <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MON</button>
+                <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+LVL</button>
                 <button onclick="exportData()" class="btn-tool">EXP</button>
                 <button onclick="importData()" class="btn-tool">IMP</button>
                 <button onclick="clearLog()" class="btn-tool" style="color:var(--fail)">CLR</button>
@@ -95,11 +97,6 @@
     </header>
 
     <div id="main-container">
-        <div id="dm-global-panel">
-            <button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+PTS</button>
-            <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MON</button>
-            <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+LVL</button>
-        </div>
         <div class="bar">
             <input type="text" id="item-input" placeholder="Nombre...">
             <button onclick="createNew('dash')" class="btn-p">+DASH</button>
@@ -111,7 +108,7 @@
 
     <div id="detail-view">
         <div class="detail-header">
-            <button onclick="closeDetail()" class="btn-tool">ATRÁS</button>
+            <button onclick="closeDetail()" class="btn-tool">VOLVER</button>
             <div id="det-title"></div>
             <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWN</button>
             <button id="use-btn" onclick="toggleUse()" class="btn-tool">USAR</button>
@@ -151,10 +148,7 @@
             if(!val) return; USER = val; localStorage.setItem('platinum_user', val);
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('user-display').innerText = USER;
-            if(USER === "DM") {
-                document.getElementById('dm-global-panel').style.display = 'flex';
-                document.getElementById('dm-tools-header').style.display = 'flex';
-            }
+            if(USER === "DM") document.getElementById('dm-master-tools').style.display = 'flex';
             initSync(); setInterval(syncFromCloud, 3000);
         }
 
@@ -175,8 +169,7 @@
             const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
             items.forEach(it => {
-                if(it.parent) return;
-                if(it.hidden && USER !== 'DM') return;
+                if(it.parent || (it.hidden && USER !== 'DM')) return;
                 area.appendChild(createEl(it));
                 if(it.type === 'folder' && DB.openFolders[it.id]) {
                     items.filter(c => c.parent === it.id).forEach(c => { 
@@ -193,7 +186,7 @@
             div.draggable = true;
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
                             <div style="display:flex; align-items:center;">
-                                <small style="opacity:0.4; margin-right:8px">${it.owner||''}</small>
+                                <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>
                                 <span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
@@ -209,7 +202,6 @@
             document.getElementById('detail-view').style.display = 'flex';
             document.getElementById('content-area').style.display = 'block';
             document.getElementById('editor-area').style.display = 'none';
-            document.getElementById('save-btn').style.display = 'none';
             document.getElementById('det-title').innerText = DB.items[id].name;
             updateHeader(); renderVisual();
         }
@@ -255,15 +247,13 @@
         function incVar(key, val) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             if(USER === 'DM') {
-                const choice = confirm(`¿Usar puntos para subir ${key}? (Cancelar para edición manual)`);
+                const choice = confirm(`¿Subir ${key} gastando puntos? (Cancelar para editar manual)`);
                 if(!choice) {
-                    const n = prompt(`Nuevo valor para ${key}:`, val);
+                    const n = prompt(`Nuevo valor:`, val);
                     if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
                     return;
                 }
             }
-            
-            // ERROR FEO CORREGIDO: Bloquear subida de Nivel y Monedas por puntos
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
 
             let costo = val <= 1 ? 1 : val;
@@ -272,7 +262,7 @@
                 it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`)
                            .replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
                 sync(); renderVisual();
-            } else alert(`Faltan ${costo - pts} PUNTOS.`);
+            } else alert(`Necesitas ${costo} PUNTOS.`);
         }
 
         async function rollDice(fStr) {
@@ -281,7 +271,6 @@
             const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
             document.getElementById('dice-overlay').style.display = 'flex';
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
-            document.getElementById('total-final').classList.remove('show');
             const results = [];
             for(let i=0; i<num; i++) {
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
@@ -299,8 +288,8 @@
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
                 <div class="log-entry">
-                    <b style="color:var(--p)">${l.u}</b>: <span style="font-size:13px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
-                    <span style="opacity:0.5; font-size:9px">Dados: ${l.faces.map(f => `<span style="color:${f===l.max?'var(--crit)':(f===1?'var(--fail)':'#8cafff')}">${f}</span>`).join(', ')}</span>
+                    <b style="color:var(--p)">${l.u}</b>: <span style="font-size:12px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
+                    <span style="opacity:0.5; font-size:9px">Caras: ${l.faces.map(f => `<span style="color:${f===l.max?'var(--crit)':(f===1?'var(--fail)':'#8cafff')}">${f}</span>`).join(', ')}</span>
                 </div>
             `).join('');
         }
@@ -308,20 +297,20 @@
         function transferText(txt, type, val, tid) {
             if(!USING_ID) return alert("Usa 'USAR' en tu Dash.");
             const target = DB.items[USING_ID]; const tVars = parseVars(target.content);
-            if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Nivel ${val} requerido.`);
+            if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Requieres Nivel ${val}`);
             if(type === 'c') {
                 const coins = tVars['MONEDAS'] || 0;
-                if(coins < val) return alert(`Faltan ${val - coins} monedas.`);
+                if(coins < val) return alert(`Faltan Monedas.`);
                 target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`);
             }
             let lines = target.content.split('\n');
             let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
             if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
-            target.content = lines.join('\n'); sync(); alert("Agregado.");
+            target.content = lines.join('\n'); sync(); alert("Enviado.");
         }
 
         function globalPrompt(key) {
-            const val = prompt(`Sumar ${key} a todos:`);
+            const val = prompt(`Sumar ${key} globalmente:`);
             if(!val) return;
             Object.values(DB.items).forEach(it => {
                 if(it.type === 'dash') {
@@ -329,7 +318,7 @@
                     if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`);
                 }
             });
-            sync();
+            sync(); alert("Actualizado.");
         }
 
         function openNote(title, content) {
@@ -351,20 +340,19 @@
             document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
             if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
             document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
+            document.getElementById('save-btn').style.display = 'none';
         }
 
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        
         function createNew(type) { 
             const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); 
             DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null, hidden: false }; 
             sync(); render(); document.getElementById('item-input').value = ""; 
         }
-
-        function deleteItem(id) { if(confirm("¿Eliminar definitivamente?")) { delete DB.items[id]; sync(); render(); } }
+        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
         function deleteCurrent() { deleteItem(CID); closeDetail(); }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
         function clearLog() { DB.log = []; sync(); updateLogUI(); }
