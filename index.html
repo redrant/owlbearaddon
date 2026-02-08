@@ -1,63 +1,9 @@
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
-     <style>
-         :root { 
-             --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
-             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-             --dice-bg: #2d2d3d;
-         }
-         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-         
-         /* HEADER ORIGINAL CON FLECHITA */
-         .header { padding: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-         .sync-arrow { color: var(--p); cursor: pointer; font-size: 18px; text-shadow: 0 0 8px var(--p); transition: 0.3s; }
-         .sync-arrow:hover { transform: scale(1.3); }
-         .sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
- 
-         #view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
-         #view-details { display: none; }
- 
-         .items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-         .card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-         .folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
-         .dash { border-left: 5px solid var(--p); }
-+        .owner-badge { font-size: 11px; color: #111; background: var(--p); padding: 2px 6px; border-radius: 10px; margin-left: 8px; }
- 
-         .block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.1s; }
-         .block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
-         .block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-         
-         .btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-         .btn-save { background: var(--crit); color: black; border-bottom-color: #008844; margin-left: 10px; display: none; }
-+        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
- 
-         .check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
-         .check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
- 
-         .tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-         textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
-         #preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
- 
-         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
-         .modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
-         .dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-         .die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
-         .total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
-         .total-box.show { opacity: 1; }
-         
-         .log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-     </style>
- </head>
- <body>
- 
-     <div class="header">
-         <span class="sync-arrow" onclick="save()" title="Forzar Sincronización Global">➤</span>
-         <div class="sig">My Dash Plus</div>
-     </div>
- 
-@@ -101,142 +103,170 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/MyTrueDashPlus.html b/MyTrueDashPlus.html
+index c6cc7c986fe2cad69507e7db6f7e9a05e10e1282..a00fdebe22949b047c62f4efe9d83089fa6fed43 100644
+--- a/MyTrueDashPlus.html
++++ b/MyTrueDashPlus.html
+@@ -101,148 +101,193 @@
              </div>
              <textarea id="editor" oninput="showSaveBtn()"></textarea>
          </div>
@@ -85,35 +31,50 @@
          let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null, isModified: false };
 -        const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 +        let appKey = "mydashplus";
++        const LOCAL_KEY = "MYDASHPLUS_LOCAL";
 +        const LEGACY_DB = "VPLAT_V3_ITEMS", LEGACY_LG = "VPLAT_V3_LOGS", LEGACY_OF = "VPLAT_V3_FOLDERS";
  
          async function init() {
              try {
-                 await OBR.onReady(async () => {
-+                    appKey = await OBR.app.getId();
-                     state.uid = await OBR.player.getId();
-                     state.uname = await OBR.player.getName();
-                     OBR.scene.onMetadataChange(m => { 
+-                await OBR.onReady(async () => {
+-                    state.uid = await OBR.player.getId();
+-                    state.uname = await OBR.player.getName();
+-                    OBR.scene.onMetadataChange(m => { 
 -                        state.items=m[DB]||{}; 
 -                        state.log=m[LG]||[]; 
 -                        state.openFolders=m[OF]||{}; 
+-                        if(!state.isModified) render(); 
++                if (window.OBR) {
++                    await OBR.onReady(async () => {
++                        appKey = await OBR.app.getId();
++                        state.uid = await OBR.player.getId();
++                        state.uname = await OBR.player.getName();
++                        OBR.scene.onMetadataChange(m => { 
++                            const data = m[appKey] || {};
++                            state.items = data.items || m[LEGACY_DB] || {}; 
++                            state.log = data.log || m[LEGACY_LG] || []; 
++                            state.openFolders = data.openFolders || m[LEGACY_OF] || {}; 
++                            if(!state.isModified) render(); 
++                        });
++                        const m = await OBR.scene.getMetadata();
 +                        const data = m[appKey] || {};
-+                        state.items = data.items || m[LEGACY_DB] || {}; 
-+                        state.log = data.log || m[LEGACY_LG] || []; 
-+                        state.openFolders = data.openFolders || m[LEGACY_OF] || {}; 
-                         if(!state.isModified) render(); 
++                        state.items = data.items || m[LEGACY_DB] || {};
++                        state.log = data.log || m[LEGACY_LG] || [];
++                        state.openFolders = data.openFolders || m[LEGACY_OF] || {};
++                        render();
++                        if (!m[appKey] && (m[LEGACY_DB] || m[LEGACY_LG] || m[LEGACY_OF])) {
++                            await save();
++                        }
                      });
-                     const m = await OBR.scene.getMetadata();
+-                    const m = await OBR.scene.getMetadata();
 -                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
-+                    const data = m[appKey] || {};
-+                    state.items = data.items || m[LEGACY_DB] || {};
-+                    state.log = data.log || m[LEGACY_LG] || [];
-+                    state.openFolders = data.openFolders || m[LEGACY_OF] || {};
-+                    render();
-+                    if (!m[appKey] && (m[LEGACY_DB] || m[LEGACY_LG] || m[LEGACY_OF])) {
-+                        await save();
-+                    }
-                 });
+-                });
++                } else {
++                    loadLocal();
++                    window.addEventListener('storage', (event) => {
++                        if (event.key === LOCAL_KEY) loadLocal();
++                    });
++                }
              } catch(e) { render(); }
          }
  
@@ -123,6 +84,12 @@
 +                await OBR.scene.setMetadata({ 
 +                    [appKey]: { items: state.items, log: state.log, openFolders: state.openFolders }
 +                }); 
++            } else {
++                localStorage.setItem(LOCAL_KEY, JSON.stringify({
++                    items: state.items,
++                    log: state.log,
++                    openFolders: state.openFolders
++                }));
 +            }
 +            render(); 
 +        }
@@ -183,9 +150,7 @@
  
          function createCard(it) {
              const d = document.createElement('div'); d.className = "card dash"; d.draggable = true;
--            d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
-+            const ownerTag = it.owner ? `<span class="owner-badge">${it.ownerName || 'Jugador'}</span>` : '';
-+            d.innerHTML = `<span>📄 ${it.name}</span> ${ownerTag}`;
+             d.innerHTML = `<span>📄 ${it.name}</span> ${it.owner ? '<span style="color:var(--p)">👤</span>' : ''}`;
              d.onclick = () => { state.id = it.id; openDetails(); };
              d.ondragstart = () => state.dragId = it.id;
              return d;
@@ -208,17 +173,21 @@
              if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
 -            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
 +            else { obtn.innerText = it.owner ? `OCUPADO` : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
-+            if(!can) {
-+                document.getElementById('t-edit').classList.add('btn-disabled');
-+            } else {
-+                document.getElementById('t-edit').classList.remove('btn-disabled');
-+            }
              document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
              document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
              if(state.edit) { if(!state.isModified) document.getElementById('editor').value = it.content; } 
              else renderPreview(it.content);
          }
  
++        function loadLocal() {
++            const raw = localStorage.getItem(LOCAL_KEY);
++            const data = raw ? JSON.parse(raw) : {};
++            state.items = data.items || {};
++            state.log = data.log || [];
++            state.openFolders = data.openFolders || {};
++            render();
++        }
++
          // --- LÓGICA DE DADOS Y VARIABLES PLATINUM ---
          function calculateMemory(txt) {
              const memory = {};
@@ -238,7 +207,13 @@
                      return `<div class="check-btn" onclick="cloneToMyDash(\`${content.replace(/`/g, "\\`")}\`)">${renderElements(content, memory)}</div>`;
                  }
                  return renderElements(line, memory);
-@@ -268,63 +298,84 @@
+             });
+             document.getElementById('preview').innerHTML = processedLines.join('<br>');
+         }
+ 
+         function renderElements(txt, memory) {
+             return txt
+@@ -268,63 +313,84 @@
              
              document.getElementById('dice-overlay').style.display = 'flex';
              document.getElementById('d-f').innerText = formulaRaw;
