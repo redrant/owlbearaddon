@@ -50,7 +50,8 @@
         .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1a1a1c; padding-bottom: 8px; }
         .log-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
-        .log-total { color: var(--p); font-size: 18px; font-weight: 900; }
+        /* TAMAÑO ROSADO AJUSTADO (un poco más pequeño que el anterior) */
+        .log-total { color: var(--p); font-size: 15px; font-weight: 900; }
         .log-formula { color: var(--dice); font-size: 12px; font-weight: bold; }
         .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
         .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
@@ -176,10 +177,8 @@
         function incVar(key, val) {
             const it = DB.items[CID], vars = parseVars(it.content);
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            if (USER === 'DM') {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`);
-                sync(); renderVisual(); return;
-            }
+            
+            // EL DM YA NO TIENE EXCEPCIÓN: Todos deben gastar puntos para subir stats
             let costo = (val === 0) ? 1 : val + 1;
             let pts = vars['PUNTOS'] || 0;
             if(pts >= costo) {
