@@ -31,6 +31,7 @@
         
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .item.hidden-item { opacity: 0.35; border-style: dashed; border-color: #444; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
         .del-btn { color: var(--fail); font-size: 11px; opacity: 0.3; padding: 5px; margin-left: 5px; }
@@ -52,16 +53,13 @@
         .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
-        /* LOG ESTILO TABLA PROFESIONAL */
         .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
-        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 6px; line-height: 1.4; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 6px; }
         .log-header { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
-        .log-faces { display: flex; gap: 4px; margin-top: 2px; }
         .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
         .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
         .face-fail { background: rgba(255,68,102,0.15); color: var(--fail); border-color: var(--fail); }
 
-        /* ANIMACION DADOS */
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         #slot-machine { display: flex; justify-content: center; gap: 10px; perspective: 1000px; }
         .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; opacity: 0; transform: translateX(-50px); transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -154,7 +152,7 @@
             if(!val) return; USER = val; localStorage.setItem('platinum_user', val);
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('user-display').innerText = USER;
-            if(USER === "DM") document.getElementById('dm-master-tools').style.display = 'flex';
+            if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex';
             initSync(); setInterval(syncFromCloud, 3000);
         }
 
@@ -175,7 +173,8 @@
             const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
             items.forEach(it => {
-                if(it.parent || (it.hidden && USER !== 'DM')) return;
+                if(it.parent) return; 
+                if(it.hidden && USER !== 'DM') return; // Ocultador activo
                 area.appendChild(createEl(it));
                 if(it.type === 'folder' && DB.openFolders[it.id]) {
                     items.filter(c => c.parent === it.id).forEach(c => { 
@@ -188,16 +187,27 @@
 
         function createEl(it) {
             const div = document.createElement('div');
-            div.className = `item ${it.type}`;
+            div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨️' : ''}</span> 
                             <div style="display:flex; align-items:center;">
                                 <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
+            
+            // Ocultador para DM con Click Derecho
+            div.oncontextmenu = (e) => {
+                if(USER === 'DM') {
+                    e.preventDefault();
+                    it.hidden = !it.hidden;
+                    sync(); render();
+                }
+            };
             return div;
         }
+
+        function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
 
         function renderVisual() {
             const it = DB.items[CID]; const vars = parseVars(it.content);
@@ -240,72 +250,42 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             let formulaLimpia = fStr.toUpperCase();
             let formulaLog = formulaLimpia;
-            
-            Object.keys(vars).forEach(k => {
-                formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]);
-                formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]);
-            });
-
+            Object.keys(vars).forEach(k => { formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]); formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]); });
             const match = formulaLimpia.match(/(\d*)D(\d+)/i);
-            const num = Math.min(parseInt(match[1]) || 1, 10); 
-            const sides = parseInt(match[2]);
-            
+            const num = Math.min(parseInt(match[1]) || 1, 10); const sides = parseInt(match[2]);
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('total-final').classList.remove('show');
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
-            
             const results = [];
             for(let i=0; i<num; i++) {
                 await new Promise(r => setTimeout(r, 150)); 
-                const box = document.createElement('div'); 
-                box.className = 'die-box'; machine.appendChild(box);
+                const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 setTimeout(() => box.classList.add('reveal'), 10);
-
-                const finalResult = Math.floor(Math.random()*sides)+1;
-                results.push(finalResult);
-                
+                const finalResult = Math.floor(Math.random()*sides)+1; results.push(finalResult);
                 let counter = 0;
                 const interval = setInterval(() => {
                     box.innerText = Math.floor(Math.random()*sides)+1;
-                    counter++;
-                    if(counter > 10) {
-                        clearInterval(interval);
-                        box.innerText = finalResult;
+                    if(++counter > 10) { clearInterval(interval); box.innerText = finalResult;
                         if(finalResult === 1) box.style.color = 'var(--fail)';
                         if(finalResult === sides) box.style.color = 'var(--crit)';
                     }
                 }, 60);
             }
-
             setTimeout(() => {
                 let totalRoll = results.reduce((a,b)=>a+b, 0);
                 let finalValue = Math.floor(eval(formulaLimpia.replace(match[0], totalRoll)));
                 document.getElementById('total-final').innerText = finalValue;
                 document.getElementById('total-final').classList.add('show');
-                
                 DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog, faces:results, max:sides });
-                if(DB.log.length > 20) DB.log.pop(); 
-                sync(); updateLogUI();
+                if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
             }, 800);
         }
 
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
                 <div class="log-entry">
-                    <div class="log-header">
-                        <b style="color:var(--p)">${l.u}</b>; 
-                        <span style="color:#888">${l.dash}</span>; 
-                        <b style="color:#fff; font-size:11px">${l.total}</b>; 
-                        <small style="color:var(--dice)">${l.formula}</small>;
-                    </div>
-                    <div class="log-faces">
-                        ${l.faces.map(f => {
-                            let cls = "";
-                            if(f === 1) cls = "face-fail";
-                            else if(f === l.max) cls = "face-crit";
-                            return `<span class="face-tag ${cls}">${f}</span>`;
-                        }).join('')}
-                    </div>
+                    <div class="log-header"><b style="color:var(--p)">${l.u}</b>; <span style="color:#888">${l.dash}</span>; <b style="color:#fff">${l.total}</b>; <small style="color:var(--dice)">${l.formula}</small>;</div>
+                    <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
                 </div>
             `).join('');
         }
@@ -332,8 +312,7 @@
                 return;
             }
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            let costo = val <= 1 ? 1 : val;
-            let pts = vars['PUNTOS'] || 0;
+            let costo = val <= 1 ? 1 : val; let pts = vars['PUNTOS'] || 0;
             if(pts >= costo) {
                 it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
                 sync(); renderVisual();
@@ -351,36 +330,14 @@
             sync(); render();
         }
 
-        function openNote(title, content) {
-            document.getElementById('note-title-ui').innerText = title;
-            document.getElementById('note-content-ui').innerHTML = content;
-            document.getElementById('note-modal').style.display = 'flex';
-        }
-
-        function updateHeader() {
-            const it = DB.items[CID]; 
-            document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none';
-            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN";
-            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
-        }
-
-        function toggleMode() {
-            IS_EDIT = !IS_EDIT;
-            document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block';
-            document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
-            if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
-            document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
-        }
-
+        function openNote(title, content) { document.getElementById('note-title-ui').innerText = title; document.getElementById('note-content-ui').innerHTML = content; document.getElementById('note-modal').style.display = 'flex'; }
+        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
+        function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        function createNew(type) { 
-            const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); 
-            DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null, hidden: false }; 
-            sync(); render(); document.getElementById('item-input').value = ""; 
-        }
+        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
         function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
@@ -392,7 +349,6 @@
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
         function addNoteTag() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
-        function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
 </body>
