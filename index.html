@@ -7,103 +7,89 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg: #0a0a0b; --surf: #141417; --p: #bb86fc; --t: #e0e0e0;
+            --bg: #0a0a0b; --surf: #121214; --p: #bb86fc; --t: #e0e0e0;
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-            --radius: 12px;
+            --radius: 8px;
         }
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; scrollbar-color: var(--p) transparent; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; scrollbar-color: #333 transparent; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* AUTH & MODALS */
-        #auth-screen, .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,11,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .auth-card, .note-card { background: var(--surf); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid #333; width: 450px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); transition: all 0.3s; }
-        .auth-card input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; margin: 20px 0; text-align: center; font-size: 1.1em; }
+        /* MODALS MINIMALISTAS */
+        #auth-screen, .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .auth-card, .note-card { background: var(--surf); padding: 30px; border-radius: 16px; border: 1px solid #222; width: 400px; text-align: center; }
+        .auth-card input { width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #333; background: #000; color: #fff; margin: 20px 0; outline: none; text-align: center; }
 
         /* HEADER */
-        header { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #222; }
-        .title { font-size: 20px; font-weight: 800; color: var(--p); letter-spacing: 2px; text-transform: uppercase; }
-        #user-display { padding: 5px 10px; border-radius: 5px; font-weight: bold; color: var(--p); cursor: pointer; }
+        header { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #1f1f22; }
+        .title { font-size: 16px; font-weight: 700; color: var(--p); letter-spacing: 1px; }
+        #user-display { font-size: 12px; opacity: 0.6; cursor: pointer; font-weight: bold; }
 
-        /* MAIN HUD */
-        #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; gap: 15px; }
-        .bar { display: flex; gap: 8px; background: var(--surf); padding: 10px; border-radius: var(--radius); border: 1px solid #333; }
-        .bar input { flex: 1; background: #000; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; outline: none; }
+        /* HUD PRINCIPAL */
+        #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 12px; }
+        .bar { display: flex; gap: 8px; }
+        .bar input { flex: 1; background: #1a1a1c; border: 1px solid #222; color: #fff; padding: 10px; border-radius: var(--radius); outline: none; font-size: 14px; }
         
         /* LISTA */
-        .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .item { background: var(--surf); padding: 12px 16px; border-radius: var(--radius); border: 1px solid #252529; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .item:hover { border-color: var(--p); background: #1a1a1e; }
-        .item.folder { border-left: 5px solid var(--var); }
-        .item.dash { border-left: 5px solid var(--p); }
-        .del-folder { color: var(--fail); font-weight: bold; padding: 5px; cursor: pointer; opacity: 0.5; }
-        .del-folder:hover { opacity: 1; }
+        .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .item:hover { background: #1c1c1f; border-color: #333; }
+        .item.folder { border-left: 3px solid var(--var); }
+        .item.dash { border-left: 3px solid var(--p); }
+        .del-folder { color: var(--fail); font-size: 12px; opacity: 0.4; margin-left: 10px; }
 
-        /* DETAIL VIEW */
+        /* VISTA DETALLE */
         #detail-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
-        .detail-header { padding: 12px 20px; display: flex; gap: 10px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
-        #content-area { flex: 1; overflow-y: auto; padding: 30px; line-height: 1.8; font-size: 1.05em; }
-        #editor-area { flex: 1; display: none; padding: 20px; flex-direction: column; gap: 10px; }
-        textarea { flex: 1; background: #080808; border: 1px solid #333; color: #ccc; border-radius: 8px; padding: 20px; resize: none; font-family: monospace; outline: none; }
+        .detail-header { padding: 10px 15px; display: flex; gap: 8px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
+        #det-title { flex: 1; text-align: center; font-size: 14px; font-weight: bold; color: var(--p); }
+        #content-area { flex: 1; overflow-y: auto; padding: 25px; line-height: 1.6; }
+        #editor-area { flex: 1; display: none; padding: 15px; flex-direction: column; gap: 10px; }
+        textarea { flex: 1; background: #0b0b0c; border: 1px solid #222; color: #bbb; border-radius: var(--radius); padding: 15px; resize: none; font-size: 14px; outline: none; }
         
-        /* DECORACIÓN DE VARIABLES Y NOTAS */
+        /* DECORATIVOS PEQUEÑOS Y MODERNOS */
         .var-tag { 
-            color: var(--var); font-weight: 800; background: rgba(255,171,64,0.15); 
-            padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255,171,64,0.3);
-            text-shadow: 0 0 8px rgba(255,171,64,0.4);
+            color: var(--var); font-size: 0.85em; font-weight: 600; 
+            background: rgba(255,171,64,0.08); padding: 1px 5px; border-radius: 4px;
         }
         .note-btn { 
-            background: linear-gradient(135deg, #1a1a1f, #252529); 
-            border: 1px solid var(--accent); border-bottom: 3px solid var(--accent);
-            color: var(--accent); padding: 3px 12px; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; transition: 0.2s;
-            display: inline-flex; align-items: center; gap: 5px;
+            color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: underline; 
+            text-underline-offset: 3px; font-size: 0.95em; transition: 0.2s;
         }
-        .note-btn:hover { background: var(--accent); color: #000; transform: translateY(-2px); }
-        .note-btn::before { content: 'ℹ'; font-size: 0.8em; opacity: 0.7; }
+        .note-btn:hover { color: #fff; }
 
-        /* DASH COMPONENTS */
-        .dash-line { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-        .plus-btn { 
-            background: rgba(187,134,252,0.1); border: 1px dashed var(--p); color: var(--p); 
-            padding: 2px 10px; border-radius: 6px; cursor: pointer; font-weight: 900; 
-            transition: 0.2s;
-        }
-        .plus-btn:hover { background: var(--p); color: #000; border-style: solid; }
+        .dash-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
+        .plus-btn { color: var(--p); cursor: pointer; font-weight: bold; font-size: 0.9em; opacity: 0.7; }
+        .plus-btn:hover { opacity: 1; }
         
-        .roll-btn { 
-            background: #1e1e24; color: #8cafff; padding: 4px 12px; border-radius: 8px; 
-            border-bottom: 3px solid #5c7cff; cursor: pointer; font-weight: bold; 
-            display: inline-block; transition: 0.2s;
-        }
-        .roll-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        .roll-btn { color: #8cafff; cursor: pointer; font-weight: bold; font-size: 0.95em; border-bottom: 1px dashed #5c7cff; }
 
-        /* LOG & DICE */
-        .log { height: 160px; background: #050507; border-top: 1px solid #222; padding: 12px; font-size: 12px; overflow-y: auto; color: #888; border-bottom: 4px solid var(--p); }
-        .btn-tool { background: #222; color: #eee; border: 1px solid #444; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        /* LOGS */
+        .log { height: 120px; background: #080809; border-top: 1px solid #1f1f22; padding: 10px; font-size: 11px; overflow-y: auto; color: #666; }
+        .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #222; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; }
         .btn-p { background: var(--p); color: #000; }
-        .btn-s { background: #2a2a2e; color: #fff; }
+        .btn-s { background: #222; color: #eee; }
 
-        #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; }
-        .slot-row { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
-        .die-box { width: 80px; height: 80px; background: #1a1a1d; border: 2px solid #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; }
-        #total-display { font-size: 120px; font-weight: 900; color: var(--p); text-shadow: 0 0 40px var(--p); transform: scale(0); transition: 0.5s; }
-        #total-display.show { transform: scale(1); }
+        /* DADOS */
+        #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .die-box { width: 60px; height: 60px; background: #111; border: 1px solid #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 5px; }
+        #total-display { font-size: 80px; font-weight: 900; color: var(--p); opacity: 0; transition: 0.4s; }
+        #total-display.show { opacity: 1; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h2 style="color:var(--p); margin:0; letter-spacing: 4px;">PLATINUM DASH</h2>
-            <input type="text" id="uname-input" placeholder="ID de Jugador / DM...">
-            <button onclick="login()" class="btn btn-p" style="width: 100%; padding: 15px;">CONECTAR</button>
+            <div style="color:var(--p); font-weight: 900; letter-spacing: 2px; margin-bottom: 10px;">PLATINUM</div>
+            <input type="text" id="uname-input" placeholder="Nombre de usuario...">
+            <button onclick="login()" class="btn btn-p" style="width: 100%">INGRESAR</button>
         </div>
     </div>
 
     <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
         <div class="note-card" onclick="event.stopPropagation()">
-            <h2 id="note-title-ui" style="margin:0;"></h2>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#ccc; max-height: 400px; overflow-y: auto; margin: 25px 0; line-height: 1.6; border-left: 2px solid var(--p); padding-left: 15px;"></div>
+            <div id="note-title-ui" style="font-weight:bold; color:var(--accent); margin-bottom: 15px; font-size: 14px; text-transform: uppercase;"></div>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#999; font-size: 14px; margin-bottom: 20px;"></div>
             <button onclick="document.getElementById('note-modal').style.display='none'" class="btn btn-s" style="width:100%">CERRAR</button>
         </div>
     </div>
@@ -115,46 +101,42 @@
 
     <div id="main-container">
         <div class="bar">
-            <input type="text" id="item-input" placeholder="Nombre del Dash o Carpeta...">
+            <input type="text" id="item-input" placeholder="Crear nuevo...">
             <button onclick="createNew('dash')" class="btn btn-p">+ DASH</button>
             <button onclick="createNew('folder')" class="btn btn-s">+ CARPETA</button>
-            <div id="dm-import-export" style="display:none; gap:5px; margin-left:10px;">
-                <button onclick="exportData()" class="btn-tool">EXP</button>
-                <button onclick="importData()" class="btn-tool">IMP</button>
-            </div>
         </div>
         <div id="list-area" class="list"></div>
         <div id="log-area" class="log"></div>
-        <div id="dm-tools" style="display:none; text-align:right; padding:5px;">
-            <button onclick="clearLog()" class="btn-tool" style="color:var(--fail)">Limpiar Log (DM)</button>
+        <div id="dm-tools" style="display:none; text-align:right;">
+            <button onclick="clearLog()" class="btn-tool" style="color:var(--fail)">LIMPIAR LOG</button>
+            <button onclick="exportData()" class="btn-tool">EXPORTAR</button>
+            <button onclick="importData()" class="btn-tool">IMPORTAR</button>
         </div>
     </div>
 
     <div id="detail-view">
         <div class="detail-header">
-            <button onclick="closeDetail()" class="btn btn-s">SALIR</button>
-            <div id="det-title" style="flex:1; text-align:center; font-weight:900; color:var(--p); text-transform:uppercase;"></div>
-            <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWNEAR</button>
+            <button onclick="closeDetail()" class="btn-tool">VOLVER</button>
+            <div id="det-title"></div>
+            <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWN</button>
             <button id="use-btn" onclick="toggleUse()" class="btn-tool" style="display:none">USAR</button>
-            <button id="mode-btn" onclick="toggleMode()" class="btn btn-s" style="display:none">EDITOR</button>
-            <button id="save-btn" onclick="saveDash()" class="btn btn-p" style="display:none">GUARDAR</button>
+            <button id="mode-btn" onclick="toggleMode()" class="btn-tool" style="display:none">EDIT</button>
+            <button id="save-btn" onclick="saveDash()" class="btn btn-p" style="display:none; padding:4px 10px;">G</button>
         </div>
         <div id="content-area"></div>
         <div id="editor-area">
             <div style="display:flex; gap:5px; margin-bottom:10px;">
                 <button class="btn-tool" onclick="wrap('**','**')">B</button>
                 <button class="btn-tool" onclick="wrap('*','*')">I</button>
-                <button class="btn-tool" onclick="addGlow()">GLOW</button>
-                <button class="btn-tool" onclick="ins('[+] ')">[+]</button>
                 <button class="btn-tool" onclick="addNote()">NOTA</button>
-                <button class="btn-tool" onclick="deleteCurrent()" style="background:#3d1a1a; color:var(--fail); margin-left:auto">BORRAR</button>
+                <button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail)">BORRAR</button>
             </div>
             <textarea id="editor-txt" oninput="showSave()"></textarea>
         </div>
     </div>
 
     <div id="dice-overlay" onclick="this.style.display='none'">
-        <div id="slot-machine" class="slot-row"></div>
+        <div id="slot-machine" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
         <div id="total-display">0</div>
     </div>
 
@@ -164,26 +146,15 @@
         const client = window.supabase.createClient(SB_URL, SB_KEY);
 
         let DB = { items: {}, log: [], openFolders: {} };
-        let USER = "";
-        let CID = null;
-        let USING_ID = null;
-        let IS_EDIT = false;
-        let lastDBString = "";
+        let USER = ""; let CID = null; let USING_ID = null; let IS_EDIT = false; let lastDBString = "";
 
         function login() {
             const val = document.getElementById('uname-input').value.trim();
-            if(!val) return;
-            USER = val;
-            localStorage.setItem('platinum_user', val);
+            if(!val) return; USER = val; localStorage.setItem('platinum_user', val);
             document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('user-display').innerText = `ID: ${USER}`;
-            if(USER === "DM") {
-                document.getElementById('dm-tools').style.display = 'block';
-                document.getElementById('dm-import-export').style.display = 'flex';
-            }
-            initSync();
-            setInterval(silentSyncList, 6000); 
-            setInterval(silentSyncLog, 2000);
+            document.getElementById('user-display').innerText = USER;
+            if(USER === "DM") document.getElementById('dm-tools').style.display = 'block';
+            initSync(); setInterval(silentSyncList, 5000); setInterval(silentSyncLog, 2000);
         }
 
         async function initSync() {
@@ -201,16 +172,11 @@
             const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
             if(data) {
                 if(JSON.stringify(data.data.log) !== JSON.stringify(DB.log)) { DB.log = data.data.log; updateLogUI(); }
-                if(CID && !IS_EDIT && JSON.stringify(data.data.items[CID]) !== JSON.stringify(DB.items[CID])) {
-                    DB.items[CID] = data.data.items[CID]; renderVisual();
-                }
+                if(CID && !IS_EDIT && JSON.stringify(data.data.items[CID]) !== JSON.stringify(DB.items[CID])) { DB.items[CID] = data.data.items[CID]; renderVisual(); }
             }
         }
 
-        async function sync() {
-            lastDBString = JSON.stringify(DB);
-            await client.from('platinum_session').upsert({ id: 1, data: DB });
-        }
+        async function sync() { lastDBString = JSON.stringify(DB); await client.from('platinum_session').upsert({ id: 1, data: DB }); }
 
         function render() {
             const area = document.getElementById('list-area'); area.innerHTML = "";
@@ -219,9 +185,7 @@
                 if(it.parent) return;
                 area.appendChild(createEl(it));
                 if(it.type === 'folder' && DB.openFolders[it.id]) {
-                    items.filter(c => c.parent === it.id).forEach(c => {
-                        const cel = createEl(c); cel.style.marginLeft = "30px"; area.appendChild(cel);
-                    });
+                    items.filter(c => c.parent === it.id).forEach(c => { const cel = createEl(c); cel.style.marginLeft = "20px"; area.appendChild(cel); });
                 }
             });
         }
@@ -230,7 +194,7 @@
             const div = document.createElement('div'); div.className = `item ${it.type}`;
             div.draggable = true;
             let del = (it.type === 'folder' && (it.owner === USER || USER === 'DM')) ? `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>` : "";
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <div style="display:flex; align-items:center; gap:10px;"><small style="opacity:0.4">${it.owner||''}</small>${del}</div>`;
+            div.innerHTML = `<span style="font-size:13px">${it.type==='folder'?'📁':'📄'} ${it.name}</span> <div style="display:flex; align-items:center;"><small style="opacity:0.3; font-size:10px">${it.owner||''}</small>${del}</div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
             div.ondragover = (e) => e.preventDefault();
@@ -238,14 +202,13 @@
             return div;
         }
 
-        function deleteFolder(id) { if(!confirm("¿Borrar carpeta?")) return; Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; }); delete DB.items[id]; sync(); render(); }
+        function deleteFolder(id) { if(!confirm("¿Borrar?")) return; Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; }); delete DB.items[id]; sync(); render(); }
 
-        async function openDash(id) {
+        function openDash(id) {
             CID = id; IS_EDIT = false;
             document.getElementById('detail-view').style.display = 'flex';
             document.getElementById('content-area').style.display = 'block';
             document.getElementById('editor-area').style.display = 'none';
-            document.getElementById('save-btn').style.display = 'none';
             document.getElementById('det-title').innerText = DB.items[id].name;
             updateHeader(); renderVisual();
         }
@@ -254,42 +217,35 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let pre = ""; let body = l;
-                if(l.trim().startsWith('[+]')) {
-                    const clean = l.replace('[+]', '').trim();
-                    pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`;
-                    body = clean;
-                }
+                if(l.trim().startsWith('[+]')) { const clean = l.replace('[+]', '').trim(); pre = `<span class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</span>`; body = clean; }
                 return `<div class="dash-line">${pre}<div>${process(body, vars)}</div></div>`;
             }).join('');
         }
 
         function process(t, v) {
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
-                    .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 10px $1">$2</span>')
+                    .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span class="note-btn" onclick="openNoteModal('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
                     .replace(/([A-Z]+=[0-9]+|[\+\-][0-9]+[A-Z]+)/gi, m => `<span class="var-tag">${m}</span>`)
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
         }
 
         function cloneToUsing(txt) {
-            if(!USING_ID || !DB.items[USING_ID]) return alert("Activa el modo 'USAR' en el Dash que debe aprender esto.");
-            DB.items[USING_ID].content += "\n" + txt;
-            sync();
-            openNoteModal("¡SISTEMA!", "Se aprendió con éxito:\n\n" + txt, true);
+            if(!USING_ID || !DB.items[USING_ID]) return alert("Activa 'USAR' en tu Dash.");
+            DB.items[USING_ID].content += "\n" + txt; sync();
+            openNoteModal("SISTEMA", "Ya se agrego la nueva funcion", true);
         }
 
-        function openNoteModal(t, b, isSuccess = false) {
+        function openNoteModal(t, b, isSys = false) {
             const modal = document.getElementById('note-modal');
-            const title = document.getElementById('note-title-ui');
-            title.innerText = t;
-            title.style.color = isSuccess ? 'var(--crit)' : 'var(--accent)';
+            document.getElementById('note-title-ui').innerText = t;
+            document.getElementById('note-title-ui').style.color = isSys ? 'var(--p)' : 'var(--accent)';
             document.getElementById('note-content-ui').innerText = b;
             modal.style.display = 'flex';
         }
 
         function parseVars(txt) {
-            const v = {};
-            const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi);
+            const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi);
             for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]);
             const subs = txt.matchAll(/([\+\-][0-9]+)([A-Z]+)/gi);
             for(const s of subs) { const k = s[2].toUpperCase(); if(v[k]!==undefined) v[k]+=parseInt(s[1]); }
@@ -299,29 +255,26 @@
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             let f = fStr.toUpperCase(); Object.keys(vars).forEach(k => f = f.replace(new RegExp(k,'g'), vars[k]));
-            const match = f.match(/(\d*)D(\d+)/i);
-            const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
-            const results = [];
-            document.getElementById('dice-overlay').style.display = 'flex';
+            const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 12); const sides = parseInt(match[2]);
+            const results = []; document.getElementById('dice-overlay').style.display = 'flex';
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
             document.getElementById('total-display').classList.remove('show');
             for(let i=0; i<num; i++) {
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 const r = Math.floor(Math.random()*sides)+1; results.push(r);
-                for(let j=0; j<8; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 50)); }
+                for(let j=0; j<6; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 60)); }
                 box.innerText = r; if(r===1) box.style.color = 'var(--fail)'; if(r===sides) box.style.color = 'var(--crit)';
             }
             let totalRoll = results.reduce((a,b)=>a+b, 0);
             let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
-            setTimeout(() => { const td = document.getElementById('total-display'); td.innerText = finalValue; td.classList.add('show'); }, 200);
+            setTimeout(() => { const td = document.getElementById('total-display'); td.innerText = finalValue; td.classList.add('show'); }, 150);
             DB.log.unshift({ u:USER, dash:it.name, total:finalValue, faces:results, formula: fStr, max: sides });
-            if(DB.log.length > 25) DB.log.pop(); await sync();
+            if(DB.log.length > 20) DB.log.pop(); await sync();
         }
 
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => {
-                const fs = l.faces.map(f => `<span style="color:${f===1?'var(--fail)':(f===l.max?'var(--crit)':'inherit')}">${f}</span>`).join(', ');
-                return `<div><b>${l.u}</b> @ ${l.dash}: <span style="color:var(--p); font-weight:900;">${l.total}</span> <small>[${fs}]</small> <span style="color:var(--var); font-size:10px">${l.formula}</span></div>`;
+                return `<div><b>${l.u}</b>: ${l.total} <small>(${l.formula})</small></div>`;
             }).join('');
         }
 
@@ -329,9 +282,8 @@
             const it = DB.items[CID]; const isOwner = it.owner === USER || USER === 'DM';
             document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
             document.getElementById('use-btn').style.display = isOwner ? 'block' : 'none';
-            document.getElementById('mode-btn').innerText = "EDITOR";
-            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "LIBERAR" : (USER==="DM"?"DM LIBERAR":"OCUPADO")) : "OWNEAR";
-            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
+            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN";
+            document.getElementById('use-btn').innerText = USING_ID === CID ? "USING" : "USE";
         }
 
         function toggleMode() {
@@ -339,7 +291,7 @@
             document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block';
             document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
             if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
-            document.getElementById('mode-btn').innerText = IS_EDIT ? "VISUAL" : "EDITOR";
+            document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
         }
 
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
@@ -350,14 +302,11 @@
         function deleteCurrent() { if(confirm("¿Eliminar?")) { delete DB.items[CID]; sync(); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
-        function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
-        function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
         function addNote() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
-        function clearLog() { if(confirm("¿Limpiar log?")) { DB.log = []; sync(); } }
+        function clearLog() { if(confirm("¿Limpiar?")) { DB.log = []; sync(); } }
         function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
         function importData() { const inp = document.createElement('input'); inp.type='file'; inp.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); sync(); render(); }; r.readAsText(e.target.files[0]); }; inp.click(); }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
-
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
 </body>
