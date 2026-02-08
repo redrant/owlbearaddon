@@ -13,7 +13,6 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER ORIGINAL CON FLECHITA */
         .header { padding: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
         .sync-arrow { color: var(--p); cursor: pointer; font-size: 18px; text-shadow: 0 0 8px var(--p); transition: 0.3s; }
         .sync-arrow:hover { transform: scale(1.3); }
@@ -122,6 +121,7 @@
     </div>
 
     <script>
+        // --- SCRIPT COMPLETO MULTIJUGADOR LISTO PARA OWLBEAR ---
         let state = { items: {}, log: [], id: null, edit: false, uid: 'local', uname: 'Player', openFolders: {}, dragId: null, isModified: false };
         const DB = "VPLAT_V3_ITEMS", LG = "VPLAT_V3_LOGS", OF = "VPLAT_V3_FOLDERS";
 
@@ -130,22 +130,32 @@
                 await OBR.onReady(async () => {
                     state.uid = await OBR.player.getId();
                     state.uname = await OBR.player.getName();
-                    OBR.scene.onMetadataChange(m => { 
-                        state.items=m[DB]||{}; 
-                        state.log=m[LG]||[]; 
-                        state.openFolders=m[OF]||{}; 
-                        if(!state.isModified) render(); 
+                    OBR.scene.onMetadataChange(m => {
+                        if(!state.isModified) {
+                            state.items = m[DB]||{};
+                            state.log = m[LG]||[];
+                            state.openFolders = m[OF]||{};
+                            render();
+                        }
                     });
                     const m = await OBR.scene.getMetadata();
-                    state.items=m[DB]||{}; state.log=m[LG]||[]; state.openFolders=m[OF]||{}; render();
+                    state.items = m[DB]||{};
+                    state.log = m[LG]||[];
+                    state.openFolders = m[OF]||{};
+                    render();
                 });
             } catch(e) { render(); }
         }
 
-        async function save() { if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
+        async function save() {
+            if(window.OBR) {
+                await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders });
+                render();
+            }
+        }
 
         function showSaveBtn() { state.isModified = true; document.getElementById('save-btn').style.display = 'flex'; }
-        
+
         async function manualSave() {
             if(!state.id) return;
             state.items[state.id].content = document.getElementById('editor').value;
@@ -213,15 +223,21 @@
             const it = state.items[state.id]; if(!it) return;
             document.getElementById('det-title').innerText = it.name.toUpperCase();
             const obtn = document.getElementById('own-btn');
-            if(it.owner === state.uid) { obtn.innerText = "LIBERAR"; obtn.className = "btn-dice btn-owner-true"; }
-            else { obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); }
+
+            if(it.owner === state.uid) { 
+                obtn.innerText = "LIBERAR"; 
+                obtn.className = "btn-dice btn-owner-true"; 
+            } else { 
+                obtn.innerText = it.owner ? "OCUPADO" : "OWNEAR"; 
+                obtn.className = "btn-dice " + (it.owner ? "" : "btn-owner-false"); 
+            }
+
             document.getElementById('editor-ui').style.display = state.edit ? 'flex' : 'none';
             document.getElementById('preview').style.display = state.edit ? 'none' : 'block';
             if(state.edit) { if(!state.isModified) document.getElementById('editor').value = it.content; } 
             else renderPreview(it.content);
         }
 
-        // --- LÓGICA DE DADOS Y VARIABLES PLATINUM ---
         function calculateMemory(txt) {
             const memory = {};
             const lines = txt.split('\n');
@@ -258,9 +274,7 @@
             const it = state.items[state.id];
             const memory = calculateMemory(it.content);
             let logic = formulaRaw.toUpperCase();
-            Object.keys(memory).sort((a,b)=>b.length-a.length).forEach(k => {
-                logic = logic.replace(new RegExp(`\\b${k}\\b`,'g'), memory[k]);
-            });
+            Object.keys(memory).sort((a,b)=>b.length-a.length).forEach(k => { logic = logic.replace(new RegExp(`\\b${k}\\b`,'g'), memory[k]); });
             const diceMatch = logic.match(/(\d*)D(\d+)/i);
             if(!diceMatch) return;
             const n = parseInt(diceMatch[1]) || 1, s = parseInt(diceMatch[2]);
@@ -278,8 +292,7 @@
                     let t = 0;
                     const iv = setInterval(() => {
                         die.innerText = Math.floor(Math.random()*s)+1;
-                        if(t++ > 7) {
-                            clearInterval(iv); die.innerText = res;
+                        if(t++ > 7) { clearInterval(iv); die.innerText = res;
                             if(res === s) die.style.color = "var(--crit)";
                             if(res === 1) die.style.color = "var(--fail)";
                             currentSum += res; logDetails.push(res); r();
@@ -295,25 +308,11 @@
             save();
         }
 
-        // --- IMPORT / EXPORT ---
-        function exportJSON() {
-            const data = JSON.stringify({ items: state.items, folders: state.openFolders, log: state.log });
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `platinum_backup.json`; a.click();
-        }
+        function exportJSON() { const data = JSON.stringify({ items: state.items, folders: state.openFolders, log: state.log }); const blob = new Blob([data], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `platinum_backup.json`; a.click(); }
+        function importJSON(input) { const reader = new FileReader(); reader.onload = e => { const data = JSON.parse(e.target.result); state.items = data.items; state.openFolders = data.folders; state.log = data.log || []; save(); alert("Importado con éxito"); }; reader.readAsText(input.files[0]); }
 
-        function importJSON(input) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const data = JSON.parse(e.target.result);
-                state.items = data.items; state.openFolders = data.folders; state.log = data.log || [];
-                save(); alert("Importado con éxito");
-            };
-            reader.readAsText(input.files[0]);
-        }
+        function toggleOwnership() { const it = state.items[state.id]; if(it.owner === state.uid) it.owner = null; else if(!it.owner) it.owner = state.uid; else { alert("Dash ocupado"); return; } save(); }
 
-        function toggleOwnership() { const it = state.items[state.id]; it.owner = it.owner ? null : state.uid; save(); }
         function openNote(t, c) { document.getElementById('note-title').innerText = t; document.getElementById('note-body').innerText = decodeURIComponent(c).replace(/  /g, '\n'); document.getElementById('note-overlay').style.display='flex'; }
         function switchTab(isEdit) { state.edit = isEdit; syncView(); }
         function wrap(a, b) { const e = document.getElementById('editor'); const s = e.selectionStart, end = e.selectionEnd; e.value = e.value.substring(0, s) + a + e.value.substring(s, end) + b + e.value.substring(end); showSaveBtn(); }
@@ -322,9 +321,10 @@
         function askGlow() { const c=prompt("Color:"); if(c) wrap(`<g=${c}>`, `</g>`); }
         function deleteItem() { if(confirm("¿Borrar?")) { delete state.items[state.id]; save(); goBack(); } }
         function deleteFolder(fid) { if(confirm("¿Borrar carpeta?")) { Object.values(state.items).forEach(it => { if(it.parent === fid) it.parent = null; }); delete state.items[fid]; save(); } }
-        function cloneToMyDash(t) { const my = Object.values(state.items).find(i => i.owner === state.uid); if(my) { my.content += "\n"+t; save(); alert("Clonado"); } }
+        function cloneToMyDash(t) { let my = Object.values(state.items).find(i => i.owner === state.uid && i.type==='dash'); if(!my) { const id = "id" + Date.now(); my = { id, type:'dash', name:'Mi Dash', content:'', parent:null, owner: state.uid }; state.items[id] = my; } my.content += "\n"+t; save(); alert("Clonado"); }
 
         init();
     </script>
+
 </body>
 </html>
