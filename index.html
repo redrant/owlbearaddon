@@ -48,7 +48,6 @@
         .btn-s { background: #222; color: #eee; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         
-        /* BOTONES DE ACCIÓN */
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
@@ -59,8 +58,10 @@
         .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
 
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .die-box { width: 50px; height: 50px; background: #111; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; margin: 4px; transition: 0.1s; }
-        #total-final { font-size: 70px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.3s; margin-top: 20px; }
+        #slot-machine { display: flex; justify-content: center; gap: 10px; perspective: 1000px; }
+        .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; opacity: 0; transform: translateX(-50px); transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .die-box.reveal { opacity: 1; transform: translateX(0); }
+        #total-final { font-size: 80px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.4s; margin-top: 30px; text-shadow: 0 0 20px var(--p); }
         #total-final.show { transform: scale(1); }
     </style>
 </head>
@@ -131,7 +132,7 @@
     </div>
 
     <div id="dice-overlay" onclick="this.style.display='none'">
-        <div id="slot-machine" style="display:flex; justify-content:center; flex-wrap: wrap;"></div>
+        <div id="slot-machine"></div>
         <div id="total-final">0</div>
     </div>
 
@@ -186,17 +187,11 @@
             div.draggable = true;
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
-
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
                             <div style="display:flex; align-items:center;">
-                                <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>
-                                ${delHtml}
+                                <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
-            div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
-            div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
-            div.ondragover = (e) => e.preventDefault();
-            div.ondrop = (e) => { const tid = e.dataTransfer.getData('id'); if(it.type === 'folder' && tid !== it.id) { DB.items[tid].parent = it.id; sync(); render(); } else if(tid !== it.id) { DB.items[tid].parent = null; sync(); render(); } };
             return div;
         }
 
@@ -213,15 +208,12 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
-                // DECORACIÓN [-] AMARILLA (Oculta ID)
                 body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-]</span>');
-                
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 if(transferMatch) {
                     const type = transferMatch[1].toLowerCase();
                     const val = transferMatch[2]; const tid = transferMatch[3];
                     const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
-                    // DECORACIÓN [+] (Oculta ID, muestra precio/tipo si lo tiene)
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
@@ -249,26 +241,20 @@
             return v;
         }
 
-        function incVar(key, val) {
-            const it = DB.items[CID]; const vars = parseVars(it.content);
-            if(USER === 'DM') {
-                const n = prompt(`Nuevo valor para ${key}:`, val);
-                if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
-                return;
-            }
-            if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            let costo = val <= 1 ? 1 : val;
-            let pts = vars['PUNTOS'] || 0;
-            if(pts >= costo) {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
-                sync(); renderVisual();
-            } else alert(`Faltan PUNTOS.`);
-        }
-
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
-            let f = fStr.toUpperCase(); Object.keys(vars).forEach(k => f = f.replace(new RegExp(k,'g'), vars[k]));
-            const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
+            let formulaLimpia = fStr.toUpperCase();
+            
+            // Reemplazar variables para el LOG descriptivo (ej: 1D20+FUE -> 1D20+10)
+            let formulaLog = formulaLimpia;
+            Object.keys(vars).forEach(k => {
+                formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]);
+                formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]);
+            });
+
+            const match = formulaLimpia.match(/(\d*)D(\d+)/i);
+            const num = Math.min(parseInt(match[1]) || 1, 10); 
+            const sides = parseInt(match[2]);
             
             document.getElementById('dice-overlay').style.display = 'flex';
             document.getElementById('total-final').classList.remove('show');
@@ -276,31 +262,38 @@
             
             const results = [];
             for(let i=0; i<num; i++) {
-                const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
-                const finalResult = Math.floor(Math.random()*sides)+1; results.push(finalResult);
+                // Animación de Izquierda a Derecha
+                await new Promise(r => setTimeout(r, 150)); 
+                const box = document.createElement('div'); 
+                box.className = 'die-box'; 
+                machine.appendChild(box);
+                setTimeout(() => box.classList.add('reveal'), 10);
+
+                const finalResult = Math.floor(Math.random()*sides)+1;
+                results.push(finalResult);
                 
-                // ANIMACIÓN FLUIDA
                 let counter = 0;
                 const interval = setInterval(() => {
                     box.innerText = Math.floor(Math.random()*sides)+1;
                     counter++;
-                    if(counter > 12) {
+                    if(counter > 10) {
                         clearInterval(interval);
                         box.innerText = finalResult;
                         if(finalResult === 1) box.style.color = 'var(--fail)';
                         if(finalResult === sides) box.style.color = 'var(--crit)';
                     }
-                }, 50);
+                }, 60);
             }
 
             setTimeout(() => {
                 let totalRoll = results.reduce((a,b)=>a+b, 0);
-                let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
+                let finalValue = Math.floor(eval(formulaLimpia.replace(match[0], totalRoll)));
                 const tf = document.getElementById('total-final');
                 tf.innerText = finalValue;
                 tf.classList.add('show');
                 
-                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr });
+                // GUARDAR EN LOG CON FÓRMULA TRADUCIDA
+                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog });
                 if(DB.log.length > 20) DB.log.pop(); 
                 sync(); updateLogUI();
             }, 800);
@@ -324,6 +317,22 @@
             let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
             if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
             target.content = lines.join('\n'); sync(); alert("Enviado.");
+        }
+
+        function incVar(key, val) {
+            const it = DB.items[CID]; const vars = parseVars(it.content);
+            if(USER === 'DM') {
+                const n = prompt(`Nuevo valor para ${key}:`, val);
+                if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
+                return;
+            }
+            if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
+            let costo = val <= 1 ? 1 : val;
+            let pts = vars['PUNTOS'] || 0;
+            if(pts >= costo) {
+                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
+                sync(); renderVisual();
+            } else alert(`Faltan PUNTOS.`);
         }
 
         function globalPrompt(key) {
@@ -369,7 +378,7 @@
             sync(); render(); document.getElementById('item-input').value = ""; 
         }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
-        function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } else alert("No eres el dueño."); }
+        function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
         function clearLog() { DB.log = []; sync(); updateLogUI(); }
         function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
