@@ -50,34 +50,20 @@
         .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1a1a1c; padding-bottom: 8px; }
         .log-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
-        /* TAMAÑO ROSADO AJUSTADO (un poco más pequeño que el anterior) */
         .log-total { color: var(--p); font-size: 15px; font-weight: 900; }
         .log-formula { color: var(--dice); font-size: 12px; font-weight: bold; }
         .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
-        .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
-        .face-fail { background: rgba(255,68,102,0.15); color: var(--fail); border-color: var(--fail); }
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        #slot-machine { display: flex; justify-content: center; gap: 10px; perspective: 1000px; }
-        .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; opacity: 0; transform: translateX(-50px); transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #slot-machine { display: flex; justify-content: center; gap: 10px; }
+        .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; opacity: 0; transform: translateX(-50px); transition: 0.3s all; }
         .die-box.reveal { opacity: 1; transform: translateX(0); }
-        #total-final { font-size: 80px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.4s; margin-top: 30px; text-shadow: 0 0 20px var(--p); }
+        #total-final { font-size: 80px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.4s; margin-top: 30px; }
         #total-final.show { transform: scale(1); }
     </style>
 </head>
 <body>
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h1 style="color:var(--p); margin:0;">PLATINUM</h1>
-            <input type="text" id="uname-input" placeholder="Nombre / DM">
-            <button onclick="login()" class="btn-p" style="width: 100%;">ENTRAR</button>
-        </div>
-    </div>
-    <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
-        <div class="note-card" onclick="event.stopPropagation()">
-            <div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom: 15px; font-size:18px;"></div>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 50vh; overflow-y: auto; font-size: 14px; line-height: 1.5;"></div>
-        </div>
-    </div>
+    <div id="auth-screen"><div class="auth-card"><h1 style="color:var(--p); margin:0;">PLATINUM</h1><input type="text" id="uname-input" placeholder="Nombre / DM"><button onclick="login()" class="btn-p" style="width: 100%;">ENTRAR</button></div></div>
+    <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'"><div class="note-card" onclick="event.stopPropagation()"><div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom:15px; font-size:18px;"></div><div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height:50vh; overflow-y:auto; font-size:14px;"></div></div></div>
     <header>
         <div class="header-left"><div class="title">My Dash</div><div id="dm-tools-header" class="dm-tools-header"><button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+PTS</button><button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MON</button><button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+LVL</button><button onclick="exportData()" class="btn-tool">EXP</button><button onclick="importData()" class="btn-tool">IMP</button><button onclick="clearLog()" class="btn-tool" style="color:var(--fail)">CLR</button></div></div>
         <div id="user-display" onclick="logout()"></div>
@@ -90,21 +76,18 @@
     <div id="detail-view">
         <div class="detail-header"><button onclick="closeDetail()" class="btn-tool">VOLVER</button><div id="det-title"></div><button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWN</button><button id="use-btn" onclick="toggleUse()" class="btn-tool">USAR</button><button id="mode-btn" onclick="toggleMode()" class="btn-p">EDIT</button><button id="save-btn" onclick="saveDash()" class="btn-p" style="display:none; background:var(--crit)">SAVE</button></div>
         <div id="content-area"></div>
-        <div id="editor-area">
-            <div style="display:flex; gap:5px; margin-bottom:10px; flex-wrap: wrap;"><button class="btn-tool" onclick="wrap('**','**')">B</button><button class="btn-tool" onclick="wrap('*','*')">I</button><button class="btn-tool" onclick="addGlow()">GLOW</button><button class="btn-tool" onclick="ins('[+] ')">[+]</button><button class="btn-tool" onclick="addNoteTag()">NOTA</button><button class="btn-tool" onclick="ins('[-1]')">[-] ID</button><button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left:auto;">BORRAR</button></div>
-            <textarea id="editor-txt" oninput="showSave()"></textarea>
-        </div>
+        <div id="editor-area"><div style="display:flex; gap:5px; margin-bottom:10px; flex-wrap:wrap;"><button class="btn-tool" onclick="wrap('**','**')">B</button><button class="btn-tool" onclick="wrap('*','*')">I</button><button class="btn-tool" onclick="addGlow()">GLOW</button><button class="btn-tool" onclick="ins('[+] ')">[+]</button><button class="btn-tool" onclick="addNoteTag()">NOTA</button><button class="btn-tool" onclick="ins('[-1]')">[-] ID</button><button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left:auto;">BORRAR</button></div><textarea id="editor-txt" oninput="showSave()"></textarea></div>
     </div>
     <div id="dice-overlay" onclick="this.style.display='none'"><div id="slot-machine"></div><div id="total-final">0</div></div>
 
     <script>
         const SB_URL = "https://emqtfhijkywtbwvcdeus.supabase.co", SB_KEY = "sb_publishable_rPFAxYZi5TqK11r3aWGppQ_SpdzF6Kp";
         const client = window.supabase.createClient(SB_URL, SB_KEY);
-        let DB = { items: {}, log: [], openFolders: {} }, USER = "", CID = null, USING_ID = null, IS_EDIT = false, DRAGGED_ID = null;
+        let DB = { items: {}, log: [], openFolders: {}, usersUsing: {} }, USER = "", CID = null, IS_EDIT = false, DRAGGED_ID = null;
 
         function login() { const val = document.getElementById('uname-input').value.trim(); if(!val) return; USER = val; localStorage.setItem('platinum_user', val); document.getElementById('auth-screen').style.display = 'none'; document.getElementById('user-display').innerText = USER; if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex'; initSync(); setInterval(syncFromCloud, 3000); setupRootDrop(); }
-        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); } }
-        async function syncFromCloud() { if(IS_EDIT || DRAGGED_ID) return; const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); if(CID) renderVisual(); } }
+        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; if(!DB.usersUsing) DB.usersUsing = {}; render(); updateLogUI(); } }
+        async function syncFromCloud() { if(IS_EDIT || DRAGGED_ID) return; const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; if(!DB.usersUsing) DB.usersUsing = {}; render(); updateLogUI(); if(CID) renderVisual(); } }
         async function sync() { await client.from('platinum_session').upsert({ id: 1, data: DB }); }
 
         function render() {
@@ -146,53 +129,41 @@
             const it = DB.items[CID], vars = parseVars(it.content); let fL = fStr.toUpperCase(), fLo = fL;
             Object.keys(vars).forEach(k => { fLo = fLo.replace(new RegExp(k,'g'), vars[k]); fL = fL.replace(new RegExp(k,'g'), vars[k]); });
             const match = fL.match(/(\d*)D(\d+)/i), num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
-            document.getElementById('dice-overlay').style.display = 'flex'; document.getElementById('total-final').classList.remove('show');
+            document.getElementById('dice-overlay').style.display='flex'; document.getElementById('total-final').classList.remove('show');
             const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
             for(let i=0; i<num; i++) {
                 await new Promise(r => setTimeout(r, 150)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 setTimeout(() => box.classList.add('reveal'), 10); const fR = Math.floor(Math.random()*sides)+1; results.push(fR);
-                let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 10) { clearInterval(inv); box.innerText = fR; if(fR === 1) box.style.color = 'var(--fail)'; if(fR === sides) box.style.color = 'var(--crit)'; } }, 60);
+                let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 10) { clearInterval(inv); box.innerText = fR; } }, 60);
             }
-            setTimeout(() => { let tR = results.reduce((a,b)=>a+b, 0), fV = Math.floor(eval(fL.replace(match[0], tR))); document.getElementById('total-final').innerText = fV; document.getElementById('total-final').classList.add('show'); DB.log.unshift({ u:USER, dash:it.name, total:fV, formula:fLo, faces:results, max:sides }); if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI(); }, 800);
+            setTimeout(() => { let tR = results.reduce((a,b)=>a+b, 0), fV = Math.floor(eval(fL.replace(match[0], tR))); document.getElementById('total-final').innerText = fV; document.getElementById('total-final').classList.add('show'); DB.log.unshift({ u:USER, dash:it.name, total:fV, formula:fLo, faces:results, max:sides }); sync(); updateLogUI(); }, 800);
         }
-        function updateLogUI() { 
-            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry">
-                    <div class="log-header">
-                        <b style="color:#888">${l.dash}</b> <span style="color:#444">|</span> 
-                        <b style="color:#fff">${l.u}</b>
-                        <span class="log-total">${l.total}</span> 
-                        <span class="log-formula">${l.formula}</span>
-                    </div>
-                    <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
-                </div>`).join(''); 
-        }
+        function updateLogUI() { document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `<div class="log-entry"><div class="log-header"><b style="color:#888">${l.dash}</b> | <b style="color:#fff">${l.u}</b> <span class="log-total">${l.total}</span> <span class="log-formula">${l.formula}</span></div></div>`).join(''); }
         function transferText(txt, type, val, tid) {
-            if(!USING_ID) return alert("Usa 'USAR' en tu Dash."); const t = DB.items[USING_ID], tV = parseVars(t.content);
+            const usingId = DB.usersUsing[USER]; if(!usingId) return alert("Usa 'USAR' en tu Dash."); const t = DB.items[usingId], tV = parseVars(t.content);
             if(type === 'l' && (tV['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
             if(type === 'c') { const c = tV['MONEDAS'] || 0; if(c < val) return alert(`Faltan Monedas.`); t.content = t.content.replace(new RegExp(`MONEDAS=${c}`,'i'), `MONEDAS=${c-val}`); }
             let lines = t.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`)); if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
             t.content = lines.join('\n'); sync(); alert("Enviado.");
         }
-        function incVar(key, val) {
-            const it = DB.items[CID], vars = parseVars(it.content);
-            if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            
-            // EL DM YA NO TIENE EXCEPCIÓN: Todos deben gastar puntos para subir stats
-            let costo = (val === 0) ? 1 : val + 1;
-            let pts = vars['PUNTOS'] || 0;
-            if(pts >= costo) {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
-                sync(); renderVisual();
-            } else alert(`Faltan PUNTOS. Necesitas ${costo} para subir a ${val+1}`);
+        function incVar(k, v) {
+            const it = DB.items[CID], vars = parseVars(it.content); if(k === "PUNTOS" || k === "MONEDAS" || k === "NIVEL") return;
+            let costo = (v === 0) ? 1 : v + 1, pts = vars['PUNTOS'] || 0;
+            if(pts >= costo) { it.content = it.content.replace(new RegExp(`${k}=${v}`,'i'), `${k}=${v+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`); sync(); renderVisual(); }
+            else alert(`Faltan PUNTOS. Necesitas ${costo}`);
         }
-        function globalPrompt(k) { const v = prompt(`Sumar ${k} global:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); sync(); render(); }
+        function globalPrompt(k) { const v = prompt(`Sumar ${k}:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); sync(); render(); }
         function openNote(t, c) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerHTML = c; document.getElementById('note-modal').style.display = 'flex'; }
-        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
+        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = DB.usersUsing[USER] === CID ? "USANDO ✅" : "USAR"; }
         function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
-        function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
+        function toggleUse() { 
+            const it = DB.items[CID];
+            if(it.owner !== USER && USER !== 'DM') return alert("Solo puedes usar un Dash que te pertenezca.");
+            DB.usersUsing[USER] = (DB.usersUsing[USER] === CID) ? null : CID; 
+            sync(); updateHeader(); 
+        }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
         function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: '', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
@@ -204,7 +175,7 @@
         function wrap(a,b) { const tx = document.getElementById('editor-txt'), s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
-        function addNoteTag() { const t = prompt("Título:"); if(t) { const c = prompt("Contenido (doble espacio = enter):"); if(c !== null) ins(`[note=${t}]${c}[/note]`); } }
+        function addNoteTag() { const t = prompt("Título:"); if(t) { const c = prompt("Contenido:"); if(c !== null) ins(`[note=${t}]${c}[/note]`); } }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
