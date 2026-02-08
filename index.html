@@ -51,16 +51,11 @@
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
-        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; margin-right: 5px; }
+        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
         .log { height: 120px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
-
-        #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .die-box { width: 50px; height: 50px; background: #111; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; margin: 4px; }
-        #total-final { font-size: 70px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.3s; }
-        #total-final.show { transform: scale(1); }
     </style>
 </head>
 <body>
@@ -183,10 +178,15 @@
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
             div.draggable = true;
+            
+            // SEGURIDAD: Solo el dueño o el DM ven el botón de borrado en la lista
+            const canDelete = (it.owner === USER || USER === 'DM');
+            const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
+
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
                             <div style="display:flex; align-items:center;">
                                 <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>
-                                <span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>
+                                ${delHtml}
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
@@ -209,8 +209,8 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
-                // REGLA PARA VISUALIZAR [-ID] BONITO
-                if(l.includes('[-]')) body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-] $1</span>');
+                // DECORACIÓN [-] MEJORADA: Detecta [-] o [-id]
+                body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-] $1</span>');
                 
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 if(transferMatch) {
@@ -222,7 +222,7 @@
                     const clean = l.replace('[+]', '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, 1)">[+]</span> ${process(clean, vars)}`;
                 } else {
-                    body = process(l, vars);
+                    body = process(body, vars);
                 }
                 return `<div style="margin-bottom:4px">${body}</div>`;
             }).join('');
@@ -255,14 +255,12 @@
                 }
             }
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-
             let costo = val <= 1 ? 1 : val;
             let pts = vars['PUNTOS'] || 0;
             if(pts >= costo) {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`)
-                           .replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
+                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
                 sync(); renderVisual();
-            } else alert(`Necesitas ${costo} PUNTOS.`);
+            } else alert(`Faltan PUNTOS.`);
         }
 
         async function rollDice(fStr) {
@@ -287,20 +285,16 @@
 
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry">
-                    <b style="color:var(--p)">${l.u}</b>: <span style="font-size:12px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
-                    <span style="opacity:0.5; font-size:9px">Caras: ${l.faces.map(f => `<span style="color:${f===l.max?'var(--crit)':(f===1?'var(--fail)':'#8cafff')}">${f}</span>`).join(', ')}</span>
-                </div>
+                <div class="log-entry"><b style="color:var(--p)">${l.u}</b>: <span style="font-size:12px; color:#fff">${l.total}</span> <small>(${l.formula})</small></div>
             `).join('');
         }
 
         function transferText(txt, type, val, tid) {
             if(!USING_ID) return alert("Usa 'USAR' en tu Dash.");
             const target = DB.items[USING_ID]; const tVars = parseVars(target.content);
-            if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Requieres Nivel ${val}`);
+            if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
             if(type === 'c') {
-                const coins = tVars['MONEDAS'] || 0;
-                if(coins < val) return alert(`Faltan Monedas.`);
+                const coins = tVars['MONEDAS'] || 0; if(coins < val) return alert(`Faltan Monedas.`);
                 target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`);
             }
             let lines = target.content.split('\n');
@@ -310,15 +304,14 @@
         }
 
         function globalPrompt(key) {
-            const val = prompt(`Sumar ${key} globalmente:`);
-            if(!val) return;
+            const val = prompt(`Sumar ${key} global:`); if(!val) return;
             Object.values(DB.items).forEach(it => {
                 if(it.type === 'dash') {
                     const v = parseVars(it.content);
                     if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`);
                 }
             });
-            sync(); alert("Actualizado.");
+            sync(); render();
         }
 
         function openNote(title, content) {
@@ -340,7 +333,6 @@
             document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
             if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
             document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
-            document.getElementById('save-btn').style.display = 'none';
         }
 
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
@@ -353,7 +345,7 @@
             sync(); render(); document.getElementById('item-input').value = ""; 
         }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
-        function deleteCurrent() { deleteItem(CID); closeDetail(); }
+        function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } else alert("No eres el dueño."); }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
         function clearLog() { DB.log = []; sync(); updateLogUI(); }
         function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
