@@ -31,8 +31,6 @@
         .item:hover { border-color: var(--p); background: #1c1c1f; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
-        .del-btn { color: var(--fail); font-size: 10px; opacity: 0.3; padding: 5px; cursor: pointer; }
-        .del-btn:hover { opacity: 1; }
 
         #dm-global-panel { display: none; background: #1a1a1c; padding: 10px; border-radius: 10px; gap: 8px; border: 1px solid #333; flex-wrap: wrap; justify-content: center; }
 
@@ -47,12 +45,13 @@
         .btn-s { background: #222; color: #eee; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; }
         
-        .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; font-weight: bold; }
+        .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; font-weight: bold; transition: 0.2s; }
+        .var-tag:hover { background: rgba(255,171,64,0.3); border-color: var(--var); }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
-        .dest-line { color: #444; font-size: 10px; border-top: 1px dashed #222; margin-top: 10px; padding-top: 2px; }
+        .minus-btn { color: #555; background: #1a1a1c; padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-weight: 900; }
 
-        .log { height: 140px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 11px; overflow-y: auto; position: relative; }
+        .log { height: 140px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 11px; overflow-y: auto; }
         .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 5px; line-height: 1.3; }
 
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
@@ -65,16 +64,9 @@
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h1 style="color:var(--p); margin:0; letter-spacing: 3px;">PLATINUM</h1>
-            <input type="text" id="uname-input" placeholder="Usuario / DM">
+            <h1 style="color:var(--p); margin:0; letter-spacing: 2px;">PLATINUM</h1>
+            <input type="text" id="uname-input" placeholder="Nombre / DM">
             <button onclick="login()" class="btn-p" style="width: 100%;">ENTRAR</button>
-        </div>
-    </div>
-
-    <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
-        <div class="note-card" onclick="event.stopPropagation()">
-            <div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom: 15px;"></div>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb;"></div>
         </div>
     </div>
 
@@ -89,11 +81,11 @@
             <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MONEDAS</button>
             <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+NIVEL</button>
             <button onclick="clearLog()" class="btn-tool">CLEAR LOG</button>
-            <button onclick="importData()" class="btn-tool">IMPORT 📤</button>
-            <button onclick="exportData()" class="btn-tool">EXPORT 📥</button>
+            <button onclick="exportData()" class="btn-tool">EXPORT</button>
+            <button onclick="importData()" class="btn-tool">IMPORT</button>
         </div>
         <div class="bar">
-            <input type="text" id="item-input" placeholder="Nombre...">
+            <input type="text" id="item-input" placeholder="Crear nuevo dash/carpeta...">
             <button onclick="createNew('dash')" class="btn-p">+DASH</button>
             <button onclick="createNew('folder')" class="btn-s">+CARPETA</button>
         </div>
@@ -103,30 +95,29 @@
 
     <div id="detail-view">
         <div class="detail-header">
-            <button onclick="closeDetail()" class="btn-tool">ATRÁS</button>
+            <button onclick="closeDetail()" class="btn-tool">VOLVER</button>
             <div id="det-title"></div>
             <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWN</button>
             <button id="use-btn" onclick="toggleUse()" class="btn-tool">USAR</button>
-            <button id="mode-btn" onclick="toggleMode()" class="btn-p" style="display:none">EDIT</button>
+            <button id="mode-btn" onclick="toggleMode()" class="btn-p">EDIT</button>
             <button id="save-btn" onclick="saveDash()" class="btn-p" style="display:none; background:var(--crit)">GUARDAR</button>
         </div>
         <div id="content-area"></div>
         <div id="editor-area">
-            <div style="display:flex; gap:5px; flex-wrap: wrap; margin-bottom:10px;">
+            <div style="display:flex; gap:5px; margin-bottom:10px; flex-wrap: wrap;">
                 <button class="btn-tool" onclick="wrap('**','**')">B</button>
                 <button class="btn-tool" onclick="wrap('*','*')">I</button>
                 <button class="btn-tool" onclick="addGlow()">GLOW</button>
                 <button class="btn-tool" onclick="ins('[+] ')">[+]</button>
-                <button class="btn-tool" onclick="addNote()">NOTA</button>
                 <button class="btn-tool" onclick="ins('[-1]')">[-] ID</button>
-                <button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left: auto;">BORRAR DASH</button>
+                <button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left:auto;">BORRAR</button>
             </div>
             <textarea id="editor-txt" oninput="showSave()"></textarea>
         </div>
     </div>
 
     <div id="dice-overlay" onclick="this.style.display='none'">
-        <div id="slot-machine" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+        <div id="slot-machine" style="display:flex; justify-content:center; flex-wrap: wrap;"></div>
         <div id="total-final">0</div>
     </div>
 
@@ -179,11 +170,7 @@
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-folder' : ''}`;
             div.draggable = true;
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
-                            <div style="display:flex; align-items:center;">
-                                <small style="opacity:0.4; margin-right:10px;">${it.owner||''}</small>
-                                <span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>
-                            </div>`;
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <small style="opacity:0.4">${it.owner||''}</small>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.oncontextmenu = (e) => { if(USER === 'DM' && it.type === 'folder') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
             div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
@@ -205,12 +192,14 @@
         function renderVisual() {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
-                if(l.includes('[-]')) return `<div class="dest-line">DESTINO ${l.match(/\[-(.*?)\]/)[0]}</div>`;
-                
                 let body = l;
-                let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i); // l1+1 o c500+1
+                // Decoración de [-]
+                if(l.includes('[-]')) body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-] $1</span>');
+                
+                // Sistema [+] con Costos o Nivel
+                let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 if(transferMatch) {
-                    const type = transferMatch[1].toLowerCase(); // l o c
+                    const type = transferMatch[1].toLowerCase();
                     const val = transferMatch[2]; const tid = transferMatch[3];
                     const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
@@ -220,15 +209,14 @@
                 } else {
                     body = process(l, vars);
                 }
-                return `<div>${body}</div>`;
+                return `<div style="margin-bottom:6px">${body}</div>`;
             }).join('');
         }
 
         function process(t, v) {
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="openNote('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
-                    .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
+                    .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="handleVarClick('${k}',${val})">${k}=${val}</span>`)
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
         }
 
@@ -238,10 +226,43 @@
             return v;
         }
 
+        function handleVarClick(key, val) {
+            const it = DB.items[CID]; 
+            const vars = parseVars(it.content);
+            
+            // Si el DM hace clic, puede elegir: subir con puntos o editar manual
+            if (USER === "DM") {
+                const choice = confirm(`¿Quieres subir ${key} usando PUNTOS? (Cancelar para editar manual)`);
+                if (!choice) {
+                    const n = prompt(`Nuevo valor para ${key}:`, val);
+                    if (n !== null) {
+                        it.content = it.content.replace(new RegExp(`${key}=${val}`, 'i'), `${key}=${n}`);
+                        sync(); renderVisual();
+                    }
+                    return;
+                }
+            }
+
+            // Lógica de Subir con Puntos (Funciona para DM y Jugadores)
+            if (key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") {
+                if(USER !== "DM") return; // Jugadores no pueden tocar estas
+            }
+
+            let costo = val <= 1 ? 1 : val;
+            let pts = vars['PUNTOS'] || 0;
+            if (pts >= costo) {
+                it.content = it.content.replace(new RegExp(`${key}=${val}`, 'i'), `${key}=${val + 1}`)
+                                       .replace(new RegExp(`PUNTOS=${pts}`, 'i'), `PUNTOS=${pts - costo}`);
+                sync(); renderVisual();
+            } else {
+                alert(`Necesitas ${costo} PUNTOS (Tienes ${pts})`);
+            }
+        }
+
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             let f = fStr.toUpperCase(); Object.keys(vars).forEach(k => f = f.replace(new RegExp(k,'g'), vars[k]));
-            const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 10); const sides = parseInt(match[2]);
+            const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
             document.getElementById('dice-overlay').style.display = 'flex';
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
             document.getElementById('total-final').classList.remove('show');
@@ -250,53 +271,45 @@
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 const r = Math.floor(Math.random()*sides)+1; results.push(r);
                 for(let j=0; j<6; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 50)); }
-                box.innerText = r; if(r===1) box.style.color = 'var(--fail)'; if(r===sides) box.style.color = 'var(--crit)';
+                box.innerText = r; 
+                if(r===1) box.style.color = 'var(--fail)'; 
+                if(r===sides) box.style.color = 'var(--crit)';
             }
             let totalRoll = results.reduce((a,b)=>a+b, 0);
             let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
             setTimeout(() => { const tf = document.getElementById('total-final'); tf.innerText = finalValue; tf.classList.add('show'); }, 100);
-            let vS = Object.entries(vars).map(([k,v])=>`${k}:${v}`).join(' ');
-            DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr, faces:results, vars: vS });
-            if(DB.log.length > 20) DB.log.pop(); sync();
+            
+            // Log con verdes en el número alto
+            DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr, faces:results, max:sides });
+            if(DB.log.length > 25) DB.log.pop(); sync();
         }
 
-        function incVar(key, val) {
-            const it = DB.items[CID]; const vars = parseVars(it.content);
-            if(USER === 'DM') {
-                const n = prompt(`Nuevo valor ${key}:`, val);
-                if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
-                return;
-            }
-            if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            
-            let costo = val <= 1 ? 1 : val;
-            let pts = vars['PUNTOS'] || 0;
-            if(pts >= costo) {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`)
-                           .replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
-                sync(); renderVisual();
-            } else alert(`Necesitas ${costo} PUNTOS.`);
+        function updateLogUI() {
+            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
+                <div class="log-entry">
+                    <b style="color:var(--p)">${l.u}</b> @ ${l.dash}: <span style="font-size:13px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
+                    <span style="opacity:0.6; font-size:10px">Caras: ${l.faces.map(f => `<span style="color:${f===1?'var(--fail)':(f===l.max?'var(--crit)':'#8cafff')}">${f}</span>`).join(', ')}</span>
+                </div>
+            `).join('');
         }
 
         function transferText(txt, type, val, tid) {
-            if(!USING_ID) return alert("Usa 'USAR' en tu Dash.");
+            if(!USING_ID) return alert("Primero selecciona un Dash con el botón 'USAR'.");
             const target = DB.items[USING_ID]; const tVars = parseVars(target.content);
-            
             if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Requieres NIVEL ${val}`);
             if(type === 'c') {
                 const coins = tVars['MONEDAS'] || 0;
                 if(coins < val) return alert(`Requieres ${val} MONEDAS`);
                 target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`);
             }
-
             let lines = target.content.split('\n');
             let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
             if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
-            target.content = lines.join('\n'); sync(); alert("Transferido.");
+            target.content = lines.join('\n'); sync(); alert("Transferido con éxito.");
         }
 
         function globalPrompt(key) {
-            const val = prompt(`Sumar a todos ${key}:`);
+            const val = prompt(`Cantidad de ${key} a sumar globalmente:`);
             if(!val) return;
             Object.values(DB.items).forEach(it => {
                 if(it.type === 'dash') {
@@ -304,36 +317,42 @@
                     if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`);
                 }
             });
-            sync();
+            sync(); alert("Valores actualizados.");
         }
 
-        function updateLogUI() {
-            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry">
-                    <b style="color:var(--p)">${l.u}</b> @ ${l.dash}: <span style="font-size:13px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
-                    <span style="opacity:0.5; font-size:9px">Caras: ${l.faces.map(f => `<span style="color:${f==1?'red':(f>=10?'#00ff88':'#8cafff')}">${f}</span>`)}</span>
-                </div>
-            `).join('');
+        function updateHeader() {
+            const it = DB.items[CID]; 
+            const isOwner = it.owner === USER || USER === 'DM';
+            document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE (Liberar)" : "BUSY") : "OWN (Tomar)";
+            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
         }
 
-        function openNote(t, b) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerText = b; document.getElementById('note-modal').style.display = 'flex'; }
-        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
-        function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
+        function toggleMode() {
+            IS_EDIT = !IS_EDIT;
+            document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block';
+            document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
+            if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
+            document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
+        }
+
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null }; sync(); render(); document.getElementById('item-input').value = ""; }
-        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
-        function deleteCurrent() { deleteItem(CID); closeDetail(); }
+        function createNew(type) { 
+            const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); 
+            DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null }; 
+            sync(); render(); document.getElementById('item-input').value = ""; 
+        }
+        function deleteCurrent() { if(confirm("¿Borrar permanentemente?")) { delete DB.items[CID]; sync(); closeDetail(); render(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
-        function clearLog() { DB.log = []; sync(); }
-        function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
+        function clearLog() { if(confirm("¿Limpiar log?")) { DB.log = []; sync(); updateLogUI(); } }
+        function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='platinum_backup.json'; a.click(); }
         function importData() { const inp = document.createElement('input'); inp.type='file'; inp.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); sync(); render(); }; r.readAsText(e.target.files[0]); }; inp.click(); }
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
-        function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
-        function addNote() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
+        function addGlow() { const c = prompt("Color (hex o nombre):"); if(c) wrap(`<g=${c}>`,`</g>`); }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
