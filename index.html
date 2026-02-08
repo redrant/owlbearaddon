@@ -9,7 +9,7 @@
         :root {
             --bg: #0a0a0b; --surf: #121214; --p: #bb86fc; --t: #e0e0e0;
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-            --radius: 8px;
+            --dice: #8cafff; --radius: 8px;
         }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; scrollbar-color: #333 transparent; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -46,10 +46,13 @@
         textarea { flex: 1; background: #0b0b0c; border: 1px solid #222; color: #bbb; border-radius: var(--radius); padding: 15px; resize: none; font-size: 14px; outline: none; }
         
         /* DECORATIVOS PEQUEÑOS Y MODERNOS */
-        .var-tag { 
-            color: var(--var); font-size: 0.85em; font-weight: 600; 
-            background: rgba(255,171,64,0.08); padding: 1px 5px; border-radius: 4px;
+        .var-tag, .roll-btn { 
+            font-size: 0.85em; font-weight: 600; padding: 1px 5px; border-radius: 4px; cursor: default;
         }
+        .var-tag { color: var(--var); background: rgba(255,171,64,0.08); }
+        .roll-btn { color: var(--dice); background: rgba(140,175,255,0.08); cursor: pointer; }
+        .roll-btn:hover { background: rgba(140,175,255,0.15); }
+
         .note-btn { 
             color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: underline; 
             text-underline-offset: 3px; font-size: 0.95em; transition: 0.2s;
@@ -59,8 +62,6 @@
         .dash-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: bold; font-size: 0.9em; opacity: 0.7; }
         .plus-btn:hover { opacity: 1; }
-        
-        .roll-btn { color: #8cafff; cursor: pointer; font-weight: bold; font-size: 0.95em; border-bottom: 1px dashed #5c7cff; }
 
         /* LOGS */
         .log { height: 120px; background: #080809; border-top: 1px solid #1f1f22; padding: 10px; font-size: 11px; overflow-y: auto; color: #666; }
@@ -154,7 +155,9 @@
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('user-display').innerText = USER;
             if(USER === "DM") document.getElementById('dm-tools').style.display = 'block';
-            initSync(); setInterval(silentSyncList, 5000); setInterval(silentSyncLog, 2000);
+            initSync(); 
+            setInterval(silentSyncList, 5000); 
+            setInterval(silentSyncLog, 1000); // REFRESH DE LOG CADA 1 SEGUNDO
         }
 
         async function initSync() {
