@@ -48,14 +48,20 @@
         .btn-s { background: #222; color: #eee; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         
+        /* BOTONES DE ACCIÓN */
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
-        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; margin-right: 5px; display: inline-block; }
+        .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
         .log { height: 120px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
+
+        #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .die-box { width: 50px; height: 50px; background: #111; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; margin: 4px; transition: 0.1s; }
+        #total-final { font-size: 70px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.3s; margin-top: 20px; }
+        #total-final.show { transform: scale(1); }
     </style>
 </head>
 <body>
@@ -178,8 +184,6 @@
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
             div.draggable = true;
-            
-            // SEGURIDAD: Solo el dueño o el DM ven el botón de borrado en la lista
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
 
@@ -209,14 +213,15 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
-                // DECORACIÓN [-] MEJORADA: Detecta [-] o [-id]
-                body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-] $1</span>');
+                // DECORACIÓN [-] AMARILLA (Oculta ID)
+                body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-]</span>');
                 
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 if(transferMatch) {
                     const type = transferMatch[1].toLowerCase();
                     const val = transferMatch[2]; const tid = transferMatch[3];
                     const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
+                    // DECORACIÓN [+] (Oculta ID, muestra precio/tipo si lo tiene)
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
@@ -247,12 +252,9 @@
         function incVar(key, val) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             if(USER === 'DM') {
-                const choice = confirm(`¿Subir ${key} gastando puntos? (Cancelar para editar manual)`);
-                if(!choice) {
-                    const n = prompt(`Nuevo valor:`, val);
-                    if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
-                    return;
-                }
+                const n = prompt(`Nuevo valor para ${key}:`, val);
+                if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
+                return;
             }
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
             let costo = val <= 1 ? 1 : val;
@@ -267,20 +269,41 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             let f = fStr.toUpperCase(); Object.keys(vars).forEach(k => f = f.replace(new RegExp(k,'g'), vars[k]));
             const match = f.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
+            
             document.getElementById('dice-overlay').style.display = 'flex';
+            document.getElementById('total-final').classList.remove('show');
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
+            
             const results = [];
             for(let i=0; i<num; i++) {
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
-                const r = Math.floor(Math.random()*sides)+1; results.push(r);
-                for(let j=0; j<5; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 60)); }
-                box.innerText = r; if(r===1) box.style.color = 'var(--fail)'; if(r===sides) box.style.color = 'var(--crit)';
+                const finalResult = Math.floor(Math.random()*sides)+1; results.push(finalResult);
+                
+                // ANIMACIÓN FLUIDA
+                let counter = 0;
+                const interval = setInterval(() => {
+                    box.innerText = Math.floor(Math.random()*sides)+1;
+                    counter++;
+                    if(counter > 12) {
+                        clearInterval(interval);
+                        box.innerText = finalResult;
+                        if(finalResult === 1) box.style.color = 'var(--fail)';
+                        if(finalResult === sides) box.style.color = 'var(--crit)';
+                    }
+                }, 50);
             }
-            let totalRoll = results.reduce((a,b)=>a+b, 0);
-            let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
-            setTimeout(() => { const tf = document.getElementById('total-final'); tf.innerText = finalValue; tf.classList.add('show'); }, 100);
-            DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr, faces:results, max:sides });
-            if(DB.log.length > 20) DB.log.pop(); sync();
+
+            setTimeout(() => {
+                let totalRoll = results.reduce((a,b)=>a+b, 0);
+                let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
+                const tf = document.getElementById('total-final');
+                tf.innerText = finalValue;
+                tf.classList.add('show');
+                
+                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr });
+                if(DB.log.length > 20) DB.log.pop(); 
+                sync(); updateLogUI();
+            }, 800);
         }
 
         function updateLogUI() {
@@ -333,6 +356,7 @@
             document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
             if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
             document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
+            document.getElementById('save-btn').style.display = 'none';
         }
 
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
