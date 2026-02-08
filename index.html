@@ -177,8 +177,6 @@
         function render() {
             const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
-            
-            // Renderizar nivel raíz
             items.filter(it => !it.parent).forEach(it => {
                 if(it.hidden && USER !== 'DM') return;
                 area.appendChild(createEl(it));
@@ -195,30 +193,20 @@
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
             div.draggable = true;
-            
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨' : ''}</span> 
                             <div style="display:flex; align-items:center;">
                                 <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}
                             </div>`;
-            
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
-
-            // DRAG & DROP EVENTS
             div.ondragstart = (e) => { DRAGGED_ID = it.id; div.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); };
             div.ondragend = () => { DRAGGED_ID = null; div.classList.remove('dragging'); render(); };
-            
             if(it.type === 'folder') {
                 div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
                 div.ondragleave = () => div.classList.remove('drag-over');
-                div.ondrop = (e) => {
-                    e.preventDefault();
-                    div.classList.remove('drag-over');
-                    const droppedId = e.dataTransfer.getData('text/plain');
-                    if(droppedId !== it.id) { moveItem(droppedId, it.id); }
-                };
+                div.ondrop = (e) => { e.preventDefault(); div.classList.remove('drag-over'); const droppedId = e.dataTransfer.getData('text/plain'); if(droppedId !== it.id) { moveItem(droppedId, it.id); } };
             }
             return div;
         }
@@ -227,21 +215,10 @@
             const root = document.getElementById('root-drop-zone');
             root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); };
             root.ondragleave = () => root.classList.remove('drag-over');
-            root.ondrop = (e) => {
-                e.preventDefault();
-                root.classList.remove('drag-over');
-                const droppedId = e.dataTransfer.getData('text/plain');
-                moveItem(droppedId, null);
-            };
+            root.ondrop = (e) => { e.preventDefault(); root.classList.remove('drag-over'); const droppedId = e.dataTransfer.getData('text/plain'); moveItem(droppedId, null); };
         }
 
-        function moveItem(id, newParentId) {
-            if(!DB.items[id]) return;
-            // Evitar bucles infinitos (mover una carpeta dentro de sí misma)
-            if(id === newParentId) return;
-            DB.items[id].parent = newParentId;
-            sync(); render();
-        }
+        function moveItem(id, newParentId) { if(!DB.items[id] || id === newParentId) return; DB.items[id].parent = newParentId; sync(); render(); }
 
         function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
 
@@ -253,13 +230,11 @@
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 let simpleMatch = l.match(/\[\+(\d+)\]/);
                 if(transferMatch) {
-                    const type = transferMatch[1].toLowerCase();
-                    const val = transferMatch[2]; const tid = transferMatch[3];
+                    const type = transferMatch[1].toLowerCase(); const val = transferMatch[2]; const tid = transferMatch[3];
                     const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
                 } else if(simpleMatch) {
-                    const tid = simpleMatch[1];
-                    const clean = l.replace(/\[\+\d+\]/, '').trim();
+                    const tid = simpleMatch[1]; const clean = l.replace(/\[\+\d+\]/, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, ${tid})">[+]</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
@@ -270,10 +245,12 @@
         }
 
         function process(t, v) {
+            // FIX: Soporte para saltos de línea (doble espacio) dentro de la etiqueta [note]
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
-                        const cleanContent = content.trim().replace(/\n/g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        // Reemplazamos el doble espacio por <br> para el visualizador del modal
+                        const cleanContent = content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         return `<span class="note-btn" onclick="openNote('${title}', '${cleanContent}')">${title}</span>`;
                     })
                     .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
@@ -288,8 +265,7 @@
 
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
-            let formulaLimpia = fStr.toUpperCase();
-            let formulaLog = formulaLimpia;
+            let formulaLimpia = fStr.toUpperCase(); let formulaLog = formulaLimpia;
             Object.keys(vars).forEach(k => { formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]); formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]); });
             const match = formulaLimpia.match(/(\d*)D(\d+)/i);
             const num = Math.min(parseInt(match[1]) || 1, 10); const sides = parseInt(match[2]);
@@ -305,17 +281,13 @@
                 let counter = 0;
                 const interval = setInterval(() => {
                     box.innerText = Math.floor(Math.random()*sides)+1;
-                    if(++counter > 10) { clearInterval(interval); box.innerText = finalResult;
-                        if(finalResult === 1) box.style.color = 'var(--fail)';
-                        if(finalResult === sides) box.style.color = 'var(--crit)';
-                    }
+                    if(++counter > 10) { clearInterval(interval); box.innerText = finalResult; if(finalResult === 1) box.style.color = 'var(--fail)'; if(finalResult === sides) box.style.color = 'var(--crit)'; }
                 }, 60);
             }
             setTimeout(() => {
                 let totalRoll = results.reduce((a,b)=>a+b, 0);
                 let finalValue = Math.floor(eval(formulaLimpia.replace(match[0], totalRoll)));
-                document.getElementById('total-final').innerText = finalValue;
-                document.getElementById('total-final').classList.add('show');
+                document.getElementById('total-final').innerText = finalValue; document.getElementById('total-final').classList.add('show');
                 DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog, faces:results, max:sides });
                 if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
             }, 800);
@@ -353,20 +325,12 @@
             }
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
             let costo = val <= 1 ? 1 : val; let pts = vars['PUNTOS'] || 0;
-            if(pts >= costo) {
-                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
-                sync(); renderVisual();
-            } else alert(`Faltan PUNTOS.`);
+            if(pts >= costo) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`); sync(); renderVisual(); } else alert(`Faltan PUNTOS.`);
         }
 
         function globalPrompt(key) {
             const val = prompt(`Sumar ${key} global:`); if(!val) return;
-            Object.values(DB.items).forEach(it => {
-                if(it.type === 'dash') {
-                    const v = parseVars(it.content);
-                    if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`);
-                }
-            });
+            Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const v = parseVars(it.content); if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`); } });
             sync(); render();
         }
 
@@ -392,7 +356,18 @@
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
-        function addNoteTag() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
+        
+        // MEJORA: Flujo de creación de nota (Título -> Contenido)
+        function addNoteTag() { 
+            const t = prompt("Título de la Nota:"); 
+            if(t) {
+                const c = prompt("Contenido de la Nota (usa doble espacio para saltos de línea):");
+                if(c !== null) {
+                    ins(`[note=${t}]${c}[/note]`);
+                }
+            }
+        }
+        
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
