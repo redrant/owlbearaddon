@@ -1,220 +1,357 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://unpkg.com/@owlbear-rodeo/sdk/dist/obr.js"></script>
-<style>
-:root { 
-    --p: #bb86fc; --bg: #0d0d0f; --surf: #16161a; --t: #f0f0f0; 
-    --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
-    --dice-bg: #2d2d3d;
-}
-* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dash - Platinum Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #0a0a0b; --surf: #141417; --p: #bb86fc; --t: #e0e0e0;
+            --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
+            --radius: 12px;
+        }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; scrollbar-color: var(--p) transparent; }
+        body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* AUTH & MODALS */
+        #auth-screen, .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,11,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .auth-card, .note-card { background: var(--surf); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid #333; width: 450px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); }
+        .auth-card input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; margin: 20px 0; text-align: center; font-size: 1.1em; }
 
-.header { padding: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; border-bottom: 1px solid #333; background: var(--surf); flex-shrink: 0; }
-.sync-arrow { color: var(--p); cursor: pointer; font-size: 18px; text-shadow: 0 0 8px var(--p); transition: 0.3s; }
-.sync-arrow:hover { transform: scale(1.3); }
-.sig { font-size: 14px; font-weight: bold; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 2px; }
+        /* HEADER */
+        header { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #222; }
+        .title { font-size: 20px; font-weight: 800; color: var(--p); letter-spacing: 2px; text-transform: uppercase; }
+        #user-display { padding: 5px 10px; border-radius: 5px; font-weight: bold; color: var(--p); cursor: pointer; }
 
-#view-list, #view-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; gap: 10px; }
-#view-details { display: none; }
+        /* MAIN HUD */
+        #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; gap: 15px; }
+        .bar { display: flex; gap: 8px; background: var(--surf); padding: 10px; border-radius: var(--radius); border: 1px solid #333; }
+        .bar input { flex: 1; background: #000; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; outline: none; }
+        
+        /* LISTA */
+        .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .item { background: var(--surf); padding: 12px 16px; border-radius: var(--radius); border: 1px solid #252529; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .item:hover { border-color: var(--p); }
+        .item.folder { border-left: 5px solid var(--var); }
+        .item.dash { border-left: 5px solid var(--p); }
+        .del-folder { color: var(--fail); font-weight: bold; padding: 5px; cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .del-folder:hover { opacity: 1; }
 
-.items-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-.card { padding: 12px; background: var(--surf); border-radius: 10px; border: 1px solid #252529; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-.folder { border-left: 5px solid var(--var); background: #1e1e1a; font-weight: bold; }
-.dash { border-left: 5px solid var(--p); }
+        /* DETAIL VIEW */
+        #detail-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
+        .detail-header { padding: 12px 20px; display: flex; gap: 10px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
+        #content-area { flex: 1; overflow-y: auto; padding: 30px; line-height: 1.8; }
+        #editor-area { flex: 1; display: none; padding: 20px; flex-direction: column; gap: 10px; }
+        textarea { flex: 1; background: #080808; border: 1px solid #333; color: #ccc; border-radius: 8px; padding: 20px; resize: none; font-family: monospace; outline: none; }
+        
+        /* LOG & DICE */
+        .log { height: 160px; background: #050507; border-top: 1px solid #222; padding: 12px; font-size: 12px; overflow-y: auto; color: #888; border-bottom: 4px solid var(--p); }
+        .btn-tool { background: #222; color: #eee; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-p { background: var(--p); color: #000; }
+        .btn-s { background: #2a2a2e; color: #fff; }
 
-.block-roll { color: #8cafff; background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid #5c7cff; font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; transition: 0.1s; }
-.block-note { color: var(--accent); background: var(--dice-bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; border-bottom: 3px solid var(--accent); font-weight: bold; display: inline-flex; align-items: center; margin: 2px 0; }
-.block-var { color: var(--var); border: 1px solid var(--var); padding: 1px 6px; border-radius: 6px; font-family: monospace; font-size: 0.9em; background: rgba(255,171,64,0.1); margin: 2px; display: inline-block; }
-
-.btn-dice { background: var(--dice-bg); border: 1px solid #333; border-bottom: 3px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 8px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-.btn-save { background: var(--crit); color: black; border-bottom-color: #008844; margin-left: 10px; display: none; }
-
-.check-btn { display: flex; align-items: center; margin: 8px 0; padding: 10px; background: rgba(187, 134, 252, 0.05); border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 8px; cursor: pointer; color: #fff; }
-.check-btn::before { content: '[+]'; margin-right: 12px; color: var(--p); font-weight: bold; }
-
-.tool { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-textarea { flex: 1; background: #080808; color: #ccc; padding: 15px; border: 1px solid #444; font-family: monospace; resize: none; outline: none; border-radius: 0 0 10px 10px; }
-#preview { flex: 1; overflow-y: auto; padding: 15px; display: none; line-height: 1.7; font-size: 16px; }
-
-.overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 10000; }
-.modal { background: #111; border: 2px solid var(--p); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; }
-.dice-display { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; min-height: 60px; }
-.die-num { font-size: 35px; font-weight: 900; background: #1a1a1d; padding: 10px; border-radius: 10px; min-width: 50px; border: 1px solid #333; }
-.total-box { font-size: 70px; font-weight: 900; color: var(--p); opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 20px var(--p); }
-.total-box.show { opacity: 1; }
-
-.log { height: 110px; background: #000; padding: 10px; font-size: 11px; border-radius: 10px; border: 1px solid #222; overflow-y: auto; color: #888; text-align: left; }
-</style>
+        .dash-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+        .plus-btn { background: rgba(187,134,252,0.1); border: 1px dashed var(--p); color: var(--p); padding: 0 8px; border-radius: 4px; cursor: pointer; }
+        .roll-btn { background: #1e1e24; color: #8cafff; padding: 4px 10px; border-radius: 6px; border-bottom: 3px solid #5c7cff; cursor: pointer; font-weight: bold; display: inline-block; }
+        
+        #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; }
+        .slot-row { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
+        .die-box { width: 80px; height: 80px; background: #1a1a1d; border: 2px solid #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; }
+        #total-display { font-size: 120px; font-weight: 900; color: var(--p); text-shadow: 0 0 40px var(--p); transform: scale(0); transition: 0.5s; }
+        #total-display.show { transform: scale(1); }
+    </style>
 </head>
 <body>
 
-<div class="header">
-    <span class="sync-arrow" onclick="save()" title="Forzar Sincronización Global">➤</span>
-    <div class="sig">My Dash Plus</div>
-</div>
-
-<div id="view-list">
-    <div style="display:flex; gap:8px;">
-        <input type="text" id="newName" placeholder="Nombre..." style="flex:1; padding:10px; background:#1a1a1d; border:1px solid #333; color:white; border-radius:8px;">
-        <button onclick="newItem('dash')" class="tool" style="background:var(--p); color:black;">+DASH</button>
-        <button onclick="newItem('folder')" class="tool" style="background:var(--var); color:black;">+CARPETA</button>
-    </div>
-    <div id="items-container" class="items-area"></div>
-    
-    <div style="display:flex; gap:5px; margin-bottom:5px;">
-        <button onclick="exportJSON()" class="tool" style="flex:1; background:#222; border: 1px solid #444;">⬇ EXPORTAR .JSON</button>
-        <button onclick="document.getElementById('importFile').click()" class="tool" style="flex:1; background:#222; border: 1px solid #444;">⬆ IMPORTAR .JSON</button>
-        <input type="file" id="importFile" style="display:none" onchange="importJSON(this)">
-    </div>
-
-    <div class="log" id="log-content"></div>
-</div>
-
-<div id="view-details">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <button onclick="goBack()" class="btn-dice">⬅ VOLVER</button>
-        <b id="det-title" style="color:var(--p)"></b>
-        <div style="display:flex; gap:5px;">
-            <button id="save-btn" onclick="manualSave()" class="btn-dice btn-save">GUARDAR</button>
-            <button id="own-btn" onclick="toggleOwnership()" class="btn-dice">...</button>
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h2 style="color:var(--p); margin:0; letter-spacing: 3px;">MY DASH</h2>
+            <input type="text" id="uname-input" placeholder="Tu Nombre / DM...">
+            <button onclick="login()" class="btn btn-p" style="width: 100%">INGRESAR</button>
         </div>
     </div>
 
-    <div style="display:flex; margin-top:10px; background:#000; padding:4px; border-radius:10px;">
-        <button id="t-view" onclick="switchTab(false)" style="flex:1; padding:10px; background:var(--p); color:black; font-weight:bold; border:none; border-radius:7px; cursor:pointer;">VER</button>
-        <button id="t-edit" onclick="switchTab(true)" style="flex:1; padding:10px; background:transparent; color:white; border:none; cursor:pointer;">EDITAR</button>
-    </div>
-
-    <div id="editor-ui" style="display:none; flex-direction:column; flex:1;">
-        <div style="display:flex; gap:5px; background:#222; padding:8px; border-radius:10px 10px 0 0;">
-            <button class="tool" onclick="wrap('**','**')">B</button>
-            <button class="tool" onclick="wrap('*','*')">I</button>
-            <button class="tool" onclick="ins('[+] ','')">Casilla+</button>
-            <button class="tool" onclick="askNote()">Nota+</button>
-            <button class="tool" onclick="askGlow()">Glow</button>
-            <button class="tool" onclick="deleteItem()" style="background:var(--fail); margin-left:auto;">ELIMINAR</button>
+    <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
+        <div class="note-card" onclick="event.stopPropagation()">
+            <h2 id="note-title-ui" style="color:var(--accent); margin:0;"></h2>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#ccc; max-height: 400px; overflow-y: auto; margin: 20px 0;"></div>
+            <button onclick="document.getElementById('note-modal').style.display='none'" class="btn btn-s" style="width:100%">CERRAR</button>
         </div>
-        <textarea id="editor" oninput="showSaveBtn()"></textarea>
     </div>
-    <div id="preview"></div>
-</div>
 
-<div id="dice-overlay" class="overlay" onclick="this.style.display='none'">
-    <div class="modal" onclick="event.stopPropagation()">
-        <div id="d-f" style="color:#555; font-size:12px; font-family: monospace;"></div>
-        <div id="dice-container" class="dice-display"></div>
-        <div id="total-val" class="total-box">0</div>
-        <div id="d-res" style="color:#777; font-size:13px; border-top: 1px solid #222; padding-top: 10px; margin-top: 10px;"></div>
+    <header>
+        <div class="title">My Dash</div>
+        <div id="user-display" onclick="logout()"></div>
+    </header>
+
+    <div id="main-container">
+        <div class="bar">
+            <input type="text" id="item-input" placeholder="Nombre...">
+            <button onclick="createNew('dash')" class="btn btn-p">+ DASH</button>
+            <button onclick="createNew('folder')" class="btn btn-s">+ CARPETA</button>
+            <div id="dm-import-export" style="display:none; gap:5px; margin-left:10px;">
+                <button onclick="exportData()" class="btn-tool">EXP</button>
+                <button onclick="importData()" class="btn-tool">IMP</button>
+            </div>
+        </div>
+        <div id="list-area" class="list"></div>
+        <div id="log-area" class="log"></div>
+        <div id="dm-tools" style="display:none; text-align:right; padding:5px;">
+            <button onclick="clearLog()" class="btn-tool" style="color:var(--fail)">Limpiar Log (DM)</button>
+        </div>
     </div>
-</div>
 
-<div id="note-overlay" class="overlay" onclick="this.style.display='none'">
-    <div class="modal" onclick="event.stopPropagation()" style="border-color: var(--accent);">
-        <h2 id="note-title" style="color:var(--accent); margin-top:0;"></h2>
-        <div id="note-body" style="text-align:left; color:#ccc; white-space: pre-wrap; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
-        <button onclick="document.getElementById('note-overlay').style.display='none'" class="btn-dice" style="width:100%; margin-top:20px; border-color:var(--accent); color:var(--accent); justify-content:center;">CERRAR</button>
+    <div id="detail-view">
+        <div class="detail-header">
+            <button onclick="closeDetail()" class="btn btn-s">VOLVER</button>
+            <div id="det-title" style="flex:1; text-align:center; font-weight:bold; color:var(--p)"></div>
+            <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWNEAR</button>
+            <button id="use-btn" onclick="toggleUse()" class="btn-tool" style="display:none">USAR</button>
+            <button id="mode-btn" onclick="toggleMode()" class="btn btn-s" style="display:none">EDITOR</button>
+            <button id="save-btn" onclick="saveDash()" class="btn btn-p" style="display:none">GUARDAR</button>
+        </div>
+        <div id="content-area"></div>
+        <div id="editor-area">
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <button class="btn-tool" onclick="wrap('**','**')">B</button>
+                <button class="btn-tool" onclick="wrap('*','*')">I</button>
+                <button class="btn-tool" onclick="addGlow()">GLOW</button>
+                <button class="btn-tool" onclick="ins('[+] ')">[+]</button>
+                <button class="btn-tool" onclick="addNote()">NOTA</button>
+                <button class="btn-tool" onclick="deleteCurrent()" style="background:#3d1a1a; color:var(--fail); margin-left:auto">BORRAR DASH</button>
+            </div>
+            <textarea id="editor-txt" oninput="showSave()"></textarea>
+        </div>
     </div>
-</div>
 
-<script>
-let state = { items: {}, log: [], id: null, edit: false, uid:'local', uname:'Player', openFolders:{}, dragId:null, isModified:false };
-const DB = "VPLAT_V3_ITEMS", LG="VPLAT_V3_LOGS", OF="VPLAT_V3_FOLDERS";
+    <div id="dice-overlay" onclick="this.style.display='none'">
+        <div id="slot-machine" class="slot-row"></div>
+        <div id="total-display">0</div>
+    </div>
 
-async function init() {
-    await OBR.onReady(async ()=>{
-        state.uid = await OBR.player.getId();
-        state.uname = await OBR.player.getName();
+    <script>
+        const SB_URL = "https://emqtfhijkywtbwvcdeus.supabase.co";
+        const SB_KEY = "sb_publishable_rPFAxYZi5TqK11r3aWGppQ_SpdzF6Kp";
+        const client = window.supabase.createClient(SB_URL, SB_KEY);
 
-        OBR.scene.onMetadataChange(m=>{
-            if(m[DB] || m[LG] || m[OF]){
-                state.items = m[DB]||state.items;
-                state.log = m[LG]||state.log;
-                state.openFolders = m[OF]||state.openFolders;
-                if(!state.isModified) render();
+        let DB = { items: {}, log: [], openFolders: {} };
+        let USER = "";
+        let CID = null;
+        let USING_ID = null;
+        let IS_EDIT = false;
+        let lastDBString = "";
+
+        function login() {
+            const val = document.getElementById('uname-input').value.trim();
+            if(!val) return;
+            USER = val;
+            localStorage.setItem('platinum_user', val);
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('user-display').innerText = `ID: ${USER}`;
+            if(USER === "DM") {
+                document.getElementById('dm-tools').style.display = 'block';
+                document.getElementById('dm-import-export').style.display = 'flex';
             }
-        });
+            initSync();
+            setInterval(silentSyncList, 6000); 
+            setInterval(silentSyncLog, 2000);
+        }
 
-        const m = await OBR.scene.getMetadata();
-        state.items = m[DB]||{};
-        state.log = m[LG]||[];
-        state.openFolders = m[OF]||{};
-        render();
-    });
-}
+        async function initSync() {
+            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
+            if(data) { DB = data.data; lastDBString = JSON.stringify(DB); render(); updateLogUI(); }
+        }
 
-async function save(){ if(window.OBR) await OBR.scene.setMetadata({ [DB]: state.items, [LG]: state.log, [OF]: state.openFolders }); render(); }
+        async function silentSyncList() {
+            if(CID) return;
+            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
+            if(data && JSON.stringify(data.data) !== lastDBString) {
+                DB = data.data; lastDBString = JSON.stringify(DB); render();
+            }
+        }
 
-function showSaveBtn(){ state.isModified=true; document.getElementById('save-btn').style.display='flex'; }
-async function manualSave(){ if(!state.id) return; state.items[state.id].content=document.getElementById('editor').value; state.isModified=false; document.getElementById('save-btn').style.display='none'; await save(); }
+        async function silentSyncLog() {
+            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
+            if(data) {
+                if(JSON.stringify(data.data.log) !== JSON.stringify(DB.log)) { DB.log = data.data.log; updateLogUI(); }
+                if(CID && !IS_EDIT && JSON.stringify(data.data.items[CID]) !== JSON.stringify(DB.items[CID])) {
+                    DB.items[CID] = data.data.items[CID]; renderVisual();
+                }
+            }
+        }
 
-function newItem(type){
-    const n=document.getElementById('newName').value||"Nuevo";
-    const id="id"+Date.now();
-    state.items[id]={id,type,name:n,content:'FUE=20\n[+] Ataque 1d20+FUE',parent:null,owner:null};
-    document.getElementById('newName').value="";
-    save();
-}
+        async function sync() {
+            lastDBString = JSON.stringify(DB);
+            await client.from('platinum_session').upsert({ id: 1, data: DB });
+        }
 
-function render(){
-    const cont = document.getElementById('items-container');
-    cont.innerHTML="";
-    const vals = Object.values(state.items);
-
-    vals.filter(f=>f.type==='folder').forEach(f=>{
-        const isOpen = state.openFolders[f.id];
-        const fd = document.createElement('div'); fd.className="card folder";
-        fd.innerHTML=`<span>${isOpen?'📂':'📁'} ${f.name}</span><span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="color:var(--fail); font-size:18px;">🗑️</span>`;
-        fd.onclick=()=>{ state.openFolders[f.id]=!isOpen; save(); };
-        fd.ondragover=e=>e.preventDefault();
-        fd.ondrop=e=>{ e.stopPropagation(); if(state.dragId){ state.items[state.dragId].parent=f.id; save(); } };
-        cont.appendChild(fd);
-
-        if(isOpen){
-            vals.filter(d=>d.parent===f.id).forEach(d=>{
-                const child = createCard(d);
-                child.style.marginLeft="20px"; child.style.width="calc(100% - 20px)";
-                cont.appendChild(child);
+        function render() {
+            const area = document.getElementById('list-area');
+            area.innerHTML = "";
+            const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
+            items.forEach(it => {
+                if(it.parent) return;
+                area.appendChild(createEl(it));
+                if(it.type === 'folder' && DB.openFolders[it.id]) {
+                    items.filter(c => c.parent === it.id).forEach(c => {
+                        const cel = createEl(c); cel.style.marginLeft = "30px"; area.appendChild(cel);
+                    });
+                }
             });
         }
-    });
 
-    vals.filter(it=>it.type==='dash'&&!it.parent).forEach(d=>{
-        const card = createCard(d);
-        card.ondrop=e=>{ e.stopPropagation(); if(state.dragId){ state.items[state.dragId].parent=null; save(); } };
-        cont.appendChild(card);
-    });
+        function createEl(it) {
+            const div = document.createElement('div');
+            div.className = `item ${it.type}`;
+            div.draggable = true;
+            
+            let deleteBtn = "";
+            // ELIMINAR CARPETA: Solo Owner o DM
+            if(it.type === 'folder' && (it.owner === USER || USER === 'DM')) {
+                deleteBtn = `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>`;
+            }
 
-    document.getElementById('log-content').innerHTML = state.log.map(l=>`<div><b>[${l.file||'DASH'}]:</b> ${l.f} ➔ <span style="color:var(--p); font-weight:bold;">${l.r}</span> <small>(${l.details})</small></div>`).join('');
-    if(state.id) syncView();
-}
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
+                             <div style="display:flex; align-items:center; gap:10px;">
+                                <small style="opacity:0.4">${it.owner||''}</small>
+                                ${deleteBtn}
+                             </div>`;
+            
+            div.onclick = () => {
+                if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); }
+                else openDash(it.id);
+            };
+            div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
+            div.ondragover = (e) => e.preventDefault();
+            div.ondrop = (e) => {
+                const tid = e.dataTransfer.getData('id');
+                if(it.type === 'folder' && tid !== it.id) { DB.items[tid].parent = it.id; sync(); render(); }
+                else if(tid !== it.id) { DB.items[tid].parent = null; sync(); render(); }
+            };
+            return div;
+        }
 
-function createCard(it){
-    const d=document.createElement('div'); d.className="card dash"; d.draggable=true;
-    d.innerHTML=`<span>📄 ${it.name}</span> ${it.owner?'<span style="color:var(--p)">👤</span>':''}`;
-    d.onclick=()=>{ state.id=it.id; openDetails(); };
-    d.ondragstart=()=>state.dragId=it.id;
-    return d;
-}
+        function deleteFolder(id) {
+            if(!confirm("¿Eliminar carpeta y liberar sus archivos?")) return;
+            // Liberamos los hijos
+            Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; });
+            delete DB.items[id];
+            sync(); render();
+        }
 
-function openDetails(){ document.getElementById('view-list').style.display='none'; document.getElementById('view-details').style.display='flex'; switchTab(false); }
-function goBack(){ if(state.isModified && !confirm("Cambios sin guardar. ¿Salir?")) return; state.id=null; state.isModified=false; document.getElementById('view-list').style.display='flex'; document.getElementById('view-details').style.display='none'; document.getElementById('save-btn').style.display='none'; }
+        async function openDash(id) {
+            CID = id; IS_EDIT = false;
+            document.getElementById('detail-view').style.display = 'flex';
+            document.getElementById('det-title').innerText = DB.items[id].name;
+            updateHeader(); renderVisual();
+        }
 
-function syncView(){
-    const it=state.items[state.id]; if(!it) return;
-    document.getElementById('det-title').innerText=it.name.toUpperCase();
-    const obtn=document.getElementById('own-btn');
-    if(it.owner===state.uid){ obtn.innerText="LIBERAR"; obtn.className="btn-dice btn-owner-true"; }
-    else{ obtn.innerText=it.owner?"OCUPADO":"OWNEAR"; obtn.className="btn-dice "+(it.owner?"":"btn-owner-false"); }
+        function updateHeader() {
+            const it = DB.items[CID];
+            const isOwner = it.owner === USER || USER === 'DM';
+            document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('use-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "LIBERAR" : (USER==="DM"?"DM LIBERAR":"OCUPADO")) : "OWNEAR";
+            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
+        }
 
-    document.getElementById('editor-ui').style.display=state.edit?'flex':'none';
-    document.getElementById('preview').style.display=state.edit?'none':'block';
-    if(state.edit){ if(!state.isModified) document.getElementById('editor').value=it.content; } else renderPreview(it.content);
-}
+        function renderVisual() {
+            const it = DB.items[CID];
+            const vars = parseVars(it.content);
+            document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
+                let pre = ""; let body = l;
+                if(l.trim().startsWith('[+]')) {
+                    const clean = l.replace('[+]', '').trim();
+                    pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`;
+                    body = clean;
+                }
+                return `<div class="dash-line">${pre}<div>${process(body, vars)}</div></div>`;
+            }).join('');
+        }
 
-// --- Resto de funciones (dados, notas, render, export/import) siguen igual que antes ---
-function calculateMemory(txt){ const memory={}; txt.split('\n').forEach(line=>{ const base=line.match(/([A-Z0-9_]+)\s*=\s*([\+\-]?\d+)/i); if(base) memory[base[1].toUpperCase()]=parseInt(base[2]); }); return memory; }
-function renderPreview(txt){ const memory=calculateMemory(txt); document.getElementById('preview').innerHTML=txt.split('\n').map(line=>{ if(line.trim().startsWith('[+]')){ const content=line.replace('[+]','').trim(); return `<
+        function process(t, v) {
+            return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 10px $1">$2</span>')
+                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span class="note-btn" onclick="openNoteModal('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
+                    .replace(/([A-Z]+=[0-9]+|[\+\-][0-9]+[A-Z]+)/gi, m => `<span class="var-tag">${m}</span>`)
+                    .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
+        }
+
+        function parseVars(txt) {
+            const v = {};
+            const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi);
+            for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]);
+            const subs = txt.matchAll(/([\+\-][0-9]+)([A-Z]+)/gi);
+            for(const s of subs) { const k = s[2].toUpperCase(); if(v[k]!==undefined) v[k]+=parseInt(s[1]); }
+            return v;
+        }
+
+        async function rollDice(fStr) {
+            const it = DB.items[CID]; const vars = parseVars(it.content);
+            let f = fStr.toUpperCase(); Object.keys(vars).forEach(k => f = f.replace(new RegExp(k,'g'), vars[k]));
+            const match = f.match(/(\d*)D(\d+)/i);
+            const num = Math.min(parseInt(match[1]) || 1, 15); const sides = parseInt(match[2]);
+            const results = [];
+            document.getElementById('dice-overlay').style.display = 'flex';
+            const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
+            document.getElementById('total-display').classList.remove('show');
+
+            for(let i=0; i<num; i++) {
+                const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
+                const r = Math.floor(Math.random()*sides)+1; results.push(r);
+                for(let j=0; j<8; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 50)); }
+                box.innerText = r; if(r===1) box.style.color = 'var(--fail)'; if(r===sides) box.style.color = 'var(--crit)';
+            }
+            let totalRoll = results.reduce((a,b)=>a+b, 0);
+            let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
+            setTimeout(() => { const td = document.getElementById('total-display'); td.innerText = finalValue; td.classList.add('show'); }, 200);
+
+            DB.log.unshift({ u:USER, dash:it.name, total:finalValue, faces:results, formula: fStr, max: sides });
+            if(DB.log.length > 25) DB.log.pop(); await sync();
+        }
+
+        function updateLogUI() {
+            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => {
+                const fs = l.faces.map(f => `<span style="color:${f===1?'var(--fail)':(f===l.max?'var(--crit)':'inherit')}">${f}</span>`).join(', ');
+                return `<div class="log-entry"><b>${l.u}</b> @ ${l.dash}: <span style="color:var(--p); font-weight:900;">${l.total}</span> <small>[${fs}]</small> <span style="color:var(--var); font-size:10px">${l.formula}</span></div>`;
+            }).join('');
+        }
+
+        function createNew(type) {
+            const name = document.getElementById('item-input').value.trim() || "Nuevo";
+            const id = 'id'+Date.now();
+            DB.items[id] = { id, name, type, content: '', owner: USER, parent: null };
+            sync(); render(); document.getElementById('item-input').value = "";
+        }
+
+        function toggleMode() {
+            IS_EDIT = !IS_EDIT;
+            document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block';
+            document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
+            if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
+            document.getElementById('mode-btn').innerText = IS_EDIT ? "VISUAL" : "EDITOR";
+        }
+
+        function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
+        function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
+        function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
+        function cloneToUsing(txt) { if(!USING_ID || !DB.items[USING_ID]) return alert("Activa 'USAR' en tu Dash."); DB.items[USING_ID].content += "\n" + txt; sync(); }
+        function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; initSync(); }
+        function deleteCurrent() { if(confirm("¿Eliminar Dash?")) { delete DB.items[CID]; sync(); closeDetail(); } }
+        function showSave() { document.getElementById('save-btn').style.display = 'block'; }
+        function openNoteModal(t, b) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerText = b; document.getElementById('note-modal').style.display = 'flex'; }
+        function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
+        function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
+        function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
+        function addNote() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
+        function clearLog() { if(confirm("¿Limpiar log?")) { DB.log = []; sync(); } }
+        function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
+        function importData() { const inp = document.createElement('input'); inp.type='file'; inp.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); sync(); render(); }; r.readAsText(e.target.files[0]); }; inp.click(); }
+        function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
+
+        window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
+    </script>
+</body>
+</html>
