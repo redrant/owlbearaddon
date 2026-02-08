@@ -26,11 +26,14 @@
         #user-display { font-size: 10px; opacity: 0.7; cursor: pointer; font-weight: bold; background: #1a1a1c; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
 
         #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px; gap: 10px; }
-        .bar { display: flex; gap: 6px; background: #161618; padding: 8px; border-radius: var(--radius); align-items: center; }
+        .bar { display: flex; gap: 6px; background: #161618; padding: 8px; border-radius: var(--radius); align-items: center; transition: 0.3s; }
+        .bar.drag-over { background: #222; border: 1px dashed var(--p); }
         .bar input { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 10px; border-radius: 8px; outline: none; font-size: 13px; }
         
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; user-select: none; }
+        .item.dragging { opacity: 0.4; border: 1px dashed var(--p); }
+        .item.drag-over { background: #1f1f23; border-color: var(--accent); transform: scale(1.01); }
         .item.hidden-item { opacity: 0.35; border-style: dashed; border-color: #444; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
@@ -101,7 +104,7 @@
     </header>
 
     <div id="main-container">
-        <div class="bar">
+        <div class="bar" id="root-drop-zone">
             <input type="text" id="item-input" placeholder="Nombre...">
             <button onclick="createNew('dash')" class="btn-p">+DASH</button>
             <button onclick="createNew('folder')" class="btn-tool">+CARPETA</button>
@@ -146,6 +149,7 @@
 
         let DB = { items: {}, log: [], openFolders: {} };
         let USER = ""; let CID = null; let USING_ID = null; let IS_EDIT = false;
+        let DRAGGED_ID = null;
 
         function login() {
             const val = document.getElementById('uname-input').value.trim();
@@ -154,6 +158,7 @@
             document.getElementById('user-display').innerText = USER;
             if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex';
             initSync(); setInterval(syncFromCloud, 3000);
+            setupRootDrop();
         }
 
         async function initSync() {
@@ -162,7 +167,7 @@
         }
 
         async function syncFromCloud() {
-            if(IS_EDIT) return;
+            if(IS_EDIT || DRAGGED_ID) return;
             const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
             if(data) { DB = data.data; render(); updateLogUI(); if(CID) renderVisual(); }
         }
@@ -172,8 +177,9 @@
         function render() {
             const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
-            items.forEach(it => {
-                if(it.parent) return; 
+            
+            // Renderizar nivel raíz
+            items.filter(it => !it.parent).forEach(it => {
                 if(it.hidden && USER !== 'DM') return;
                 area.appendChild(createEl(it));
                 if(it.type === 'folder' && DB.openFolders[it.id]) {
@@ -188,15 +194,53 @@
         function createEl(it) {
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
+            div.draggable = true;
+            
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨' : ''}</span> 
                             <div style="display:flex; align-items:center;">
                                 <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}
                             </div>`;
+            
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
+
+            // DRAG & DROP EVENTS
+            div.ondragstart = (e) => { DRAGGED_ID = it.id; div.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); };
+            div.ondragend = () => { DRAGGED_ID = null; div.classList.remove('dragging'); render(); };
+            
+            if(it.type === 'folder') {
+                div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
+                div.ondragleave = () => div.classList.remove('drag-over');
+                div.ondrop = (e) => {
+                    e.preventDefault();
+                    div.classList.remove('drag-over');
+                    const droppedId = e.dataTransfer.getData('text/plain');
+                    if(droppedId !== it.id) { moveItem(droppedId, it.id); }
+                };
+            }
             return div;
+        }
+
+        function setupRootDrop() {
+            const root = document.getElementById('root-drop-zone');
+            root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); };
+            root.ondragleave = () => root.classList.remove('drag-over');
+            root.ondrop = (e) => {
+                e.preventDefault();
+                root.classList.remove('drag-over');
+                const droppedId = e.dataTransfer.getData('text/plain');
+                moveItem(droppedId, null);
+            };
+        }
+
+        function moveItem(id, newParentId) {
+            if(!DB.items[id]) return;
+            // Evitar bucles infinitos (mover una carpeta dentro de sí misma)
+            if(id === newParentId) return;
+            DB.items[id].parent = newParentId;
+            sync(); render();
         }
 
         function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
@@ -206,11 +250,8 @@
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
                 body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-]</span>');
-                
-                // MEJORA: [+1] sin requisitos (n) o [+l1+1] con requisitos
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
                 let simpleMatch = l.match(/\[\+(\d+)\]/);
-                
                 if(transferMatch) {
                     const type = transferMatch[1].toLowerCase();
                     const val = transferMatch[2]; const tid = transferMatch[3];
@@ -223,15 +264,12 @@
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, 1)">[+]</span> ${process(clean, vars)}`;
-                } else {
-                    body = process(body, vars);
-                }
+                } else { body = process(body, vars); }
                 return `<div style="margin-bottom:4px">${body}</div>`;
             }).join('');
         }
 
         function process(t, v) {
-            // MEJORA NOTAS: Soporta multilínea y caracteres especiales
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
