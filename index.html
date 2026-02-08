@@ -23,17 +23,18 @@
         #user-display { font-size: 11px; opacity: 0.7; cursor: pointer; font-weight: bold; background: #1a1a1c; padding: 4px 10px; border-radius: 20px; }
 
         #main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px; gap: 10px; }
-        .bar { display: flex; gap: 6px; background: #161618; padding: 8px; border-radius: var(--radius); }
+        .bar { display: flex; gap: 6px; background: #161618; padding: 8px; border-radius: var(--radius); align-items: center; }
         .bar input { flex: 1; background: #000; border: 1px solid #222; color: #fff; padding: 10px; border-radius: 8px; outline: none; font-size: 13px; }
         
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
-        .item:hover { transform: translateX(5px); border-color: var(--p); }
-        .item.hidden-folder { opacity: 0.4; border-style: dashed; }
+        .item:hover { border-color: var(--p); background: #1c1c1f; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
+        .del-btn { color: var(--fail); font-size: 10px; opacity: 0.3; padding: 5px; cursor: pointer; }
+        .del-btn:hover { opacity: 1; }
 
-        #dm-global-panel { display: none; background: linear-gradient(90deg, #1a1a1c, #251a33); padding: 10px; border-radius: 10px; gap: 8px; border: 1px solid #333; }
+        #dm-global-panel { display: none; background: #1a1a1c; padding: 10px; border-radius: 10px; gap: 8px; border: 1px solid #333; flex-wrap: wrap; justify-content: center; }
 
         #detail-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
         .detail-header { padding: 12px 20px; display: flex; gap: 10px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
@@ -48,16 +49,15 @@
         
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
-        .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
-        .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; border: 1px solid var(--p); }
+        .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
+        .dest-line { color: #444; font-size: 10px; border-top: 1px dashed #222; margin-top: 10px; padding-top: 2px; }
 
-        .log { height: 130px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 11px; overflow-y: auto; color: #777; }
-        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 5px; }
+        .log { height: 140px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 11px; overflow-y: auto; position: relative; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 5px; line-height: 1.3; }
 
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .slot-machine { display: flex; gap: 10px; margin-bottom: 30px; }
-        .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; }
-        #total-final { font-size: 80px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; margin: 5px; }
+        #total-final { font-size: 80px; font-weight: 900; color: var(--p); transform: scale(0); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #total-final.show { transform: scale(1); }
     </style>
 </head>
@@ -65,17 +65,16 @@
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h1 style="color:var(--p); margin:0;">PLATINUM</h1>
-            <input type="text" id="uname-input" placeholder="Tu Nombre / DM">
-            <button onclick="login()" class="btn-p" style="width: 100%;">INGRESAR</button>
+            <h1 style="color:var(--p); margin:0; letter-spacing: 3px;">PLATINUM</h1>
+            <input type="text" id="uname-input" placeholder="Usuario / DM">
+            <button onclick="login()" class="btn-p" style="width: 100%;">ENTRAR</button>
         </div>
     </div>
 
     <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
         <div class="note-card" onclick="event.stopPropagation()">
             <div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom: 15px;"></div>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 300px; overflow-y: auto;"></div>
-            <button onclick="document.getElementById('note-modal').style.display='none'" class="btn-s" style="width:100%; margin-top: 20px;">CERRAR</button>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb;"></div>
         </div>
     </div>
 
@@ -86,14 +85,17 @@
 
     <div id="main-container">
         <div id="dm-global-panel">
-            <button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+ PUNTOS GLOBAL</button>
-            <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+ MONEDAS GLOBAL</button>
-            <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+ NIVEL GLOBAL</button>
+            <button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+PUNTOS</button>
+            <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MONEDAS</button>
+            <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+NIVEL</button>
+            <button onclick="clearLog()" class="btn-tool">CLEAR LOG</button>
+            <button onclick="importData()" class="btn-tool">IMPORT 📤</button>
+            <button onclick="exportData()" class="btn-tool">EXPORT 📥</button>
         </div>
         <div class="bar">
-            <input type="text" id="item-input" placeholder="Crear nuevo...">
-            <button onclick="createNew('dash')" class="btn-p">+ DASH</button>
-            <button onclick="createNew('folder')" class="btn-s">+ CARPETA</button>
+            <input type="text" id="item-input" placeholder="Nombre...">
+            <button onclick="createNew('dash')" class="btn-p">+DASH</button>
+            <button onclick="createNew('folder')" class="btn-s">+CARPETA</button>
         </div>
         <div id="list-area" class="list"></div>
         <div id="log-area" class="log"></div>
@@ -101,12 +103,12 @@
 
     <div id="detail-view">
         <div class="detail-header">
-            <button onclick="closeDetail()" class="btn-tool">VOLVER</button>
+            <button onclick="closeDetail()" class="btn-tool">ATRÁS</button>
             <div id="det-title"></div>
             <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWN</button>
             <button id="use-btn" onclick="toggleUse()" class="btn-tool">USAR</button>
             <button id="mode-btn" onclick="toggleMode()" class="btn-p" style="display:none">EDIT</button>
-            <button id="save-btn" onclick="saveDash()" class="btn-p" style="display:none; background:var(--crit)">SAVE</button>
+            <button id="save-btn" onclick="saveDash()" class="btn-p" style="display:none; background:var(--crit)">GUARDAR</button>
         </div>
         <div id="content-area"></div>
         <div id="editor-area">
@@ -117,14 +119,14 @@
                 <button class="btn-tool" onclick="ins('[+] ')">[+]</button>
                 <button class="btn-tool" onclick="addNote()">NOTA</button>
                 <button class="btn-tool" onclick="ins('[-1]')">[-] ID</button>
-                <button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left: auto;">BORRAR</button>
+                <button class="btn-tool" onclick="deleteCurrent()" style="color:var(--fail); margin-left: auto;">BORRAR DASH</button>
             </div>
             <textarea id="editor-txt" oninput="showSave()"></textarea>
         </div>
     </div>
 
     <div id="dice-overlay" onclick="this.style.display='none'">
-        <div id="slot-machine" class="slot-machine"></div>
+        <div id="slot-machine" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
         <div id="total-final">0</div>
     </div>
 
@@ -177,7 +179,11 @@
             const div = document.createElement('div');
             div.className = `item ${it.type} ${it.hidden ? 'hidden-folder' : ''}`;
             div.draggable = true;
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <small style="opacity:0.4">${it.owner||''}</small>`;
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
+                            <div style="display:flex; align-items:center;">
+                                <small style="opacity:0.4; margin-right:10px;">${it.owner||''}</small>
+                                <span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>
+                            </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.oncontextmenu = (e) => { if(USER === 'DM' && it.type === 'folder') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
             div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
@@ -187,8 +193,7 @@
         }
 
         function openDash(id) {
-            CID = id; 
-            IS_EDIT = false; // RESET DE VISTA
+            CID = id; IS_EDIT = false; 
             document.getElementById('detail-view').style.display = 'flex';
             document.getElementById('content-area').style.display = 'block';
             document.getElementById('editor-area').style.display = 'none';
@@ -200,36 +205,36 @@
         function renderVisual() {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
+                if(l.includes('[-]')) return `<div class="dest-line">DESTINO ${l.match(/\[-(.*?)\]/)[0]}</div>`;
+                
                 let body = l;
-                let transferMatch = l.match(/\[c(\d+)\+(\d+)\]/i);
+                let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i); // l1+1 o c500+1
                 if(transferMatch) {
-                    const cost = transferMatch[1]; const tid = transferMatch[2];
-                    const clean = l.replace(/\[c\d+\+\d+\]/i, '').trim();
-                    body = `<span class="plus-btn" onclick="transferText('${clean}', ${cost}, ${tid})">[+] C${cost}</span> ${process(clean, vars)}`;
+                    const type = transferMatch[1].toLowerCase(); // l o c
+                    const val = transferMatch[2]; const tid = transferMatch[3];
+                    const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
+                    body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
-                    body = `<span class="plus-btn" onclick="transferText('${clean}', 0, 1)">[+]</span> ${process(clean, vars)}`;
+                    body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, 1)">[+]</span> ${process(clean, vars)}`;
                 } else {
                     body = process(l, vars);
                 }
-                return `<div style="margin-bottom:4px">${body}</div>`;
+                return `<div>${body}</div>`;
             }).join('');
         }
 
         function process(t, v) {
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
-                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span class="note-btn" onclick="openNote('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
+                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span style="color:var(--accent); cursor:pointer; font-weight:bold;" onclick="openNote('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
                     .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
-                    .replace(/([\+\-][0-9]+[A-Z]+)/gi, `<span style="color:var(--var); opacity:0.8">$1</span>`)
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
         }
 
         function parseVars(txt) {
             const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi);
             for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]);
-            const subs = txt.matchAll(/([\+\-][0-9]+)([A-Z]+)/gi);
-            for(const s of subs) { const k = s[2].toUpperCase(); if(v[k]!==undefined) v[k]+=parseInt(s[1]); }
             return v;
         }
 
@@ -244,27 +249,26 @@
             for(let i=0; i<num; i++) {
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 const r = Math.floor(Math.random()*sides)+1; results.push(r);
-                for(let j=0; j<6; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 60)); }
+                for(let j=0; j<6; j++) { box.innerText = Math.floor(Math.random()*sides)+1; await new Promise(res => setTimeout(res, 50)); }
                 box.innerText = r; if(r===1) box.style.color = 'var(--fail)'; if(r===sides) box.style.color = 'var(--crit)';
             }
             let totalRoll = results.reduce((a,b)=>a+b, 0);
             let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
-            setTimeout(() => { const tf = document.getElementById('total-final'); tf.innerText = finalValue; tf.classList.add('show'); }, 200);
+            setTimeout(() => { const tf = document.getElementById('total-final'); tf.innerText = finalValue; tf.classList.add('show'); }, 100);
             let vS = Object.entries(vars).map(([k,v])=>`${k}:${v}`).join(' ');
             DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:fStr, faces:results, vars: vS });
             if(DB.log.length > 20) DB.log.pop(); sync();
         }
 
         function incVar(key, val) {
-            if(USER !== 'DM' && (key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL")) {
-                alert("Solo el DM puede modificar esta variable."); return;
-            }
             const it = DB.items[CID]; const vars = parseVars(it.content);
             if(USER === 'DM') {
-                const n = prompt(`Nuevo valor para ${key}:`, val);
+                const n = prompt(`Nuevo valor ${key}:`, val);
                 if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
                 return;
             }
+            if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
+            
             let costo = val <= 1 ? 1 : val;
             let pts = vars['PUNTOS'] || 0;
             if(pts >= costo) {
@@ -274,20 +278,25 @@
             } else alert(`Necesitas ${costo} PUNTOS.`);
         }
 
-        function transferText(txt, cost, tid) {
-            if(!USING_ID) return alert("Usa 'USAR' en tu Dash primero.");
+        function transferText(txt, type, val, tid) {
+            if(!USING_ID) return alert("Usa 'USAR' en tu Dash.");
             const target = DB.items[USING_ID]; const tVars = parseVars(target.content);
-            const coins = tVars['MONEDAS'] || 0;
-            if(coins < cost) return alert(`No tienes monedas suficientes.`);
-            if(cost > 0) target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-cost}`);
+            
+            if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Requieres NIVEL ${val}`);
+            if(type === 'c') {
+                const coins = tVars['MONEDAS'] || 0;
+                if(coins < val) return alert(`Requieres ${val} MONEDAS`);
+                target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`);
+            }
+
             let lines = target.content.split('\n');
             let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
             if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
-            target.content = lines.join('\n'); sync(); alert("Agregado al Dash usado.");
+            target.content = lines.join('\n'); sync(); alert("Transferido.");
         }
 
         function globalPrompt(key) {
-            const val = prompt(`Sumar cantidad de ${key} a todos:`);
+            const val = prompt(`Sumar a todos ${key}:`);
             if(!val) return;
             Object.values(DB.items).forEach(it => {
                 if(it.type === 'dash') {
@@ -295,50 +304,32 @@
                     if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`);
                 }
             });
-            sync(); alert("Hecho.");
+            sync();
         }
 
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
                 <div class="log-entry">
                     <b style="color:var(--p)">${l.u}</b> @ ${l.dash}: <span style="font-size:13px; color:#fff">${l.total}</span> <small>(${l.formula})</small><br>
-                    <span style="opacity:0.5; font-size:9px">Caras: ${l.faces.map(f => `<span style="color:${f==1?'red':(f>=10?'#00ff88':'#8cafff')}">${f}</span>`)}</span><br>
-                    <i style="font-size:8px; opacity:0.3">[${l.vars}]</i>
+                    <span style="opacity:0.5; font-size:9px">Caras: ${l.faces.map(f => `<span style="color:${f==1?'red':(f>=10?'#00ff88':'#8cafff')}">${f}</span>`)}</span>
                 </div>
             `).join('');
         }
 
-        function openNote(t, b) {
-            document.getElementById('note-title-ui').innerText = t;
-            document.getElementById('note-content-ui').innerText = b;
-            document.getElementById('note-modal').style.display = 'flex';
-        }
-
-        function updateHeader() {
-            const it = DB.items[CID]; const isOwner = it.owner === USER || USER === 'DM';
-            document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
-            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
-        }
-
-        function toggleMode() {
-            IS_EDIT = !IS_EDIT;
-            document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block';
-            document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
-            if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
-            document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
-        }
-
+        function openNote(t, b) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerText = b; document.getElementById('note-modal').style.display = 'flex'; }
+        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
+        function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
-        function closeDetail() { CID = null; IS_EDIT = false; document.getElementById('detail-view').style.display = 'none'; }
-        function createNew(type) { 
-            const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); 
-            DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null }; 
-            sync(); render(); document.getElementById('item-input').value = ""; 
-        }
-        function deleteCurrent() { if(confirm("¿Borrar?")) { delete DB.items[CID]; sync(); closeDetail(); render(); } }
+        function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
+        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\n', owner: USER, parent: null }; sync(); render(); document.getElementById('item-input').value = ""; }
+        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
+        function deleteCurrent() { deleteItem(CID); closeDetail(); }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
+        function clearLog() { DB.log = []; sync(); }
+        function exportData() { const blob = new Blob([JSON.stringify(DB)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='backup.json'; a.click(); }
+        function importData() { const inp = document.createElement('input'); inp.type='file'; inp.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); sync(); render(); }; r.readAsText(e.target.files[0]); }; inp.click(); }
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
