@@ -161,17 +161,8 @@
             setupRootDrop();
         }
 
-        async function initSync() {
-            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
-            if(data) { DB = data.data; render(); updateLogUI(); }
-        }
-
-        async function syncFromCloud() {
-            if(IS_EDIT || DRAGGED_ID) return;
-            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
-            if(data) { DB = data.data; render(); updateLogUI(); if(CID) renderVisual(); }
-        }
-
+        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); } }
+        async function syncFromCloud() { if(IS_EDIT || DRAGGED_ID) return; const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); if(CID) renderVisual(); } }
         async function sync() { await client.from('platinum_session').upsert({ id: 1, data: DB }); }
 
         function render() {
@@ -219,7 +210,6 @@
         }
 
         function moveItem(id, newParentId) { if(!DB.items[id] || id === newParentId) return; DB.items[id].parent = newParentId; sync(); render(); }
-
         function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
 
         function renderVisual() {
@@ -227,14 +217,12 @@
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
                 body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-]</span>');
-                let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
-                let simpleMatch = l.match(/\[\+(\d+)\]/);
-                if(transferMatch) {
-                    const type = transferMatch[1].toLowerCase(); const val = transferMatch[2]; const tid = transferMatch[3];
-                    const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
+                let tM = l.match(/\[(l|c)(\d+)\+(\d+)\]/i); let sM = l.match(/\[\+(\d+)\]/);
+                if(tM) {
+                    const type = tM[1].toLowerCase(); const val = tM[2]; const tid = tM[3]; const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
-                } else if(simpleMatch) {
-                    const tid = simpleMatch[1]; const clean = l.replace(/\[\+\d+\]/, '').trim();
+                } else if(sM) {
+                    const tid = sM[1]; const clean = l.replace(/\[\+\d+\]/, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, ${tid})">[+]</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
@@ -245,11 +233,9 @@
         }
 
         function process(t, v) {
-            // FIX: Soporte para saltos de línea (doble espacio) dentro de la etiqueta [note]
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
-                        // Reemplazamos el doble espacio por <br> para el visualizador del modal
                         const cleanContent = content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         return `<span class="note-btn" onclick="openNote('${title}', '${cleanContent}')">${title}</span>`;
                     })
@@ -257,70 +243,45 @@
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
         }
 
-        function parseVars(txt) {
-            const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi);
-            for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]);
-            return v;
-        }
+        function parseVars(txt) { const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); return v; }
 
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
-            let formulaLimpia = fStr.toUpperCase(); let formulaLog = formulaLimpia;
-            Object.keys(vars).forEach(k => { formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]); formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]); });
-            const match = formulaLimpia.match(/(\d*)D(\d+)/i);
-            const num = Math.min(parseInt(match[1]) || 1, 10); const sides = parseInt(match[2]);
-            document.getElementById('dice-overlay').style.display = 'flex';
-            document.getElementById('total-final').classList.remove('show');
-            const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
-            const results = [];
+            let fL = fStr.toUpperCase(); let fLo = fL;
+            Object.keys(vars).forEach(k => { fLo = fLo.replace(new RegExp(k,'g'), vars[k]); fL = fL.replace(new RegExp(k,'g'), vars[k]); });
+            const match = fL.match(/(\d*)D(\d+)/i); const num = Math.min(parseInt(match[1]) || 1, 10); const sides = parseInt(match[2]);
+            document.getElementById('dice-overlay').style.display = 'flex'; document.getElementById('total-final').classList.remove('show');
+            const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
             for(let i=0; i<num; i++) {
-                await new Promise(r => setTimeout(r, 150)); 
-                const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
-                setTimeout(() => box.classList.add('reveal'), 10);
-                const finalResult = Math.floor(Math.random()*sides)+1; results.push(finalResult);
-                let counter = 0;
-                const interval = setInterval(() => {
-                    box.innerText = Math.floor(Math.random()*sides)+1;
-                    if(++counter > 10) { clearInterval(interval); box.innerText = finalResult; if(finalResult === 1) box.style.color = 'var(--fail)'; if(finalResult === sides) box.style.color = 'var(--crit)'; }
-                }, 60);
+                await new Promise(r => setTimeout(r, 150)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
+                setTimeout(() => box.classList.add('reveal'), 10); const finalResult = Math.floor(Math.random()*sides)+1; results.push(finalResult);
+                let counter = 0; const interval = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++counter > 10) { clearInterval(interval); box.innerText = finalResult; if(finalResult === 1) box.style.color = 'var(--fail)'; if(finalResult === sides) box.style.color = 'var(--crit)'; } }, 60);
             }
             setTimeout(() => {
-                let totalRoll = results.reduce((a,b)=>a+b, 0);
-                let finalValue = Math.floor(eval(formulaLimpia.replace(match[0], totalRoll)));
-                document.getElementById('total-final').innerText = finalValue; document.getElementById('total-final').classList.add('show');
-                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog, faces:results, max:sides });
-                if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
+                let tR = results.reduce((a,b)=>a+b, 0); let fV = Math.floor(eval(fL.replace(match[0], tR)));
+                document.getElementById('total-final').innerText = fV; document.getElementById('total-final').classList.add('show');
+                DB.log.unshift({ u:USER, dash:it.name, total:fV, formula:fLo, faces:results, max:sides }); if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
             }, 800);
         }
 
-        function updateLogUI() {
-            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry">
-                    <div class="log-header"><b style="color:var(--p)">${l.u}</b>; <span style="color:#888">${l.dash}</span>; <b style="color:#fff">${l.total}</b>; <small style="color:var(--dice)">${l.formula}</small>;</div>
-                    <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
-                </div>
-            `).join('');
-        }
+        function updateLogUI() { document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `<div class="log-entry"><div class="log-header"><b style="color:var(--p)">${l.u}</b>; <span style="color:#888">${l.dash}</span>; <b style="color:#fff">${l.total}</b>; <small style="color:var(--dice)">${l.formula}</small>;</div><div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div></div>`).join(''); }
 
         function transferText(txt, type, val, tid) {
             if(!USING_ID) return alert("Usa 'USAR' en tu Dash.");
             const target = DB.items[USING_ID]; const tVars = parseVars(target.content);
             if(type === 'l' && (tVars['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
-            if(type === 'c') {
-                const coins = tVars['MONEDAS'] || 0; if(coins < val) return alert(`Faltan Monedas.`);
-                target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`);
-            }
-            let lines = target.content.split('\n');
-            let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
+            if(type === 'c') { const coins = tVars['MONEDAS'] || 0; if(coins < val) return alert(`Faltan Monedas.`); target.content = target.content.replace(new RegExp(`MONEDAS=${coins}`,'i'), `MONEDAS=${coins-val}`); }
+            let lines = target.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`));
             if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
             target.content = lines.join('\n'); sync(); alert("Enviado.");
         }
 
         function incVar(key, val) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
+            // MEJORA DM: Si es DM, simplemente sube el valor sin gastar puntos.
             if(USER === 'DM') {
-                const n = prompt(`Nuevo valor:`, val);
-                if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
+                it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`);
+                sync(); renderVisual();
                 return;
             }
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
@@ -328,18 +289,8 @@
             if(pts >= costo) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`); sync(); renderVisual(); } else alert(`Faltan PUNTOS.`);
         }
 
-        function globalPrompt(key) {
-            const val = prompt(`Sumar ${key} global:`); if(!val) return;
-            Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const v = parseVars(it.content); if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`); } });
-            sync(); render();
-        }
-
-        function openNote(title, content) { 
-            document.getElementById('note-title-ui').innerText = title; 
-            document.getElementById('note-content-ui').innerHTML = content; 
-            document.getElementById('note-modal').style.display = 'flex'; 
-        }
-
+        function globalPrompt(key) { const val = prompt(`Sumar ${key} global:`); if(!val) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const v = parseVars(it.content); if(v[key] !== undefined) it.content = it.content.replace(new RegExp(`${key}=${v[key]}`,'i'), `${key}=${parseInt(v[key]) + parseInt(val)}`); } }); sync(); render(); }
+        function openNote(title, content) { document.getElementById('note-title-ui').innerText = title; document.getElementById('note-content-ui').innerHTML = content; document.getElementById('note-modal').style.display = 'flex'; }
         function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
         function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
@@ -356,18 +307,7 @@
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
-        
-        // MEJORA: Flujo de creación de nota (Título -> Contenido)
-        function addNoteTag() { 
-            const t = prompt("Título de la Nota:"); 
-            if(t) {
-                const c = prompt("Contenido de la Nota (usa doble espacio para saltos de línea):");
-                if(c !== null) {
-                    ins(`[note=${t}]${c}[/note]`);
-                }
-            }
-        }
-        
+        function addNoteTag() { const t = prompt("Título de la Nota:"); if(t) { const c = prompt("Contenido de la Nota (usa doble espacio para saltos de línea):"); if(c !== null) { ins(`[note=${t}]${c}[/note]`); } } }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
