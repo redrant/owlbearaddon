@@ -15,7 +15,7 @@
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
         #auth-screen, .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .auth-card, .note-card { background: var(--surf); padding: 30px; border-radius: 20px; border: 1px solid #222; width: 90%; max-width: 380px; text-align: center; }
+        .auth-card, .note-card { background: var(--surf); padding: 30px; border-radius: 20px; border: 1px solid #222; width: 90%; max-width: 450px; text-align: center; }
         .auth-card input { width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #333; background: #000; color: #fff; margin: 20px 0; outline: none; text-align: center; }
 
         header { padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--surf); border-bottom: 1px solid #1f1f22; height: 50px; }
@@ -81,14 +81,14 @@
     <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
         <div class="note-card" onclick="event.stopPropagation()">
             <div id="note-title-ui" style="font-weight:900; color:var(--accent); margin-bottom: 15px; font-size:18px;"></div>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 50vh; overflow-y: auto;"></div>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#bbb; max-height: 50vh; overflow-y: auto; font-size: 14px; line-height: 1.5;"></div>
         </div>
     </div>
 
     <header>
         <div class="header-left">
             <div class="title">My Dash</div>
-            <div id="dm-master-tools" class="dm-tools-header">
+            <div id="dm-tools-header" class="dm-tools-header">
                 <button onclick="globalPrompt('PUNTOS')" class="btn-tool" style="color:var(--p)">+PTS</button>
                 <button onclick="globalPrompt('MONEDAS')" class="btn-tool" style="color:var(--accent)">+MON</button>
                 <button onclick="globalPrompt('NIVEL')" class="btn-tool" style="color:var(--crit)">+LVL</button>
@@ -174,7 +174,7 @@
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
             items.forEach(it => {
                 if(it.parent) return; 
-                if(it.hidden && USER !== 'DM') return; // Ocultador activo
+                if(it.hidden && USER !== 'DM') return;
                 area.appendChild(createEl(it));
                 if(it.type === 'folder' && DB.openFolders[it.id]) {
                     items.filter(c => c.parent === it.id).forEach(c => { 
@@ -190,20 +190,12 @@
             div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨️' : ''}</span> 
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨' : ''}</span> 
                             <div style="display:flex; align-items:center;">
                                 <small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
-            
-            // Ocultador para DM con Click Derecho
-            div.oncontextmenu = (e) => {
-                if(USER === 'DM') {
-                    e.preventDefault();
-                    it.hidden = !it.hidden;
-                    sync(); render();
-                }
-            };
+            div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
             return div;
         }
 
@@ -214,12 +206,20 @@
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
                 body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-]</span>');
+                
+                // MEJORA: [+1] sin requisitos (n) o [+l1+1] con requisitos
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
+                let simpleMatch = l.match(/\[\+(\d+)\]/);
+                
                 if(transferMatch) {
                     const type = transferMatch[1].toLowerCase();
                     const val = transferMatch[2]; const tid = transferMatch[3];
                     const clean = l.replace(/\[(l|c)\d+\+\d+\]/i, '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', '${type}', ${val}, ${tid})">[+] ${type.toUpperCase()}${val}</span> ${process(clean, vars)}`;
+                } else if(simpleMatch) {
+                    const tid = simpleMatch[1];
+                    const clean = l.replace(/\[\+\d+\]/, '').trim();
+                    body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, ${tid})">[+]</span> ${process(clean, vars)}`;
                 } else if(l.trim().startsWith('[+]')) {
                     const clean = l.replace('[+]', '').trim();
                     body = `<span class="plus-btn" onclick="transferText('${clean}', 'n', 0, 1)">[+]</span> ${process(clean, vars)}`;
@@ -231,10 +231,12 @@
         }
 
         function process(t, v) {
+            // MEJORA NOTAS: Soporta multilínea y caracteres especiales
             return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => {
-                        return `<span class="note-btn" onclick="openNote('${title}', \`${content.replace(/\n/g, '<br>').replace(/'/g, "\\'")}\`)">${title}</span>`;
+                        const cleanContent = content.trim().replace(/\n/g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        return `<span class="note-btn" onclick="openNote('${title}', '${cleanContent}')">${title}</span>`;
                     })
                     .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
@@ -330,7 +332,12 @@
             sync(); render();
         }
 
-        function openNote(title, content) { document.getElementById('note-title-ui').innerText = title; document.getElementById('note-content-ui').innerHTML = content; document.getElementById('note-modal').style.display = 'flex'; }
+        function openNote(title, content) { 
+            document.getElementById('note-title-ui').innerText = title; 
+            document.getElementById('note-content-ui').innerHTML = content; 
+            document.getElementById('note-modal').style.display = 'flex'; 
+        }
+
         function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
         function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
