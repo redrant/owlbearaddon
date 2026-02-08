@@ -206,44 +206,24 @@
             const div = document.createElement('div');
             div.className = `item ${it.type}`;
             div.draggable = true;
-            
-            let deleteBtn = "";
-            // ELIMINAR CARPETA: Solo Owner o DM
-            if(it.type === 'folder' && (it.owner === USER || USER === 'DM')) {
-                deleteBtn = `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>`;
-            }
-
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
-                             <div style="display:flex; align-items:center; gap:10px;">
-                                <small style="opacity:0.4">${it.owner||''}</small>
-                                ${deleteBtn}
-                             </div>`;
-            
-            div.onclick = () => {
-                if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); }
-                else openDash(it.id);
-            };
+            let deleteBtn = (it.type === 'folder' && (it.owner === USER || USER === 'DM')) ? `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>` : "";
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <div style="display:flex; align-items:center; gap:10px;"><small style="opacity:0.4">${it.owner||''}</small>${deleteBtn}</div>`;
+            div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
             div.ondragover = (e) => e.preventDefault();
-            div.ondrop = (e) => {
-                const tid = e.dataTransfer.getData('id');
-                if(it.type === 'folder' && tid !== it.id) { DB.items[tid].parent = it.id; sync(); render(); }
-                else if(tid !== it.id) { DB.items[tid].parent = null; sync(); render(); }
-            };
+            div.ondrop = (e) => { const tid = e.dataTransfer.getData('id'); if(it.type === 'folder' && tid !== it.id) { DB.items[tid].parent = it.id; sync(); render(); } else if(tid !== it.id) { DB.items[tid].parent = null; sync(); render(); } };
             return div;
         }
 
-        function deleteFolder(id) {
-            if(!confirm("¿Eliminar carpeta y liberar sus archivos?")) return;
-            // Liberamos los hijos
-            Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; });
-            delete DB.items[id];
-            sync(); render();
-        }
+        function deleteFolder(id) { if(!confirm("¿Eliminar carpeta?")) return; Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; }); delete DB.items[id]; sync(); render(); }
 
         async function openDash(id) {
-            CID = id; IS_EDIT = false;
+            CID = id; 
+            IS_EDIT = false; // RESET AL ABRIR
             document.getElementById('detail-view').style.display = 'flex';
+            document.getElementById('content-area').style.display = 'block';
+            document.getElementById('editor-area').style.display = 'none';
+            document.getElementById('save-btn').style.display = 'none';
             document.getElementById('det-title').innerText = DB.items[id].name;
             updateHeader(); renderVisual();
         }
@@ -253,6 +233,7 @@
             const isOwner = it.owner === USER || USER === 'DM';
             document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
             document.getElementById('use-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('mode-btn').innerText = "EDITOR";
             document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "LIBERAR" : (USER==="DM"?"DM LIBERAR":"OCUPADO")) : "OWNEAR";
             document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
         }
@@ -262,11 +243,7 @@
             const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let pre = ""; let body = l;
-                if(l.trim().startsWith('[+]')) {
-                    const clean = l.replace('[+]', '').trim();
-                    pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`;
-                    body = clean;
-                }
+                if(l.trim().startsWith('[+]')) { const clean = l.replace('[+]', '').trim(); pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`; body = clean; }
                 return `<div class="dash-line">${pre}<div>${process(body, vars)}</div></div>`;
             }).join('');
         }
@@ -307,7 +284,6 @@
             let totalRoll = results.reduce((a,b)=>a+b, 0);
             let finalValue = Math.floor(eval(f.replace(match[0], totalRoll)));
             setTimeout(() => { const td = document.getElementById('total-display'); td.innerText = finalValue; td.classList.add('show'); }, 200);
-
             DB.log.unshift({ u:USER, dash:it.name, total:finalValue, faces:results, formula: fStr, max: sides });
             if(DB.log.length > 25) DB.log.pop(); await sync();
         }
@@ -319,12 +295,7 @@
             }).join('');
         }
 
-        function createNew(type) {
-            const name = document.getElementById('item-input').value.trim() || "Nuevo";
-            const id = 'id'+Date.now();
-            DB.items[id] = { id, name, type, content: '', owner: USER, parent: null };
-            sync(); render(); document.getElementById('item-input').value = "";
-        }
+        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: '', owner: USER, parent: null }; sync(); render(); document.getElementById('item-input').value = ""; }
 
         function toggleMode() {
             IS_EDIT = !IS_EDIT;
@@ -338,7 +309,14 @@
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
         function cloneToUsing(txt) { if(!USING_ID || !DB.items[USING_ID]) return alert("Activa 'USAR' en tu Dash."); DB.items[USING_ID].content += "\n" + txt; sync(); }
-        function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; initSync(); }
+        
+        function closeDetail() { 
+            CID = null; 
+            IS_EDIT = false; // RESET AL CERRAR
+            document.getElementById('detail-view').style.display = 'none'; 
+            initSync(); 
+        }
+
         function deleteCurrent() { if(confirm("¿Eliminar Dash?")) { delete DB.items[CID]; sync(); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
         function openNoteModal(t, b) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerText = b; document.getElementById('note-modal').style.display = 'flex'; }
