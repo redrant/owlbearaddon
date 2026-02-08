@@ -16,7 +16,7 @@
         
         /* AUTH & MODALS */
         #auth-screen, .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,11,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .auth-card, .note-card { background: var(--surf); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid #333; width: 450px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); }
+        .auth-card, .note-card { background: var(--surf); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid #333; width: 450px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); transition: all 0.3s; }
         .auth-card input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; margin: 20px 0; text-align: center; font-size: 1.1em; }
 
         /* HEADER */
@@ -32,30 +32,57 @@
         /* LISTA */
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .item { background: var(--surf); padding: 12px 16px; border-radius: var(--radius); border: 1px solid #252529; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .item:hover { border-color: var(--p); }
+        .item:hover { border-color: var(--p); background: #1a1a1e; }
         .item.folder { border-left: 5px solid var(--var); }
         .item.dash { border-left: 5px solid var(--p); }
-        .del-folder { color: var(--fail); font-weight: bold; padding: 5px; cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .del-folder { color: var(--fail); font-weight: bold; padding: 5px; cursor: pointer; opacity: 0.5; }
         .del-folder:hover { opacity: 1; }
 
         /* DETAIL VIEW */
         #detail-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
         .detail-header { padding: 12px 20px; display: flex; gap: 10px; background: var(--surf); border-bottom: 1px solid #222; align-items: center; }
-        #content-area { flex: 1; overflow-y: auto; padding: 30px; line-height: 1.8; }
+        #content-area { flex: 1; overflow-y: auto; padding: 30px; line-height: 1.8; font-size: 1.05em; }
         #editor-area { flex: 1; display: none; padding: 20px; flex-direction: column; gap: 10px; }
         textarea { flex: 1; background: #080808; border: 1px solid #333; color: #ccc; border-radius: 8px; padding: 20px; resize: none; font-family: monospace; outline: none; }
         
+        /* DECORACIÓN DE VARIABLES Y NOTAS */
+        .var-tag { 
+            color: var(--var); font-weight: 800; background: rgba(255,171,64,0.15); 
+            padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255,171,64,0.3);
+            text-shadow: 0 0 8px rgba(255,171,64,0.4);
+        }
+        .note-btn { 
+            background: linear-gradient(135deg, #1a1a1f, #252529); 
+            border: 1px solid var(--accent); border-bottom: 3px solid var(--accent);
+            color: var(--accent); padding: 3px 12px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .note-btn:hover { background: var(--accent); color: #000; transform: translateY(-2px); }
+        .note-btn::before { content: 'ℹ'; font-size: 0.8em; opacity: 0.7; }
+
+        /* DASH COMPONENTS */
+        .dash-line { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+        .plus-btn { 
+            background: rgba(187,134,252,0.1); border: 1px dashed var(--p); color: var(--p); 
+            padding: 2px 10px; border-radius: 6px; cursor: pointer; font-weight: 900; 
+            transition: 0.2s;
+        }
+        .plus-btn:hover { background: var(--p); color: #000; border-style: solid; }
+        
+        .roll-btn { 
+            background: #1e1e24; color: #8cafff; padding: 4px 12px; border-radius: 8px; 
+            border-bottom: 3px solid #5c7cff; cursor: pointer; font-weight: bold; 
+            display: inline-block; transition: 0.2s;
+        }
+        .roll-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+
         /* LOG & DICE */
         .log { height: 160px; background: #050507; border-top: 1px solid #222; padding: 12px; font-size: 12px; overflow-y: auto; color: #888; border-bottom: 4px solid var(--p); }
-        .btn-tool { background: #222; color: #eee; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-tool { background: #222; color: #eee; border: 1px solid #444; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .btn-p { background: var(--p); color: #000; }
         .btn-s { background: #2a2a2e; color: #fff; }
 
-        .dash-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
-        .plus-btn { background: rgba(187,134,252,0.1); border: 1px dashed var(--p); color: var(--p); padding: 0 8px; border-radius: 4px; cursor: pointer; }
-        .roll-btn { background: #1e1e24; color: #8cafff; padding: 4px 10px; border-radius: 6px; border-bottom: 3px solid #5c7cff; cursor: pointer; font-weight: bold; display: inline-block; }
-        
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; }
         .slot-row { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
         .die-box { width: 80px; height: 80px; background: #1a1a1d; border: 2px solid #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; }
@@ -67,16 +94,16 @@
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h2 style="color:var(--p); margin:0; letter-spacing: 3px;">MY DASH</h2>
-            <input type="text" id="uname-input" placeholder="Tu Nombre / DM...">
-            <button onclick="login()" class="btn btn-p" style="width: 100%">INGRESAR</button>
+            <h2 style="color:var(--p); margin:0; letter-spacing: 4px;">PLATINUM DASH</h2>
+            <input type="text" id="uname-input" placeholder="ID de Jugador / DM...">
+            <button onclick="login()" class="btn btn-p" style="width: 100%; padding: 15px;">CONECTAR</button>
         </div>
     </div>
 
     <div id="note-modal" class="modal-overlay" style="display:none;" onclick="this.style.display='none'">
         <div class="note-card" onclick="event.stopPropagation()">
-            <h2 id="note-title-ui" style="color:var(--accent); margin:0;"></h2>
-            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#ccc; max-height: 400px; overflow-y: auto; margin: 20px 0;"></div>
+            <h2 id="note-title-ui" style="margin:0;"></h2>
+            <div id="note-content-ui" style="text-align:left; white-space:pre-wrap; color:#ccc; max-height: 400px; overflow-y: auto; margin: 25px 0; line-height: 1.6; border-left: 2px solid var(--p); padding-left: 15px;"></div>
             <button onclick="document.getElementById('note-modal').style.display='none'" class="btn btn-s" style="width:100%">CERRAR</button>
         </div>
     </div>
@@ -88,7 +115,7 @@
 
     <div id="main-container">
         <div class="bar">
-            <input type="text" id="item-input" placeholder="Nombre...">
+            <input type="text" id="item-input" placeholder="Nombre del Dash o Carpeta...">
             <button onclick="createNew('dash')" class="btn btn-p">+ DASH</button>
             <button onclick="createNew('folder')" class="btn btn-s">+ CARPETA</button>
             <div id="dm-import-export" style="display:none; gap:5px; margin-left:10px;">
@@ -105,8 +132,8 @@
 
     <div id="detail-view">
         <div class="detail-header">
-            <button onclick="closeDetail()" class="btn btn-s">VOLVER</button>
-            <div id="det-title" style="flex:1; text-align:center; font-weight:bold; color:var(--p)"></div>
+            <button onclick="closeDetail()" class="btn btn-s">SALIR</button>
+            <div id="det-title" style="flex:1; text-align:center; font-weight:900; color:var(--p); text-transform:uppercase;"></div>
             <button id="own-btn" onclick="toggleOwn()" class="btn-tool">OWNEAR</button>
             <button id="use-btn" onclick="toggleUse()" class="btn-tool" style="display:none">USAR</button>
             <button id="mode-btn" onclick="toggleMode()" class="btn btn-s" style="display:none">EDITOR</button>
@@ -120,7 +147,7 @@
                 <button class="btn-tool" onclick="addGlow()">GLOW</button>
                 <button class="btn-tool" onclick="ins('[+] ')">[+]</button>
                 <button class="btn-tool" onclick="addNote()">NOTA</button>
-                <button class="btn-tool" onclick="deleteCurrent()" style="background:#3d1a1a; color:var(--fail); margin-left:auto">BORRAR DASH</button>
+                <button class="btn-tool" onclick="deleteCurrent()" style="background:#3d1a1a; color:var(--fail); margin-left:auto">BORRAR</button>
             </div>
             <textarea id="editor-txt" oninput="showSave()"></textarea>
         </div>
@@ -167,9 +194,7 @@
         async function silentSyncList() {
             if(CID) return;
             const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
-            if(data && JSON.stringify(data.data) !== lastDBString) {
-                DB = data.data; lastDBString = JSON.stringify(DB); render();
-            }
+            if(data && JSON.stringify(data.data) !== lastDBString) { DB = data.data; lastDBString = JSON.stringify(DB); render(); }
         }
 
         async function silentSyncLog() {
@@ -188,8 +213,7 @@
         }
 
         function render() {
-            const area = document.getElementById('list-area');
-            area.innerHTML = "";
+            const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
             items.forEach(it => {
                 if(it.parent) return;
@@ -203,11 +227,10 @@
         }
 
         function createEl(it) {
-            const div = document.createElement('div');
-            div.className = `item ${it.type}`;
+            const div = document.createElement('div'); div.className = `item ${it.type}`;
             div.draggable = true;
-            let deleteBtn = (it.type === 'folder' && (it.owner === USER || USER === 'DM')) ? `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>` : "";
-            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <div style="display:flex; align-items:center; gap:10px;"><small style="opacity:0.4">${it.owner||''}</small>${deleteBtn}</div>`;
+            let del = (it.type === 'folder' && (it.owner === USER || USER === 'DM')) ? `<span class="del-folder" onclick="event.stopPropagation(); deleteFolder('${it.id}')">✖</span>` : "";
+            div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> <div style="display:flex; align-items:center; gap:10px;"><small style="opacity:0.4">${it.owner||''}</small>${del}</div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             div.ondragstart = (e) => e.dataTransfer.setData('id', it.id);
             div.ondragover = (e) => e.preventDefault();
@@ -215,11 +238,10 @@
             return div;
         }
 
-        function deleteFolder(id) { if(!confirm("¿Eliminar carpeta?")) return; Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; }); delete DB.items[id]; sync(); render(); }
+        function deleteFolder(id) { if(!confirm("¿Borrar carpeta?")) return; Object.values(DB.items).forEach(it => { if(it.parent === id) it.parent = null; }); delete DB.items[id]; sync(); render(); }
 
         async function openDash(id) {
-            CID = id; 
-            IS_EDIT = false; // RESET AL ABRIR
+            CID = id; IS_EDIT = false;
             document.getElementById('detail-view').style.display = 'flex';
             document.getElementById('content-area').style.display = 'block';
             document.getElementById('editor-area').style.display = 'none';
@@ -228,22 +250,15 @@
             updateHeader(); renderVisual();
         }
 
-        function updateHeader() {
-            const it = DB.items[CID];
-            const isOwner = it.owner === USER || USER === 'DM';
-            document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
-            document.getElementById('use-btn').style.display = isOwner ? 'block' : 'none';
-            document.getElementById('mode-btn').innerText = "EDITOR";
-            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "LIBERAR" : (USER==="DM"?"DM LIBERAR":"OCUPADO")) : "OWNEAR";
-            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
-        }
-
         function renderVisual() {
-            const it = DB.items[CID];
-            const vars = parseVars(it.content);
+            const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let pre = ""; let body = l;
-                if(l.trim().startsWith('[+]')) { const clean = l.replace('[+]', '').trim(); pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`; body = clean; }
+                if(l.trim().startsWith('[+]')) {
+                    const clean = l.replace('[+]', '').trim();
+                    pre = `<div class="plus-btn" onclick="cloneToUsing(\`${clean}\`)">[+]</div>`;
+                    body = clean;
+                }
                 return `<div class="dash-line">${pre}<div>${process(body, vars)}</div></div>`;
             }).join('');
         }
@@ -254,6 +269,22 @@
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, t, b) => `<span class="note-btn" onclick="openNoteModal('${t}', \`${b.replace(/  /g, '\n')}\`)">${t}</span>`)
                     .replace(/([A-Z]+=[0-9]+|[\+\-][0-9]+[A-Z]+)/gi, m => `<span class="var-tag">${m}</span>`)
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`);
+        }
+
+        function cloneToUsing(txt) {
+            if(!USING_ID || !DB.items[USING_ID]) return alert("Activa el modo 'USAR' en el Dash que debe aprender esto.");
+            DB.items[USING_ID].content += "\n" + txt;
+            sync();
+            openNoteModal("¡SISTEMA!", "Se aprendió con éxito:\n\n" + txt, true);
+        }
+
+        function openNoteModal(t, b, isSuccess = false) {
+            const modal = document.getElementById('note-modal');
+            const title = document.getElementById('note-title-ui');
+            title.innerText = t;
+            title.style.color = isSuccess ? 'var(--crit)' : 'var(--accent)';
+            document.getElementById('note-content-ui').innerText = b;
+            modal.style.display = 'flex';
         }
 
         function parseVars(txt) {
@@ -274,7 +305,6 @@
             document.getElementById('dice-overlay').style.display = 'flex';
             const machine = document.getElementById('slot-machine'); machine.innerHTML = "";
             document.getElementById('total-display').classList.remove('show');
-
             for(let i=0; i<num; i++) {
                 const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 const r = Math.floor(Math.random()*sides)+1; results.push(r);
@@ -291,11 +321,18 @@
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => {
                 const fs = l.faces.map(f => `<span style="color:${f===1?'var(--fail)':(f===l.max?'var(--crit)':'inherit')}">${f}</span>`).join(', ');
-                return `<div class="log-entry"><b>${l.u}</b> @ ${l.dash}: <span style="color:var(--p); font-weight:900;">${l.total}</span> <small>[${fs}]</small> <span style="color:var(--var); font-size:10px">${l.formula}</span></div>`;
+                return `<div><b>${l.u}</b> @ ${l.dash}: <span style="color:var(--p); font-weight:900;">${l.total}</span> <small>[${fs}]</small> <span style="color:var(--var); font-size:10px">${l.formula}</span></div>`;
             }).join('');
         }
 
-        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: '', owner: USER, parent: null }; sync(); render(); document.getElementById('item-input').value = ""; }
+        function updateHeader() {
+            const it = DB.items[CID]; const isOwner = it.owner === USER || USER === 'DM';
+            document.getElementById('mode-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('use-btn').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('mode-btn').innerText = "EDITOR";
+            document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "LIBERAR" : (USER==="DM"?"DM LIBERAR":"OCUPADO")) : "OWNEAR";
+            document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR";
+        }
 
         function toggleMode() {
             IS_EDIT = !IS_EDIT;
@@ -308,18 +345,10 @@
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
-        function cloneToUsing(txt) { if(!USING_ID || !DB.items[USING_ID]) return alert("Activa 'USAR' en tu Dash."); DB.items[USING_ID].content += "\n" + txt; sync(); }
-        
-        function closeDetail() { 
-            CID = null; 
-            IS_EDIT = false; // RESET AL CERRAR
-            document.getElementById('detail-view').style.display = 'none'; 
-            initSync(); 
-        }
-
-        function deleteCurrent() { if(confirm("¿Eliminar Dash?")) { delete DB.items[CID]; sync(); closeDetail(); } }
+        function closeDetail() { CID = null; IS_EDIT = false; document.getElementById('detail-view').style.display = 'none'; initSync(); }
+        function createNew(type) { const name = document.getElementById('item-input').value.trim() || "Nuevo"; const id = 'id'+Date.now(); DB.items[id] = { id, name, type, content: '', owner: USER, parent: null }; sync(); render(); document.getElementById('item-input').value = ""; }
+        function deleteCurrent() { if(confirm("¿Eliminar?")) { delete DB.items[CID]; sync(); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
-        function openNoteModal(t, b) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerText = b; document.getElementById('note-modal').style.display = 'flex'; }
         function wrap(a,b) { const tx = document.getElementById('editor-txt'); const s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
