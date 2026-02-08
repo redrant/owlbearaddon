@@ -48,11 +48,10 @@
         .btn-s { background: #222; color: #eee; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         
-        /* BOTONES DE ACCIÓN VISUAL */
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
-        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; }
+        .minus-btn { color: #888; cursor: default; font-weight: 900; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #444; margin-right: 5px; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
         .log { height: 120px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
@@ -210,6 +209,7 @@
             const it = DB.items[CID]; const vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
                 let body = l;
+                // REGLA PARA VISUALIZAR [-ID] BONITO
                 if(l.includes('[-]')) body = body.replace(/\[-(.*?)\]/g, '<span class="minus-btn">[-] $1</span>');
                 
                 let transferMatch = l.match(/\[(l|c)(\d+)\+(\d+)\]/i);
