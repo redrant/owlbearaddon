@@ -43,6 +43,7 @@
         .btn-p { background: var(--p); color: #000; padding: 6px 12px; border-radius: 6px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .var-static { color: var(--var); background: rgba(255,171,64,0.05); padding: 2px 6px; border-radius: 5px; font-weight: bold; opacity: 0.9; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
         .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
@@ -129,15 +130,13 @@
         function moveItem(id, pId) { if(!DB.items[id] || id === pId) return; DB.items[id].parent = pId; sync(); render(); }
         
         function openDash(id) { 
-            CID = id; 
-            IS_EDIT = false; // SIEMPRE EMPEZAR EN MODO VISTA
+            CID = id; IS_EDIT = false;
             document.getElementById('detail-view').style.display = 'flex'; 
             document.getElementById('content-area').style.display = 'block'; 
             document.getElementById('editor-area').style.display = 'none'; 
             document.getElementById('mode-btn').innerText = "EDIT";
             document.getElementById('det-title').innerText = DB.items[id].name; 
-            updateHeader(); 
-            renderVisual(); 
+            updateHeader(); renderVisual(); 
         }
 
         function renderVisual() {
@@ -151,21 +150,61 @@
                 else body = process(body, vars); return `<div style="margin-bottom:4px">${body}</div>`;
             }).join('');
         }
-        function process(t, v) { return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>').replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>').replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => `<span class="note-btn" onclick="openNote('${title}', '${content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">${title}</span>`).replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`).replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`); }
-        function parseVars(txt) { const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); return v; }
+
+        function process(t, v) { 
+            return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
+                    .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => `<span class="note-btn" onclick="openNote('${title}', '${content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">${title}</span>`)
+                    .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
+                    .replace(/([\+\-]\d+)([A-Z]+)/gi, '<span class="var-static">$1$2</span>') // Decorar modificadores estáticos
+                    .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`); 
+        }
+
+        function parseVars(txt) { 
+            const v = {}; 
+            // 1. Cargar bases: ATRIBUTO=10
+            const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); 
+            for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); 
+            // 2. Sumar modificadores: +5ATRIBUTO
+            const mods = txt.matchAll(/([\+\-]\d+)([A-Z]+)/gi);
+            for(const m of mods) {
+                const val = parseInt(m[1]), key = m[2].toUpperCase();
+                if(v[key] !== undefined) v[key] += val;
+                else v[key] = val; // Si no existe base, se inicia con el mod
+            }
+            return v; 
+        }
         
         async function rollDice(fStr) {
-            const it = DB.items[CID], vars = parseVars(it.content); let fL = fStr.toUpperCase(), fLo = fL;
-            Object.keys(vars).forEach(k => { fLo = fLo.replace(new RegExp(k,'g'), vars[k]); fL = fL.replace(new RegExp(k,'g'), vars[k]); });
-            const match = fL.match(/(\d*)D(\d+)/i), num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
-            document.getElementById('dice-overlay').style.display = 'flex'; document.getElementById('total-final').classList.remove('show');
+            const it = DB.items[CID], vars = parseVars(it.content); 
+            let fL = fStr.toUpperCase().replace(/\s/g, ''), fLo = fL;
+            const keys = Object.keys(vars).sort((a,b) => b.length - a.length);
+            keys.forEach(k => { const reg = new RegExp(k, 'g'); fL = fL.replace(reg, vars[k]); fLo = fLo.replace(reg, vars[k]); });
+
+            const match = fL.match(/(\d*)D(\d+)/i);
+            if(!match) return;
+            const num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
+            document.getElementById('dice-overlay').style.display = 'flex'; 
+            document.getElementById('total-final').classList.remove('show');
             const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
+
             for(let i=0; i<num; i++) {
                 await new Promise(r => setTimeout(r, 150)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 setTimeout(() => box.classList.add('reveal'), 10); const fR = Math.floor(Math.random()*sides)+1; results.push(fR);
                 let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 10) { clearInterval(inv); box.innerText = fR; if(fR === 1) box.style.color = 'var(--fail)'; if(fR === sides) box.style.color = 'var(--crit)'; } }, 60);
             }
-            setTimeout(() => { let tR = results.reduce((a,b)=>a+b, 0), fV = Math.floor(eval(fL.replace(match[0], tR))); document.getElementById('total-final').innerText = fV; document.getElementById('total-final').classList.add('show'); DB.log.unshift({ u:USER, dash:it.name, total:fV, formula:fLo, faces:results, max:sides }); if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI(); }, 800);
+
+            setTimeout(() => { 
+                let tR = results.reduce((a,b)=>a+b, 0);
+                let evalFormula = fL.replace(match[0], tR);
+                let finalVal = 0;
+                try { finalVal = Math.floor(eval(evalFormula)); } catch(e) { finalVal = tR; }
+                document.getElementById('total-final').innerText = finalVal; 
+                document.getElementById('total-final').classList.add('show'); 
+                DB.log.unshift({ u:USER, dash:it.name, total:finalVal, formula:fLo, faces:results, max:sides }); 
+                if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
+            }, 800);
         }
 
         function updateLogUI() { 
