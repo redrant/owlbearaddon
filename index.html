@@ -31,7 +31,6 @@
         
         .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .item { background: #161618; padding: 10px 15px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
-        .item.hidden-item { opacity: 0.3; border-style: dashed; }
         .item.folder { border-left: 4px solid var(--var); }
         .item.dash { border-left: 4px solid var(--p); }
         .del-btn { color: var(--fail); font-size: 11px; opacity: 0.3; padding: 5px; margin-left: 5px; }
@@ -45,7 +44,6 @@
         textarea { flex: 1; background: #080809; border: 1px solid #222; color: #bbb; border-radius: 12px; padding: 15px; resize: none; font-size: 13px; outline: none; }
         
         .btn-p { background: var(--p); color: #000; padding: 6px 12px; border-radius: 6px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; }
-        .btn-s { background: #222; color: #eee; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
@@ -54,9 +52,16 @@
         .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
 
-        .log { height: 120px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
-        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
+        /* LOG ESTILO TABLA PROFESIONAL */
+        .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #1a1a1c; padding-bottom: 6px; line-height: 1.4; }
+        .log-header { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
+        .log-faces { display: flex; gap: 4px; margin-top: 2px; }
+        .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
+        .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
+        .face-fail { background: rgba(255,68,102,0.15); color: var(--fail); border-color: var(--fail); }
 
+        /* ANIMACION DADOS */
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         #slot-machine { display: flex; justify-content: center; gap: 10px; perspective: 1000px; }
         .die-box { width: 60px; height: 60px; background: #111; border: 2px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; opacity: 0; transform: translateX(-50px); transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -101,7 +106,7 @@
         <div class="bar">
             <input type="text" id="item-input" placeholder="Nombre...">
             <button onclick="createNew('dash')" class="btn-p">+DASH</button>
-            <button onclick="createNew('folder')" class="btn-s">+CARPETA</button>
+            <button onclick="createNew('folder')" class="btn-tool">+CARPETA</button>
         </div>
         <div id="list-area" class="list"></div>
         <div id="log-area" class="log"></div>
@@ -183,8 +188,7 @@
 
         function createEl(it) {
             const div = document.createElement('div');
-            div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`;
-            div.draggable = true;
+            div.className = `item ${it.type}`;
             const canDelete = (it.owner === USER || USER === 'DM');
             const delHtml = canDelete ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name}</span> 
@@ -193,15 +197,6 @@
                             </div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
             return div;
-        }
-
-        function openDash(id) {
-            CID = id; IS_EDIT = false; 
-            document.getElementById('detail-view').style.display = 'flex';
-            document.getElementById('content-area').style.display = 'block';
-            document.getElementById('editor-area').style.display = 'none';
-            document.getElementById('det-title').innerText = DB.items[id].name;
-            updateHeader(); renderVisual();
         }
 
         function renderVisual() {
@@ -244,9 +239,8 @@
         async function rollDice(fStr) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             let formulaLimpia = fStr.toUpperCase();
-            
-            // Reemplazar variables para el LOG descriptivo (ej: 1D20+FUE -> 1D20+10)
             let formulaLog = formulaLimpia;
+            
             Object.keys(vars).forEach(k => {
                 formulaLog = formulaLog.replace(new RegExp(k,'g'), vars[k]);
                 formulaLimpia = formulaLimpia.replace(new RegExp(k,'g'), vars[k]);
@@ -262,11 +256,9 @@
             
             const results = [];
             for(let i=0; i<num; i++) {
-                // Animación de Izquierda a Derecha
                 await new Promise(r => setTimeout(r, 150)); 
                 const box = document.createElement('div'); 
-                box.className = 'die-box'; 
-                machine.appendChild(box);
+                box.className = 'die-box'; machine.appendChild(box);
                 setTimeout(() => box.classList.add('reveal'), 10);
 
                 const finalResult = Math.floor(Math.random()*sides)+1;
@@ -288,12 +280,10 @@
             setTimeout(() => {
                 let totalRoll = results.reduce((a,b)=>a+b, 0);
                 let finalValue = Math.floor(eval(formulaLimpia.replace(match[0], totalRoll)));
-                const tf = document.getElementById('total-final');
-                tf.innerText = finalValue;
-                tf.classList.add('show');
+                document.getElementById('total-final').innerText = finalValue;
+                document.getElementById('total-final').classList.add('show');
                 
-                // GUARDAR EN LOG CON FÓRMULA TRADUCIDA
-                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog });
+                DB.log.unshift({ u:USER, dash:it.name, total:finalValue, formula:formulaLog, faces:results, max:sides });
                 if(DB.log.length > 20) DB.log.pop(); 
                 sync(); updateLogUI();
             }, 800);
@@ -301,7 +291,22 @@
 
         function updateLogUI() {
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry"><b style="color:var(--p)">${l.u}</b>: <span style="font-size:12px; color:#fff">${l.total}</span> <small>(${l.formula})</small></div>
+                <div class="log-entry">
+                    <div class="log-header">
+                        <b style="color:var(--p)">${l.u}</b>; 
+                        <span style="color:#888">${l.dash}</span>; 
+                        <b style="color:#fff; font-size:11px">${l.total}</b>; 
+                        <small style="color:var(--dice)">${l.formula}</small>;
+                    </div>
+                    <div class="log-faces">
+                        ${l.faces.map(f => {
+                            let cls = "";
+                            if(f === 1) cls = "face-fail";
+                            else if(f === l.max) cls = "face-crit";
+                            return `<span class="face-tag ${cls}">${f}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
             `).join('');
         }
 
@@ -322,7 +327,7 @@
         function incVar(key, val) {
             const it = DB.items[CID]; const vars = parseVars(it.content);
             if(USER === 'DM') {
-                const n = prompt(`Nuevo valor para ${key}:`, val);
+                const n = prompt(`Nuevo valor:`, val);
                 if(n !== null) { it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${n}`); sync(); renderVisual(); }
                 return;
             }
@@ -365,7 +370,6 @@
             document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none';
             if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content;
             document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT";
-            document.getElementById('save-btn').style.display = 'none';
         }
 
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
@@ -388,6 +392,7 @@
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
         function addNoteTag() { const t = prompt("Título:"); if(t) wrap(`[note=${t}]`,`[/note]`); }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
+        function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
 </body>
