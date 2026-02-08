@@ -47,14 +47,11 @@
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
         .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
-        
-        /* ESTILOS DEL LOG AJUSTADOS */
         .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
         .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1a1a1c; padding-bottom: 8px; }
         .log-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
         .log-total { color: var(--p); font-size: 18px; font-weight: 900; }
         .log-formula { color: var(--dice); font-size: 12px; font-weight: bold; }
-        
         .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
         .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
         .face-fail { background: rgba(255,68,102,0.15); color: var(--fail); border-color: var(--fail); }
@@ -131,7 +128,6 @@
         function setupRootDrop() { const root = document.getElementById('root-drop-zone'); root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); }; root.ondragleave = () => root.classList.remove('drag-over'); root.ondrop = (e) => { e.preventDefault(); root.classList.remove('drag-over'); const dId = e.dataTransfer.getData('text/plain'); moveItem(dId, null); }; }
         function moveItem(id, pId) { if(!DB.items[id] || id === pId) return; DB.items[id].parent = pId; sync(); render(); }
         function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
-        
         function renderVisual() {
             const it = DB.items[CID], vars = parseVars(it.content);
             document.getElementById('content-area').innerHTML = it.content.split('\n').map(l => {
@@ -145,7 +141,6 @@
         }
         function process(t, v) { return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>').replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>').replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => `<span class="note-btn" onclick="openNote('${title}', '${content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">${title}</span>`).replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`).replace(/(\d*d\d+[\+\-\*\/A-Z0-9]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`); }
         function parseVars(txt) { const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); return v; }
-        
         async function rollDice(fStr) {
             const it = DB.items[CID], vars = parseVars(it.content); let fL = fStr.toUpperCase(), fLo = fL;
             Object.keys(vars).forEach(k => { fLo = fLo.replace(new RegExp(k,'g'), vars[k]); fL = fL.replace(new RegExp(k,'g'), vars[k]); });
@@ -159,7 +154,6 @@
             }
             setTimeout(() => { let tR = results.reduce((a,b)=>a+b, 0), fV = Math.floor(eval(fL.replace(match[0], tR))); document.getElementById('total-final').innerText = fV; document.getElementById('total-final').classList.add('show'); DB.log.unshift({ u:USER, dash:it.name, total:fV, formula:fLo, faces:results, max:sides }); if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI(); }, 800);
         }
-
         function updateLogUI() { 
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
                 <div class="log-entry">
@@ -172,7 +166,6 @@
                     <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
                 </div>`).join(''); 
         }
-
         function transferText(txt, type, val, tid) {
             if(!USING_ID) return alert("Usa 'USAR' en tu Dash."); const t = DB.items[USING_ID], tV = parseVars(t.content);
             if(type === 'l' && (tV['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
@@ -180,7 +173,6 @@
             let lines = t.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`)); if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
             t.content = lines.join('\n'); sync(); alert("Enviado.");
         }
-
         function incVar(key, val) {
             const it = DB.items[CID], vars = parseVars(it.content);
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
@@ -194,7 +186,6 @@
                 sync(); renderVisual();
             } else alert(`Faltan PUNTOS. Necesitas ${costo} para subir a ${val+1}`);
         }
-
         function globalPrompt(k) { const v = prompt(`Sumar ${k} global:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); sync(); render(); }
         function openNote(t, c) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerHTML = c; document.getElementById('note-modal').style.display = 'flex'; }
         function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = USING_ID === CID ? "USANDO ✅" : "USAR"; }
@@ -203,14 +194,7 @@
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
         function toggleUse() { USING_ID = (USING_ID === CID) ? null : CID; updateHeader(); }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        
-        // DASH SIN CONTENIDO DEFAULT
-        function createNew(t) { 
-            const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); 
-            DB.items[id] = { id, name: n, type: t, content: '', owner: USER, parent: null, hidden: false }; 
-            sync(); render(); document.getElementById('item-input').value = ""; 
-        }
-        
+        function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: '', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
         function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
