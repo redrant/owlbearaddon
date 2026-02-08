@@ -176,12 +176,13 @@
         function incVar(key, val) {
             const it = DB.items[CID], vars = parseVars(it.content);
             if(key === "PUNTOS" || key === "MONEDAS" || key === "NIVEL") return;
-            let costo = (val === 0) ? 1 : val + 1;
-            let pts = vars['PUNTOS'] || 0;
             if (USER === 'DM') {
                 it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`);
-                sync(); renderVisual();
-            } else if(pts >= costo) {
+                sync(); renderVisual(); return;
+            }
+            let costo = (val === 0) ? 1 : val + 1;
+            let pts = vars['PUNTOS'] || 0;
+            if(pts >= costo) {
                 it.content = it.content.replace(new RegExp(`${key}=${val}`,'i'), `${key}=${val+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`);
                 sync(); renderVisual();
             } else alert(`Faltan PUNTOS. Necesitas ${costo} para subir a ${val+1}`);
