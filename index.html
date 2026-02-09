@@ -10,7 +10,7 @@
             --bg: #0a0a0b; --surf: #121214; --p: #bb86fc; --t: #e0e0e0;
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
             --dice: #8cafff; --radius: 10px;
-            --stats: #fce4ec; /* Blanco rosadito para HP, ST, FT */
+            --stats: #fce4ec; 
         }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -104,23 +104,62 @@
         const client = window.supabase.createClient(SB_URL, SB_KEY);
         let DB = { items: {}, log: [], openFolders: {}, usersUsing: {} }, USER = "", CID = null, IS_EDIT = false, DRAGGED_ID = null;
 
-        function login() { const val = document.getElementById('uname-input').value.trim(); if(!val) return; USER = val; localStorage.setItem('platinum_user', val); document.getElementById('auth-screen').style.display = 'none'; document.getElementById('user-display').innerText = USER; if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex'; initSync(); setInterval(syncFromCloud, 3000); setupRootDrop(); }
-        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); } }
-        
-        async function syncFromCloud() { 
-            if(IS_EDIT || DRAGGED_ID) return; 
-            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); 
-            if(data) { 
-                const cloudDB = data.data;
-                Object.keys(cloudDB.items).forEach(id => { if(CID !== id) DB.items[id] = cloudDB.items[id]; });
-                DB.log = cloudDB.log || [];
-                DB.usersUsing = cloudDB.usersUsing || {};
-                render(); updateLogUI(); if(CID) { updateHeader(); renderVisual(); }
-            } 
+        // --- SISTEMA DE SINCRONIZACION MEJORADO ---
+        async function fetchCloud() {
+            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle();
+            return data ? data.data : null;
         }
-        
-        async function sync() { await client.from('platinum_session').upsert({ id: 1, data: DB }); }
 
+        async function pushCloud() {
+            // Antes de subir, hacemos un fetch rápido para fusionar logs y estados de otros usuarios
+            const cloud = await fetchCloud();
+            if(cloud) {
+                // Preservamos los logs nuevos de otros
+                DB.log = mergeLogs(DB.log, cloud.log);
+                // Preservamos quien usa que de otros
+                DB.usersUsing = {...cloud.usersUsing, ...DB.usersUsing};
+            }
+            await client.from('platinum_session').upsert({ id: 1, data: DB });
+        }
+
+        function mergeLogs(local, cloud) {
+            const combined = [...local, ...cloud];
+            const unique = combined.filter((v,i,a) => a.findIndex(t => (t.timestamp === v.timestamp && t.u === v.u)) === i);
+            return unique.sort((a,b) => b.timestamp - a.timestamp).slice(0, 25);
+        }
+
+        async function syncFromCloud() {
+            if(DRAGGED_ID) return; // No interrumpir drag & drop
+            const cloud = await fetchCloud();
+            if(!cloud) return;
+
+            // 1. Sincronizar items (solo los que NO estamos editando ahora mismo)
+            Object.keys(cloud.items).forEach(id => {
+                if(CID === id && IS_EDIT) return; // Si estoy editando ESTE dash, no sobrescribas mi texto
+                DB.items[id] = cloud.items[id];
+            });
+
+            // 2. Sincronizar Logs y Uso
+            DB.log = cloud.log || [];
+            DB.usersUsing = cloud.usersUsing || {};
+            
+            // 3. Refrescar UI
+            render();
+            updateLogUI();
+            if(CID && !IS_EDIT) {
+                updateHeader();
+                renderVisual(); 
+            }
+        }
+
+        // Intervalo de refresco rápido (1.5 segundos para logs y cambios)
+        setInterval(syncFromCloud, 1500);
+
+        // --- FUNCIONES DE SESION ---
+        function login() { const val = document.getElementById('uname-input').value.trim(); if(!val) return; USER = val; localStorage.setItem('platinum_user', val); document.getElementById('auth-screen').style.display = 'none'; document.getElementById('user-display').innerText = USER; if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex'; initSync(); setupRootDrop(); }
+        async function initSync() { const cloud = await fetchCloud(); if(cloud) { DB = cloud; render(); updateLogUI(); } }
+        
+        // --- LOGICA DE DASHES Y CARPETAS ---
         function render() {
             const area = document.getElementById('list-area'); area.innerHTML = "";
             const items = Object.values(DB.items || {}).sort((a,b) => a.id.localeCompare(b.id));
@@ -134,16 +173,13 @@
             const div = document.createElement('div'); div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`; div.draggable = true;
             const delHtml = (it.owner === USER || USER === 'DM') ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨' : ''}</span><div style="display:flex; align-items:center;"><small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}</div>`;
-            div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
+            div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; pushCloud(); render(); } else openDash(it.id); };
             div.ondragstart = (e) => { DRAGGED_ID = it.id; div.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); };
             div.ondragend = () => { DRAGGED_ID = null; div.classList.remove('dragging'); render(); };
             if(it.type === 'folder') { div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); }; div.ondragleave = () => div.classList.remove('drag-over'); div.ondrop = (e) => { e.preventDefault(); div.classList.remove('drag-over'); const droppedId = e.dataTransfer.getData('text/plain'); if(droppedId !== it.id) moveItem(droppedId, it.id); }; }
             return div;
         }
 
-        function setupRootDrop() { const root = document.getElementById('root-drop-zone'); root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); }; root.ondragleave = () => root.classList.remove('drag-over'); root.ondrop = (e) => { e.preventDefault(); root.classList.remove('drag-over'); const dId = e.dataTransfer.getData('text/plain'); moveItem(dId, null); }; }
-        function moveItem(id, pId) { if(!DB.items[id] || id === pId) return; DB.items[id].parent = pId; sync(); render(); }
-        
         function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('mode-btn').innerText = "EDIT"; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
 
         function renderVisual() {
@@ -171,6 +207,46 @@
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`); 
         }
 
+        // --- LOGICA DE DADOS Y LOGS ---
+        async function rollDice(fStr) {
+            const it = DB.items[CID], vars = parseVars(it.content); 
+            let fL = fStr.toUpperCase().replace(/\s/g, ''), fLo = fL;
+            const keys = Object.keys(vars).sort((a,b) => b.length - a.length);
+            keys.forEach(k => { const reg = new RegExp(k, 'g'); fL = fL.replace(reg, vars[k]); fLo = fLo.replace(reg, vars[k]); });
+            const match = fL.match(/(\d*)D(\d+)/i); if(!match) return;
+            const num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
+            document.getElementById('dice-overlay').style.display = 'flex'; 
+            document.getElementById('total-final').classList.remove('show');
+            const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
+            for(let i=0; i<num; i++) {
+                await new Promise(r => setTimeout(r, 120)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
+                setTimeout(() => box.classList.add('reveal'), 10); const fR = Math.floor(Math.random()*sides)+1; results.push(fR);
+                let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 8) { clearInterval(inv); box.innerText = fR; if(fR === 1) box.style.color = 'var(--fail)'; if(fR === sides) box.style.color = 'var(--crit)'; } }, 50);
+            }
+            setTimeout(() => { 
+                let tR = results.reduce((a,b)=>a+b, 0);
+                let evalFormula = fL.replace(match[0], tR);
+                let finalVal = 0; try { finalVal = Math.floor(eval(evalFormula)); } catch(e) { finalVal = tR; }
+                document.getElementById('total-final').innerText = finalVal; document.getElementById('total-final').classList.add('show'); 
+                DB.log.unshift({ u:USER, dash:it.name, total:finalVal, formula:fLo, faces:results, max:sides, timestamp: Date.now() }); 
+                pushCloud(); updateLogUI();
+            }, 600);
+        }
+
+        function updateLogUI() { 
+            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
+                <div class="log-entry">
+                    <div class="log-header">
+                        <b style="color:#666">${l.dash}</b> <span style="color:#333">|</span> 
+                        <b style="color:#fff">${l.u}</b>
+                        <span class="log-total">${l.total}</span> 
+                        <span class="log-formula">${l.formula}</span>
+                    </div>
+                    <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
+                </div>`).join(''); 
+        }
+
+        // --- AUXILIARES (Puntos, Costes, etc) ---
         function parseVars(txt) { 
             const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); 
             const mods = txt.matchAll(/([\+\-]\d+)([A-Z]+)/gi);
@@ -190,105 +266,44 @@
         function incVar(k, v) {
             const it = DB.items[CID], vars = parseVars(it.content);
             if(["PUNTOS", "MONEDAS", "NIVEL", "ST", "FT", "HP"].includes(k)) return;
-            
             let amount = prompt(`¿Cuántos niveles quieres subir ${k}?`, "1");
             if(!amount || isNaN(amount)) return;
             amount = parseInt(amount);
-            
             let pts = vars['PUNTOS'] || 0;
             let totalCost = calculateCost(v, amount);
-
             if(pts >= totalCost) {
-                let newContent = it.content.replace(new RegExp(`${k}=${v}`,'i'), `${k}=${v+amount}`)
-                                          .replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-totalCost}`);
-                
+                let newContent = it.content.replace(new RegExp(`${k}=${v}`,'i'), `${k}=${v+amount}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-totalCost}`);
                 let updatedVars = parseVars(newContent);
-                if(k === "FUE" || k === "INT") {
-                    let st = updatedVars['ST'] || 0;
-                    newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (10 * amount)}`);
-                } else if(k === "DES") {
-                    let st = updatedVars['ST'] || 0;
-                    newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (15 * amount)}`);
-                } else if(k === "FOR") {
-                    let hp = updatedVars['HP'] || 0;
-                    newContent = newContent.replace(new RegExp(`HP=${hp}`,'i'), `HP=${hp + (10 * amount)}`);
-                } else if(k === "AGI") {
-                    let ft = updatedVars['FT'] || 0;
-                    let extraFt = 0;
-                    for(let i=1; i<=amount; i++) { if((v + i) % 2 === 0) extraFt += 5; }
-                    newContent = newContent.replace(new RegExp(`FT=${ft}`,'i'), `FT=${ft + extraFt}`);
-                }
-                
-                it.content = newContent; sync(); renderVisual();
-            } else alert(`Faltan PUNTOS. Necesitas ${totalCost} (Tienes ${pts})`);
+                if(k === "FUE" || k === "INT") { let st = updatedVars['ST'] || 0; newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (10 * amount)}`); }
+                else if(k === "DES") { let st = updatedVars['ST'] || 0; newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (15 * amount)}`); }
+                else if(k === "FOR") { let hp = updatedVars['HP'] || 0; newContent = newContent.replace(new RegExp(`HP=${hp}`,'i'), `HP=${hp + (10 * amount)}`); }
+                else if(k === "AGI") { let ft = updatedVars['FT'] || 0; let extraFt = 0; for(let i=1; i<=amount; i++) { if((v + i) % 2 === 0) extraFt += 5; } newContent = newContent.replace(new RegExp(`FT=${ft}`,'i'), `FT=${ft + extraFt}`); }
+                it.content = newContent; pushCloud(); renderVisual();
+            } else alert(`Faltan PUNTOS. Necesitas ${totalCost}`);
         }
 
-        async function rollDice(fStr) {
-            const it = DB.items[CID], vars = parseVars(it.content); 
-            let fL = fStr.toUpperCase().replace(/\s/g, ''), fLo = fL;
-            const keys = Object.keys(vars).sort((a,b) => b.length - a.length);
-            keys.forEach(k => { const reg = new RegExp(k, 'g'); fL = fL.replace(reg, vars[k]); fLo = fLo.replace(reg, vars[k]); });
-            const match = fL.match(/(\d*)D(\d+)/i); if(!match) return;
-            const num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
-            document.getElementById('dice-overlay').style.display = 'flex'; 
-            document.getElementById('total-final').classList.remove('show');
-            const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
-            for(let i=0; i<num; i++) {
-                await new Promise(r => setTimeout(r, 150)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
-                setTimeout(() => box.classList.add('reveal'), 10); const fR = Math.floor(Math.random()*sides)+1; results.push(fR);
-                let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 10) { clearInterval(inv); box.innerText = fR; if(fR === 1) box.style.color = 'var(--fail)'; if(fR === sides) box.style.color = 'var(--crit)'; } }, 60);
-            }
-            setTimeout(() => { 
-                let tR = results.reduce((a,b)=>a+b, 0);
-                let evalFormula = fL.replace(match[0], tR);
-                let finalVal = 0; try { finalVal = Math.floor(eval(evalFormula)); } catch(e) { finalVal = tR; }
-                document.getElementById('total-final').innerText = finalVal; document.getElementById('total-final').classList.add('show'); 
-                DB.log.unshift({ u:USER, dash:it.name, total:finalVal, formula:fLo, faces:results, max:sides }); 
-                if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
-            }, 800);
-        }
-
-        function updateLogUI() { 
-            document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
-                <div class="log-entry">
-                    <div class="log-header">
-                        <b style="color:#666">${l.dash}</b> <span style="color:#333">|</span> 
-                        <b style="color:#fff">${l.u}</b>
-                        <span class="log-total">${l.total}</span> 
-                        <span class="log-formula">${l.formula}</span>
-                    </div>
-                    <div class="log-faces">${l.faces.map(f => `<span class="face-tag ${f===1?'face-fail':f===l.max?'face-crit':''}">${f}</span>`).join('')}</div>
-                </div>`).join(''); 
-        }
-
-        function transferText(txt, type, val, tid) {
-            const usingId = DB.usersUsing[USER]; if(!usingId) return alert("Usa 'USAR' en tu Dash."); 
-            const t = DB.items[usingId], tV = parseVars(t.content);
-            if(type === 'l' && (tV['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
-            if(type === 'c') { const c = tV['MONEDAS'] || 0; if(c < val) return alert(`Faltan Monedas.`); t.content = t.content.replace(new RegExp(`MONEDAS=${c}`,'i'), `MONEDAS=${c-val}`); }
-            let lines = t.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`)); if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
-            t.content = lines.join('\n'); sync(); alert("Enviado.");
-        }
-
-        function globalPrompt(k) { const v = prompt(`Sumar ${k}:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); sync(); render(); }
-        function openNote(t, c) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerHTML = c; document.getElementById('note-modal').style.display = 'flex'; }
-        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = DB.usersUsing[USER] === CID ? "USANDO ✅" : "USAR"; }
         function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
-        function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
-        function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
-        function toggleUse() { const it = DB.items[CID]; if(it.owner !== USER && USER !== 'DM') return alert("Solo puedes usar un Dash que te pertenezca."); DB.usersUsing[USER] = (DB.usersUsing[USER] === CID) ? null : CID; sync(); updateHeader(); }
-        function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\nHP=100\nST=100\nFT=100\nFUE=0\nINT=0\nDES=0\nAGI=0\nFOR=0', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
-        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
-        function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
+        function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; pushCloud(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
-        function clearLog() { DB.log = []; sync(); updateLogUI(); }
-        function exportData() { const b = new Blob([JSON.stringify(DB)], {type:'application/json'}), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download='backup.json'; a.click(); }
-        function importData() { const i = document.createElement('input'); i.type='file'; i.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); sync(); render(); }; r.readAsText(e.target.files[0]); }; i.click(); }
+        function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; pushCloud(); updateHeader(); }
+        function toggleUse() { const it = DB.items[CID]; if(it.owner !== USER && USER !== 'DM') return alert("Solo puedes usar un Dash que te pertenezca."); DB.usersUsing[USER] = (DB.usersUsing[USER] === CID) ? null : CID; pushCloud(); updateHeader(); }
+        function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = DB.usersUsing[USER] === CID ? "USANDO ✅" : "USAR"; }
+        function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
+        function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\nHP=100\nST=100\nFT=100\nFUE=0\nINT=0\nDES=0\nAGI=0\nFOR=0', owner: USER, parent: null, hidden: false }; pushCloud(); render(); document.getElementById('item-input').value = ""; }
+        function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; pushCloud(); render(); } }
+        function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
+        function clearLog() { DB.log = []; pushCloud(); updateLogUI(); }
+        function setupRootDrop() { const root = document.getElementById('root-drop-zone'); root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); }; root.ondragleave = () => root.classList.remove('drag-over'); root.ondrop = (e) => { e.preventDefault(); root.classList.remove('drag-over'); const dId = e.dataTransfer.getData('text/plain'); moveItem(dId, null); }; }
+        function moveItem(id, pId) { if(!DB.items[id] || id === pId) return; DB.items[id].parent = pId; pushCloud(); render(); }
+        function transferText(txt, type, val, tid) { const usingId = DB.usersUsing[USER]; if(!usingId) return alert("Usa 'USAR' en tu Dash."); const t = DB.items[usingId], tV = parseVars(t.content); if(type === 'l' && (tV['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`); if(type === 'c') { const c = tV['MONEDAS'] || 0; if(c < val) return alert(`Faltan Monedas.`); t.content = t.content.replace(new RegExp(`MONEDAS=${c}`,'i'), `MONEDAS=${c-val}`); } let lines = t.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`)); if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt); t.content = lines.join('\n'); pushCloud(); alert("Enviado."); }
+        function globalPrompt(k) { const v = prompt(`Sumar ${k}:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); pushCloud(); render(); }
+        function openNote(t, c) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerHTML = c; document.getElementById('note-modal').style.display = 'flex'; }
         function wrap(a,b) { const tx = document.getElementById('editor-txt'), s=tx.selectionStart, e=tx.selectionEnd; tx.value=tx.value.substring(0,s)+a+tx.value.substring(s,e)+b+tx.value.substring(e); showSave(); }
         function ins(a) { document.getElementById('editor-txt').value += a; showSave(); }
         function addGlow() { const c = prompt("Color:"); if(c) wrap(`<g=${c}>`,`</g>`); }
         function addNoteTag() { const t = prompt("Título:"); if(t) { const c = prompt("Contenido:"); if(c !== null) ins(`[note=${t}]${c}[/note]`); } }
+        function exportData() { const b = new Blob([JSON.stringify(DB)], {type:'application/json'}), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download='backup.json'; a.click(); }
+        function importData() { const i = document.createElement('input'); i.type='file'; i.onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { DB = JSON.parse(ev.target.result); pushCloud(); render(); }; r.readAsText(e.target.files[0]); }; i.click(); }
         function logout() { localStorage.removeItem('platinum_user'); location.reload(); }
         window.onload = () => { const s = localStorage.getItem('platinum_user'); if(s) { document.getElementById('uname-input').value = s; login(); } };
     </script>
