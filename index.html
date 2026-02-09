@@ -10,6 +10,7 @@
             --bg: #0a0a0b; --surf: #121214; --p: #bb86fc; --t: #e0e0e0;
             --accent: #03dac6; --crit: #00ff88; --fail: #ff4466; --var: #ffab40;
             --dice: #8cafff; --radius: 10px;
+            --stats: #fce4ec; /* Blanco rosadito para HP, ST, FT */
         }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; scrollbar-width: thin; }
         body { background: var(--bg); color: var(--t); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -44,16 +45,17 @@
         .btn-tool { background: #1a1a1c; color: #aaa; border: 1px solid #333; padding: 4px 7px; border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold; }
         .var-tag { color: var(--var); background: rgba(255,171,64,0.1); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .var-static { color: var(--var); background: rgba(255,171,64,0.05); padding: 2px 6px; border-radius: 5px; font-weight: bold; opacity: 0.9; }
+        .var-stats { color: var(--stats); background: rgba(252,228,236,0.05); padding: 2px 6px; border-radius: 5px; font-weight: bold; }
         .roll-btn { color: var(--dice); background: rgba(140,175,255,0.1); padding: 2px 8px; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--dice); }
         .plus-btn { color: var(--p); cursor: pointer; font-weight: 900; background: rgba(187,134,252,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--p); }
         .minus-btn { color: var(--var); cursor: default; font-weight: 900; background: rgba(255,171,64,0.1); padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--var); margin-right: 5px; display: inline-block; }
         .note-btn { color: var(--accent); cursor: pointer; font-weight: bold; border-bottom: 1px dashed var(--accent); }
-        .log { height: 160px; background: #080809; border-top: 2px solid var(--p); padding: 10px; font-size: 10px; overflow-y: auto; }
-        .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1a1a1c; padding-bottom: 8px; }
-        .log-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
-        .log-total { color: var(--p); font-size: 15px; font-weight: 900; }
-        .log-formula { color: var(--dice); font-size: 12px; font-weight: bold; }
-        .face-tag { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; }
+        .log { height: 110px; background: #080809; border-top: 2px solid var(--p); padding: 6px; font-size: 9px; overflow-y: auto; }
+        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1a1a1c; padding-bottom: 4px; }
+        .log-header { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 2px; }
+        .log-total { color: var(--p); font-size: 13px; font-weight: 900; }
+        .log-formula { color: var(--dice); font-size: 10px; font-weight: bold; }
+        .face-tag { padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: 900; background: #222; color: #888; border: 1px solid #333; margin-right: 2px; }
         .face-crit { background: rgba(0,255,136,0.15); color: var(--crit); border-color: var(--crit); }
         .face-fail { background: rgba(255,68,102,0.15); color: var(--fail); border-color: var(--fail); }
         #dice-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
@@ -103,8 +105,20 @@
         let DB = { items: {}, log: [], openFolders: {}, usersUsing: {} }, USER = "", CID = null, IS_EDIT = false, DRAGGED_ID = null;
 
         function login() { const val = document.getElementById('uname-input').value.trim(); if(!val) return; USER = val; localStorage.setItem('platinum_user', val); document.getElementById('auth-screen').style.display = 'none'; document.getElementById('user-display').innerText = USER; if(USER === "DM") document.getElementById('dm-tools-header').style.display = 'flex'; initSync(); setInterval(syncFromCloud, 3000); setupRootDrop(); }
-        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; if(!DB.usersUsing) DB.usersUsing = {}; render(); updateLogUI(); } }
-        async function syncFromCloud() { if(IS_EDIT || DRAGGED_ID) return; const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; if(!DB.usersUsing) DB.usersUsing = {}; render(); updateLogUI(); if(CID) renderVisual(); } }
+        async function initSync() { const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); if(data) { DB = data.data; render(); updateLogUI(); } }
+        
+        async function syncFromCloud() { 
+            if(IS_EDIT || DRAGGED_ID) return; 
+            const { data } = await client.from('platinum_session').select('data').eq('id', 1).maybeSingle(); 
+            if(data) { 
+                const cloudDB = data.data;
+                Object.keys(cloudDB.items).forEach(id => { if(CID !== id) DB.items[id] = cloudDB.items[id]; });
+                DB.log = cloudDB.log || [];
+                DB.usersUsing = cloudDB.usersUsing || {};
+                render(); updateLogUI(); if(CID) { updateHeader(); renderVisual(); }
+            } 
+        }
+        
         async function sync() { await client.from('platinum_session').upsert({ id: 1, data: DB }); }
 
         function render() {
@@ -115,29 +129,22 @@
                 if(it.type === 'folder' && DB.openFolders[it.id]) { items.filter(c => c.parent === it.id).forEach(c => { if(c.hidden && USER !== 'DM') return; const cel = createEl(c); cel.style.marginLeft = "20px"; area.appendChild(cel); }); }
             });
         }
+
         function createEl(it) {
             const div = document.createElement('div'); div.className = `item ${it.type} ${it.hidden ? 'hidden-item' : ''}`; div.draggable = true;
             const delHtml = (it.owner === USER || USER === 'DM') ? `<span class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')">✕</span>` : '';
             div.innerHTML = `<span>${it.type==='folder'?'📁':'📄'} ${it.name} ${it.hidden ? '👁️‍🗨' : ''}</span><div style="display:flex; align-items:center;"><small style="opacity:0.4; font-size:9px">${it.owner||''}</small>${delHtml}</div>`;
             div.onclick = () => { if(it.type === 'folder') { DB.openFolders[it.id] = !DB.openFolders[it.id]; sync(); render(); } else openDash(it.id); };
-            div.oncontextmenu = (e) => { if(USER === 'DM') { e.preventDefault(); it.hidden = !it.hidden; sync(); render(); } };
             div.ondragstart = (e) => { DRAGGED_ID = it.id; div.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); };
             div.ondragend = () => { DRAGGED_ID = null; div.classList.remove('dragging'); render(); };
             if(it.type === 'folder') { div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); }; div.ondragleave = () => div.classList.remove('drag-over'); div.ondrop = (e) => { e.preventDefault(); div.classList.remove('drag-over'); const droppedId = e.dataTransfer.getData('text/plain'); if(droppedId !== it.id) moveItem(droppedId, it.id); }; }
             return div;
         }
+
         function setupRootDrop() { const root = document.getElementById('root-drop-zone'); root.ondragover = (e) => { e.preventDefault(); root.classList.add('drag-over'); }; root.ondragleave = () => root.classList.remove('drag-over'); root.ondrop = (e) => { e.preventDefault(); root.classList.remove('drag-over'); const dId = e.dataTransfer.getData('text/plain'); moveItem(dId, null); }; }
         function moveItem(id, pId) { if(!DB.items[id] || id === pId) return; DB.items[id].parent = pId; sync(); render(); }
         
-        function openDash(id) { 
-            CID = id; IS_EDIT = false;
-            document.getElementById('detail-view').style.display = 'flex'; 
-            document.getElementById('content-area').style.display = 'block'; 
-            document.getElementById('editor-area').style.display = 'none'; 
-            document.getElementById('mode-btn').innerText = "EDIT";
-            document.getElementById('det-title').innerText = DB.items[id].name; 
-            updateHeader(); renderVisual(); 
-        }
+        function openDash(id) { CID = id; IS_EDIT = false; document.getElementById('detail-view').style.display = 'flex'; document.getElementById('content-area').style.display = 'block'; document.getElementById('editor-area').style.display = 'none'; document.getElementById('mode-btn').innerText = "EDIT"; document.getElementById('det-title').innerText = DB.items[id].name; updateHeader(); renderVisual(); }
 
         function renderVisual() {
             const it = DB.items[CID], vars = parseVars(it.content);
@@ -156,52 +163,86 @@
                     .replace(/\*(.*?)\*/g, '<i>$1</i>')
                     .replace(/<g=(.*?)>(.*?)<\/g>/g, '<span style="color:$1; text-shadow:0 0 8px $1">$2</span>')
                     .replace(/\[note=(.*?)\](.*?)\[\/note\]/gs, (m, title, content) => `<span class="note-btn" onclick="openNote('${title}', '${content.trim().replace(/  /g, '<br>').replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">${title}</span>`)
-                    .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => `<span class="var-tag" onclick="incVar('${k}',${val})">${k}=${val}</span>`)
-                    .replace(/([\+\-]\d+)([A-Z]+)/gi, '<span class="var-static">$1$2</span>') // Decorar modificadores estáticos
+                    .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, val) => {
+                        const isStat = ["HP", "ST", "FT"].includes(k.toUpperCase());
+                        return `<span class="${isStat ? 'var-stats' : 'var-tag'}" onclick="${isStat ? '' : `incVar('${k}',${val})`}">${k}=${val}</span>`;
+                    })
+                    .replace(/([\+\-]\d+)([A-Z]+)/gi, '<span class="var-static">$1$2</span>')
                     .replace(/(\d*d\d+[\+\-\*\/A-Z0-9\(\)]*)/gi, f => `<span class="roll-btn" onclick="rollDice('${f}')">${f}</span>`); 
         }
 
         function parseVars(txt) { 
-            const v = {}; 
-            // 1. Cargar bases: ATRIBUTO=10
-            const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); 
-            for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); 
-            // 2. Sumar modificadores: +5ATRIBUTO
+            const v = {}; const bases = txt.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const b of bases) v[b[1].toUpperCase()] = parseInt(b[2]); 
             const mods = txt.matchAll(/([\+\-]\d+)([A-Z]+)/gi);
-            for(const m of mods) {
-                const val = parseInt(m[1]), key = m[2].toUpperCase();
-                if(v[key] !== undefined) v[key] += val;
-                else v[key] = val; // Si no existe base, se inicia con el mod
-            }
+            for(const m of mods) { const val = parseInt(m[1]), key = m[2].toUpperCase(); if(v[key] !== undefined) v[key] += val; else v[key] = val; }
             return v; 
         }
-        
+
+        function calculateCost(currentLevel, levelsToIncrease) {
+            let totalCost = 0;
+            for(let i = 1; i <= levelsToIncrease; i++) {
+                let nextLevel = currentLevel + i;
+                totalCost += Math.floor((nextLevel - 1) / 4) + 1;
+            }
+            return totalCost;
+        }
+
+        function incVar(k, v) {
+            const it = DB.items[CID], vars = parseVars(it.content);
+            if(["PUNTOS", "MONEDAS", "NIVEL", "ST", "FT", "HP"].includes(k)) return;
+            
+            let amount = prompt(`¿Cuántos niveles quieres subir ${k}?`, "1");
+            if(!amount || isNaN(amount)) return;
+            amount = parseInt(amount);
+            
+            let pts = vars['PUNTOS'] || 0;
+            let totalCost = calculateCost(v, amount);
+
+            if(pts >= totalCost) {
+                let newContent = it.content.replace(new RegExp(`${k}=${v}`,'i'), `${k}=${v+amount}`)
+                                          .replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-totalCost}`);
+                
+                let updatedVars = parseVars(newContent);
+                if(k === "FUE" || k === "INT") {
+                    let st = updatedVars['ST'] || 0;
+                    newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (10 * amount)}`);
+                } else if(k === "DES") {
+                    let st = updatedVars['ST'] || 0;
+                    newContent = newContent.replace(new RegExp(`ST=${st}`,'i'), `ST=${st + (15 * amount)}`);
+                } else if(k === "FOR") {
+                    let hp = updatedVars['HP'] || 0;
+                    newContent = newContent.replace(new RegExp(`HP=${hp}`,'i'), `HP=${hp + (10 * amount)}`);
+                } else if(k === "AGI") {
+                    let ft = updatedVars['FT'] || 0;
+                    let extraFt = 0;
+                    for(let i=1; i<=amount; i++) { if((v + i) % 2 === 0) extraFt += 5; }
+                    newContent = newContent.replace(new RegExp(`FT=${ft}`,'i'), `FT=${ft + extraFt}`);
+                }
+                
+                it.content = newContent; sync(); renderVisual();
+            } else alert(`Faltan PUNTOS. Necesitas ${totalCost} (Tienes ${pts})`);
+        }
+
         async function rollDice(fStr) {
             const it = DB.items[CID], vars = parseVars(it.content); 
             let fL = fStr.toUpperCase().replace(/\s/g, ''), fLo = fL;
             const keys = Object.keys(vars).sort((a,b) => b.length - a.length);
             keys.forEach(k => { const reg = new RegExp(k, 'g'); fL = fL.replace(reg, vars[k]); fLo = fLo.replace(reg, vars[k]); });
-
-            const match = fL.match(/(\d*)D(\d+)/i);
-            if(!match) return;
+            const match = fL.match(/(\d*)D(\d+)/i); if(!match) return;
             const num = Math.min(parseInt(match[1]) || 1, 10), sides = parseInt(match[2]);
             document.getElementById('dice-overlay').style.display = 'flex'; 
             document.getElementById('total-final').classList.remove('show');
             const machine = document.getElementById('slot-machine'); machine.innerHTML = ""; const results = [];
-
             for(let i=0; i<num; i++) {
                 await new Promise(r => setTimeout(r, 150)); const box = document.createElement('div'); box.className = 'die-box'; machine.appendChild(box);
                 setTimeout(() => box.classList.add('reveal'), 10); const fR = Math.floor(Math.random()*sides)+1; results.push(fR);
                 let c = 0; const inv = setInterval(() => { box.innerText = Math.floor(Math.random()*sides)+1; if(++c > 10) { clearInterval(inv); box.innerText = fR; if(fR === 1) box.style.color = 'var(--fail)'; if(fR === sides) box.style.color = 'var(--crit)'; } }, 60);
             }
-
             setTimeout(() => { 
                 let tR = results.reduce((a,b)=>a+b, 0);
                 let evalFormula = fL.replace(match[0], tR);
-                let finalVal = 0;
-                try { finalVal = Math.floor(eval(evalFormula)); } catch(e) { finalVal = tR; }
-                document.getElementById('total-final').innerText = finalVal; 
-                document.getElementById('total-final').classList.add('show'); 
+                let finalVal = 0; try { finalVal = Math.floor(eval(evalFormula)); } catch(e) { finalVal = tR; }
+                document.getElementById('total-final').innerText = finalVal; document.getElementById('total-final').classList.add('show'); 
                 DB.log.unshift({ u:USER, dash:it.name, total:finalVal, formula:fLo, faces:results, max:sides }); 
                 if(DB.log.length > 20) DB.log.pop(); sync(); updateLogUI();
             }, 800);
@@ -211,7 +252,7 @@
             document.getElementById('log-area').innerHTML = (DB.log || []).map(l => `
                 <div class="log-entry">
                     <div class="log-header">
-                        <b style="color:#888">${l.dash}</b> <span style="color:#444">|</span> 
+                        <b style="color:#666">${l.dash}</b> <span style="color:#333">|</span> 
                         <b style="color:#fff">${l.u}</b>
                         <span class="log-total">${l.total}</span> 
                         <span class="log-formula">${l.formula}</span>
@@ -221,33 +262,23 @@
         }
 
         function transferText(txt, type, val, tid) {
-            const usingId = DB.usersUsing[USER];
-            if(!usingId) return alert("Usa 'USAR' en tu Dash."); const t = DB.items[usingId], tV = parseVars(t.content);
+            const usingId = DB.usersUsing[USER]; if(!usingId) return alert("Usa 'USAR' en tu Dash."); 
+            const t = DB.items[usingId], tV = parseVars(t.content);
             if(type === 'l' && (tV['NIVEL'] || 0) < val) return alert(`Nivel insuficiente.`);
             if(type === 'c') { const c = tV['MONEDAS'] || 0; if(c < val) return alert(`Faltan Monedas.`); t.content = t.content.replace(new RegExp(`MONEDAS=${c}`,'i'), `MONEDAS=${c-val}`); }
             let lines = t.content.split('\n'); let idx = lines.findIndex(l => l.includes(`[-${tid}]`)); if(idx !== -1) lines.splice(idx + 1, 0, txt); else lines.push(txt);
             t.content = lines.join('\n'); sync(); alert("Enviado.");
         }
-        function incVar(k, v) {
-            const it = DB.items[CID], vars = parseVars(it.content); if(k === "PUNTOS" || k === "MONEDAS" || k === "NIVEL") return;
-            let costo = (v === 0) ? 1 : v + 1, pts = vars['PUNTOS'] || 0;
-            if(pts >= costo) { it.content = it.content.replace(new RegExp(`${k}=${v}`,'i'), `${k}=${v+1}`).replace(new RegExp(`PUNTOS=${pts}`,'i'), `PUNTOS=${pts-costo}`); sync(); renderVisual(); }
-            else alert(`Faltan PUNTOS. Necesitas ${costo}`);
-        }
+
         function globalPrompt(k) { const v = prompt(`Sumar ${k}:`); if(!v) return; Object.values(DB.items).forEach(it => { if(it.type === 'dash') { const vars = parseVars(it.content); if(vars[k] !== undefined) it.content = it.content.replace(new RegExp(`${k}=${vars[k]}`,'i'), `${k}=${parseInt(vars[k]) + parseInt(v)}`); } }); sync(); render(); }
         function openNote(t, c) { document.getElementById('note-title-ui').innerText = t; document.getElementById('note-content-ui').innerHTML = c; document.getElementById('note-modal').style.display = 'flex'; }
         function updateHeader() { const it = DB.items[CID]; document.getElementById('mode-btn').style.display = (it.owner === USER || USER === 'DM') ? 'block' : 'none'; document.getElementById('own-btn').innerText = it.owner ? (it.owner === USER ? "FREE" : "BUSY") : "OWN"; document.getElementById('use-btn').innerText = DB.usersUsing[USER] === CID ? "USANDO ✅" : "USAR"; }
         function toggleMode() { IS_EDIT = !IS_EDIT; document.getElementById('content-area').style.display = IS_EDIT ? 'none' : 'block'; document.getElementById('editor-area').style.display = IS_EDIT ? 'flex' : 'none'; if(IS_EDIT) document.getElementById('editor-txt').value = DB.items[CID].content; document.getElementById('mode-btn').innerText = IS_EDIT ? "VIEW" : "EDIT"; }
         function saveDash() { DB.items[CID].content = document.getElementById('editor-txt').value; sync(); renderVisual(); document.getElementById('save-btn').style.display = 'none'; }
         function toggleOwn() { const it = DB.items[CID]; if(it.owner && it.owner !== USER && USER !== 'DM') return; it.owner = it.owner ? null : USER; sync(); updateHeader(); }
-        function toggleUse() { 
-            const it = DB.items[CID];
-            if(it.owner !== USER && USER !== 'DM') return alert("Solo puedes usar un Dash que te pertenezca.");
-            DB.usersUsing[USER] = (DB.usersUsing[USER] === CID) ? null : CID; 
-            sync(); updateHeader(); 
-        }
+        function toggleUse() { const it = DB.items[CID]; if(it.owner !== USER && USER !== 'DM') return alert("Solo puedes usar un Dash que te pertenezca."); DB.usersUsing[USER] = (DB.usersUsing[USER] === CID) ? null : CID; sync(); updateHeader(); }
         function closeDetail() { CID = null; document.getElementById('detail-view').style.display = 'none'; }
-        function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: '', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
+        function createNew(t) { const n = document.getElementById('item-input').value.trim() || "Nuevo", id = 'id'+Date.now(); DB.items[id] = { id, name: n, type: t, content: 'PUNTOS=0\nMONEDAS=0\nNIVEL=1\nHP=100\nST=100\nFT=100\nFUE=0\nINT=0\nDES=0\nAGI=0\nFOR=0', owner: USER, parent: null, hidden: false }; sync(); render(); document.getElementById('item-input').value = ""; }
         function deleteItem(id) { if(confirm("¿Eliminar?")) { delete DB.items[id]; sync(); render(); } }
         function deleteCurrent() { if(DB.items[CID].owner === USER || USER === 'DM') { deleteItem(CID); closeDetail(); } }
         function showSave() { document.getElementById('save-btn').style.display = 'block'; }
