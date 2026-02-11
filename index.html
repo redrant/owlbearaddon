@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Platinum Dash v32 - Final Prototype</title>
+    <title>Platinum Dash v33 - Extra Vars Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -44,10 +44,9 @@
         .v-simple { color: var(--accent); font-weight: bold; background: rgba(0,0,0,0.4); padding: 3px 10px; border-radius: 6px; border: 1px solid #333; font-size: 13px; }
         .v-roll { color: var(--crit); font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 6px; border: 1px solid #444; }
 
-        /* Estilo para los botones +/- */
         .btn-interact { background: var(--p); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s; }
         .btn-interact:hover { box-shadow: 0 0 10px var(--p); }
-        .tag-receptor { background: #1a1a24; color: var(--p-glow); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; }
+        .tag-receptor { background: #1a1a24; color: var(--p-glow); border: 1px solid var(--p); padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; box-shadow: inset 0 0 5px rgba(157, 78, 221, 0.2); }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .note-content { background: var(--surf); border: 2px solid var(--p); padding: 25px; border-radius: 20px; max-width: 450px; width: 90%; text-align: center; }
@@ -67,7 +66,7 @@
 
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; align-items:center; justify-content:center;">
         <div style="background:var(--surf); padding:30px; border-radius:20px; border:2px solid var(--p); text-align:center; min-width:300px;">
-            <h1 style="color:var(--p); margin:0 0 20px 0; letter-spacing:3px; font-size:24px;">PLATINUM v32</h1>
+            <h1 style="color:var(--p); margin:0 0 20px 0; letter-spacing:3px; font-size:24px;">PLATINUM v33</h1>
             <input type="text" id="user-in" placeholder="USUARIO / DM" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:#fff; border-radius:10px; outline:none; text-align:center;">
             <button onclick="login()" class="btn-p" style="width:100%; margin-top:15px; padding:12px;">INGRESAR</button>
         </div>
@@ -177,7 +176,7 @@
             const items = Object.values(DB.items).filter(it => (it.page||1) === LOCAL_PAGE && !it.parentId);
             
             items.forEach(it => {
-                if(it.hidden && !IS_DM(USER)) return; // INVISIBILIDAD TOTAL
+                if(it.hidden && !IS_DM(USER)) return;
                 if(it.type === 'folder') {
                     const isOpen = OPEN_FOLDERS.has(it.id);
                     const f = document.createElement('div'); f.className = `folder ${isOpen?'open-local':''}`; f.dataset.id = it.id;
@@ -236,7 +235,9 @@
                         .replace(/([A-Z]+)=([0-9]+)/gi, (m, k, v) => {
                             k = k.toUpperCase(); if(bases.includes(k)) return `<div class="v-base" onclick="lvlUp('${k}',${v})"><b>${k}</b><span>LVL: ${v} | pt${getPtCost(v)}</span></div>`;
                             return `<span class="v-simple">${k}=${v}</span>`;
-                        });
+                        })
+                        .replace(/([\+\-])(\d+)([A-Z]+)/gi, (m, sign, val, k) => `<span class="v-simple" style="color:var(--p-glow);">${sign}${val}${k}</span>`);
+                    
                     h = h.replace(/\[(L\d+|C\d+)?\+(\d+)\]/gi, (m, req, tid) => {
                         const pureText = line.replace(/\[.*?\]/gi,'').trim();
                         return `<button class="btn-interact" onclick="sendTo('${pureText}', '${req||''}', '${tid}')">${req||''}+${tid}</button>`;
@@ -269,13 +270,7 @@
             Object.values(DB.items).forEach(it => {
                 const pattern = new RegExp(`\\[\\-${tid}\\]`, 'i');
                 if(pattern.test(it.content)) {
-                    const lines = it.content.split('\n');
-                    const newLines = [];
-                    lines.forEach(line => {
-                        newLines.push(line);
-                        if(pattern.test(line)) newLines.push(text);
-                    });
-                    it.content = newLines.join('\n');
+                    it.content += `\n${text}`;
                     found = true;
                 }
             });
@@ -284,19 +279,23 @@
         }
 
         function roll(formula) {
-            const it = DB.items[CID], vs = getVars(it.content);
+            const it = DB.items[CID], vars = getFullVars(it.content);
             let rf = formula.toUpperCase();
-            Object.keys(vs).forEach(k => rf = rf.replace(new RegExp(`\\b${k}\\b`,'g'), vs[k]));
+            Object.keys(vars).forEach(k => rf = rf.replace(new RegExp(`\\b${k}\\b`,'g'), vars[k]));
+            
             const match = rf.match(/(\d+)D(\d+)/i) || rf.match(/D(\d+)/i);
             if(!match) return;
             const n = match[1]?parseInt(match[1]):1, faces = parseInt(match[match.length-1]), results = [];
             let sumFaces = 0; for(let i=0; i<n; i++){ const r = Math.floor(Math.random()*faces)+1; results.push(r); sumFaces += r; }
+            
             const totalFinal = eval(rf.replace(/(\d*)D\d+/i, sumFaces));
             const extra = totalFinal - sumFaces;
+            
             document.getElementById('dice-total').innerText = "0";
             document.getElementById('dice-extra').innerText = "";
             document.getElementById('dice-modal').style.display = 'flex';
             const reels = document.getElementById('reels-container'); reels.innerHTML = "";
+            
             results.forEach((r, i) => {
                 const reel = document.createElement('div'); reel.className = 'reel';
                 for(let x=0; x<15; x++) reel.innerHTML += `<div class="face">${Math.floor(Math.random()*faces)+1}</div>`;
@@ -304,6 +303,7 @@
                 reels.appendChild(reel);
                 setTimeout(() => reel.style.transform = `translateY(-${reel.scrollHeight - 80}px)`, i*150);
             });
+
             setTimeout(() => {
                 if(extra !== 0) document.getElementById('dice-extra').innerText = (extra > 0 ? "+ " : "- ") + Math.abs(extra);
                 document.getElementById('dice-total').innerText = totalFinal;
@@ -313,7 +313,24 @@
         }
 
         function getPtCost(l) { if(l<4) return 1; if(l<7) return 2; if(l<10) return 3; return Math.floor((l-10)/3)+4; }
-        function getVars(t) { const v={}; const ms=t.matchAll(/([A-Z]+)=([0-9]+)/gi); for(const m of ms) v[m[1].toUpperCase()]=parseInt(m[2]); return v; }
+        
+        function getVars(t) { 
+            const v={}; 
+            const ms=t.matchAll(/([A-Z]+)=([0-9]+)/gi); 
+            for(const m of ms) v[m[1].toUpperCase()]=parseInt(m[2]); 
+            return v; 
+        }
+
+        function getFullVars(t) {
+            const v = getVars(t);
+            const extras = t.matchAll(/([\+\-])(\d+)([A-Z]+)/gi);
+            for(const m of extras) {
+                const sign = m[1], val = parseInt(m[2]), k = m[3].toUpperCase();
+                if(v[k] === undefined) v[k] = 0;
+                v[k] += (sign === '+' ? val : -val);
+            }
+            return v;
+        }
 
         function lvlUp(stat, current) {
             const it = DB.items[CID], vs = getVars(it.content);
